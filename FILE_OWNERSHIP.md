@@ -11,12 +11,12 @@ Current wave: **Wave 1** (updated 2026-10-07).
 |---|---|---|---|
 | `docs/master/**` | Opus (Lead Orchestrator) | all | permanent |
 | `FILE_OWNERSHIP.md`, `README.md`, `docs/adr/**` | Opus | all | permanent |
-| `docs/research/**` | Agent 01 — Product Research | 1a | active |
+| `docs/research/**` | Agent 01 — Product Research | 1a | released (complete) |
 | `docs/domain/core/**`, `docs/domain/GLOSSARY.md` | Agent 02 — Temple Domain | 1a | active |
-| `docs/domain/workforce/**` | Agent 17 — Temple Workforce | 1a | active |
-| `docs/domain/facility/**` | Agent 18 — Facility / Asset | 1a | active |
-| `docs/domain/events/**` | Agent 19 — Ceremony / Event Operations | 1a | active |
-| `docs/ux/**` | Agent 03 — UX Architecture | 1b | reserved (starts after 1a review) |
+| `docs/domain/workforce/**` | Agent 17 — Temple Workforce | 1a | released (complete) |
+| `docs/domain/facility/**` | Agent 18 — Facility / Asset | 1a | released (complete) |
+| `docs/domain/events/**` | Agent 19 — Ceremony / Event Operations | 1a | released (complete) |
+| `docs/ux/**` | Agent 03 — UX Architecture | 1b | active |
 | `docs/reviews/wave-1/**` | Agent 20 — Governance Auditor | 1b | reserved |
 
 ## Reserved for later waves (no writes yet)

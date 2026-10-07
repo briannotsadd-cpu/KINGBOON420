@@ -1,6 +1,6 @@
 # AGENT PROMPT PACK — BOON SYSTEM
 
-Pack revision: **W1-r2** (2026-10-07). Covers Wave 1 (1a: Agents 01, 02, 17, 18, 19 · 1b: Agents 03, 20).
+Pack revision: **W1-r3** (2026-10-07). Covers Wave 1 (1a: Agents 01, 02, 17, 18, 19 · 1b: Agents 03, 20).
 Prompts for later waves are written only after the previous gate, from the repository state at that time.
 
 ---
@@ -28,7 +28,8 @@ Prompts for later waves are written only after the previous gate, from the repos
   profile fields are never required and support PUBLIC/CONNECTIONS/PRIVATE; unknown data is shown as Unknown,
   never invented; every tenant row has `temple_id`; cross-temple leakage is P0.
 - Readiness vocabulary only: PLANNED, RESEARCHED, DESIGNED, IMPLEMENTED, TESTED, VERIFIED, PILOT_READY, BLOCKED.
-- Finish with `REPORT.md` in your folder containing: Summary · Files written · Evidence (sources list, self-review
+- Finish with `REPORT.md` in your folder (if the harness refuses that write, put the full REPORT text in your final
+  message instead and say so) containing: Summary · Files written · Evidence (sources list, self-review
   checklist results) · Open questions · Proposed changes to master docs (exact file + section + replacement text)
   · Blockers · Self-assessed readiness of each artifact.
 - Your final message back to the orchestrator: ≤ 25 lines — files written, top 5 findings, blockers.
@@ -300,7 +301,12 @@ north-star questions and key journeys, state patterns, accessibility/Simple Mode
 
 **PRODUCT CONTEXT** — Precedes Visual Design (Agent 04, Wave 2), who must not invent structure.
 
-**CURRENT STATE** — `docs/master/UX_INFORMATION_ARCHITECTURE.md` (skeleton), plus Wave 1a outputs in
+**CURRENT STATE (r3)** — Wave 1a reviewed by Opus. Master docs updated to v0.2: `ROLE_PERMISSION_MATRIX.md` now
+has 27 roles incl. `department_lead`, `waiyawatchakon`, `lay_resident` (grants source: `role_permissions.yaml` — your
+home modules must reference these exact permission codes); monastic score label is "แต้มกิจวัตร" (never "แต้มบุญ"
+for monastics); staff presence has 6 states incl. `OFF_SHIFT`; kitchen headcount is a range. Facility, events,
+workforce specs are final; `docs/domain/core/` is still being completed by Agent 02 — re-read it before you write
+`REPORT.md` and reconcile. Inputs: `docs/master/UX_INFORMATION_ARCHITECTURE.md` (skeleton), plus Wave 1a outputs in
 `docs/research/`, `docs/domain/**` — read them all, including each `REPORT.md`, and Opus's Wave 1a review notes in
 `docs/master/GAP_ANALYSIS.md`.
 
@@ -374,6 +380,8 @@ claims, coverage gaps against the master specification, and file-ownership viola
 | 6 | Research agent might fabricate citations if web is blocked | Explicit STOP condition: label HYPOTHESIS, mark BLOCKED |
 | 7 | "Case tables" ambiguous | Numbered Given/When/Then with exact inputs/outputs and minimum counts |
 | 8 | Kitchen headcount needs availability + events (two other agents) | 17 defines formula and Unknown handling; references 02/19 by concept |
+| 10 | (r3) Agent 03 launched while Agent 02 finishes quest/scoring specs — accepted: master §5 already fixes the quest lifecycle; 03 must re-read core before finishing | Explicit reconcile step in 03's CURRENT STATE |
+| 11 | (r3) Sub-agent harness refuses `REPORT.md` writes | Agents return REPORT text in final message; Opus saves it |
 | 9 | Governance auditor needs a diff baseline | Opus commits Wave 0 before launch; 20 audits via `git status`/`git diff HEAD` |
 
 File-collision check: owned paths of 01, 02, 17, 18, 19, 03, 20 are pairwise disjoint (see `FILE_OWNERSHIP.md`). ✔
