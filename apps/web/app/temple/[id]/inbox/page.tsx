@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { inboxAccess, inboxThreads, type InboxThread } from "@/components/contact/queries";
 import { InboxActions } from "@/components/contact/inbox-actions";
+import { FlashNotice } from "@/components/contact/flash";
 import { Notice } from "@/components/ui";
 import { STATUS_TH, TABS, topicLabel } from "@/lib/contact";
 
@@ -38,6 +39,7 @@ export default async function Inbox({ params, searchParams }: { params: Promise<
             className="btn btn-secondary" style={{ minHeight: 48, padding: "0 16px", ...(t.key === active.key ? { background: "var(--primary)", color: "var(--on-primary)" } : {}) }}>{t.label} {count(t.status)}</Link>
         ))}
       </nav>
+      <FlashNotice />
       <p className="meta">ไม่มีช่องส่งตรงถึงพระ ทุกคำตอบส่งในนามเจ้าหน้าที่วัด</p>
       {shown.length === 0 ? (
         <div className="card empty"><h3>{active.key === "new" ? "ยังไม่มีข้อความใหม่" : `ยังไม่มีข้อความที่${active.label}`}</h3></div>

@@ -4,11 +4,12 @@ import { useRouter } from "next/navigation";
 import { Check, MessageSquareReply, UserCheck, Archive } from "lucide-react";
 import { Field, Notice, SubmitButton } from "@/components/ui";
 import { contactOpAction, type ContactState } from "@/app/contact-actions";
+import { setFlash } from "./flash";
 
 function useRefreshOnOk(s: ContactState) {
   const router = useRouter();
   const last = useRef<ContactState | null>(null);
-  useEffect(() => { if (s.ok && last.current !== s) { last.current = s; router.refresh(); } }, [s, router]);
+  useEffect(() => { if (s.ok && last.current !== s) { last.current = s; setFlash(s.ok); router.refresh(); } }, [s, router]);
 }
 
 /** One form per thread; stays mounted when the status changes so the result message stays visible. */
@@ -21,7 +22,6 @@ export function InboxActions({ templeId, threadId, status }: { templeId: string;
   return (
     <form action={act} className="stack" noValidate>
       {s.error && <Notice kind="error">{s.error}</Notice>}
-      {s.ok && <Notice kind="ok">{s.ok}</Notice>}
       <input type="hidden" name="thread_id" value={threadId} />
       <input type="hidden" name="temple_id" value={templeId} />
       {canReply && (
