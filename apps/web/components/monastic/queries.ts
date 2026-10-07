@@ -84,9 +84,7 @@ export const invitationDetail = (authUserId: string, templeId: string, invId: st
         where i.temple_id = $1 and i.id = $2`, [templeId, invId])).rows[0] ?? null;
     if (!inv) return null;
     const team = (await c.query<TeamRow>(
-      `select t.person_id, p.display_name as name, t.role, t.monk_response from public.invitation_team t
-         left join public.persons p on p.id = t.person_id where t.temple_id = $1 and t.invitation_id = $2
-        order by (t.role = 'LEAD') desc, p.display_name`, [templeId, invId])).rows;
+      "select person_id, display_name as name, role, monk_response from app.invitation_team_view($1, $2)", [templeId, invId])).rows;
     const perms = (await c.query<{ manage: boolean; confirm: boolean }>(
       "select app.has_permission($1, 'invitation.manage', 'T') as manage, app.has_permission($1, 'invitation.confirm', 'T') as confirm", [templeId])).rows[0];
     return { inv, team, canManage: perms.manage, me: (await c.query<{ id: string }>("select app.current_person_id() as id")).rows[0].id };

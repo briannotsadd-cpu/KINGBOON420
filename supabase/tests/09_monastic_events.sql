@@ -93,10 +93,12 @@ begin
   select state into st from app.resolve_availability(A, DEP, t0 - interval '10 minutes'); perform test.assert(st = 'TRAVELING', 'before rite => TRAVELING');
   perform test.as_person(BHI);
   select count(*) into n from public.invitations where id = inv; perform test.assert(n = 0, 'bhikkhu (scope A) cannot see invitations he is not on');
+  select count(*) into n from app.invitation_team_view(A, inv); perform test.assert(n = 0, 'non-team monk cannot list the team');
   ok := false; begin perform app.invitation_respond(A, inv, 'ACKNOWLEDGED'); exception when insufficient_privilege then ok := true; end;
   perform test.assert(ok, 'non-team monk cannot respond');
   reset role;
   perform test.as_person(DEP);
+  select count(*) into n from app.invitation_team_view(A, inv) v where v.display_name is not null; perform test.assert(n = 2, 'team member sees team names');
   perform app.invitation_respond(A, inv, 'ACKNOWLEDGED');
   reset role;
   perform test.as_person(CM);
