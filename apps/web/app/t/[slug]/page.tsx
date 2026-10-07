@@ -4,6 +4,7 @@ import { ChevronLeft, BadgeCheck, Car, Accessibility, Banknote, Clock, Hash, Pho
 import { templeParking, templePublic, type PublicField } from "@/lib/db";
 import { presentParking, type ParkingView } from "@/lib/parking";
 import { formatDateTh, formatValue } from "@/lib/verification";
+import { FollowSection } from "@/components/contact/follow-section";
 
 const TONE: Record<string, string> = { ok: "b-ok", warn: "b-warn", bad: "b-bad", closed: "b-closed", unknown: "b-unknown" };
 const DETAIL_ICON = { vehicles: Car, count: Hash, access: Accessibility, fee: Banknote, hours: Clock };
@@ -35,6 +36,8 @@ export default async function TemplePage({ params }: { params: Promise<{ slug: s
             <h1>{name ? formatValue(name.value) : "วัด"}</h1>
             <span className="badge b-ok"><BadgeCheck size={18} aria-hidden />วัดที่ผ่านการตรวจสอบ</span>
           </div>
+          <Link className="btn btn-primary btn-block" href={`/t/${encodeURIComponent(slug)}/contact`}>ติดต่อวัด</Link>
+          <FollowSection slug={slug} />
           <section className="card" aria-labelledby="info-h">
             <h2 id="info-h">ข้อมูลวัด</h2>
             <p className="hint" style={{ marginTop: 0 }}>แสดงเฉพาะข้อมูลที่วัดยืนยันแล้ว เรื่องที่ไม่แสดงคือยังไม่ได้ยืนยัน</p>

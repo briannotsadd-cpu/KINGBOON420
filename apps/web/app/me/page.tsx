@@ -6,6 +6,7 @@ import { asUser } from "@/lib/db";
 import { signOutAction } from "@/app/actions";
 import { SubmitButton } from "@/components/ui";
 import { StatusBadge } from "@/components/status";
+import { ContactSection } from "@/components/contact/contact-section";
 
 export const dynamic = "force-dynamic";
 export default async function Me() {
@@ -37,6 +38,7 @@ export default async function Me() {
           </ul>
         )}
       </section>
+      <ContactSection authUserId={s.authUserId} />
       <Link className="btn btn-primary btn-block" href="/me/temples/new"><Plus aria-hidden />ลงทะเบียนวัดใหม่</Link>
       <form action={signOutAction}><SubmitButton pendingText="กำลังออกจากระบบ…" variant="secondary" block><LogOut aria-hidden />ออกจากระบบ</SubmitButton></form>
       <p className="meta">เข้าสู่ระบบด้วย {s.email}</p>
