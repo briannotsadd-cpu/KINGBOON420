@@ -26,7 +26,7 @@ specs are specification data/tooling, allowed in documentation waves.
 
 | Path | Planned owner | Wave |
 |---|---|---|
-| `docs/design/**`, `packages/ui/tokens/**` | Agent 04 | 2 |
+| `docs/design/**`, `packages/ui/tokens/**` | Agent 04 — **paused** (Figma plan limit; owner: wait) | 2 |
 | `packages/ui/**` except `tokens/` (scaffold), `packages/domain/**` (scaffold) | Agent 16 → 06/11 | 2 / 3 |
 | `docs/security/**` | Agent 13 | 2 |
 | `docs/3d/**` (except `ASSET_BRIEF.md`, Opus), `assets/3d/**` | Agent 05 — **active (Wave 2, procedural Wat Arun design)** | 2 |

@@ -2,7 +2,8 @@
 
 Temple Operating System + Monastic Life System + Temple Workforce + Community Network.
 
-**Status:** planning (Wave 1). No application code yet. Every feature is `PLANNED` until evidence says otherwise.
+**Status:** Wave 1 closed; Wave 2 in progress (database schema + RLS tests, procedural 3D Wat Arun; Figma design paused
+by plan limit). No application features yet. Every feature is `PLANNED` until evidence says otherwise.
 
 ## Start here
 
@@ -22,6 +23,10 @@ Temple Operating System + Monastic Life System + Temple Workforce + Community Ne
 | [`docs/master/AGENT_PLAN.md`](docs/master/AGENT_PLAN.md) | Waves, agents, gates |
 | [`docs/master/AGENT_PROMPT_PACK.md`](docs/master/AGENT_PROMPT_PACK.md) | Prompts given to sub-agents |
 | [`docs/master/RISK_REGISTER.md`](docs/master/RISK_REGISTER.md) | Risks and mitigations |
+| [`docs/master/SPEC.md`](docs/master/SPEC.md) | Owner's specification (baseline) |
+| [`docs/adr/`](docs/adr/README.md) | Architecture decisions |
+| [`docs/design/DIRECTIONS.md`](docs/design/DIRECTIONS.md) | Three visual directions (partial) |
+| [`docs/3d/ASSET_BRIEF.md`](docs/3d/ASSET_BRIEF.md) | 3D model requirements |
 | [`FILE_OWNERSHIP.md`](FILE_OWNERSHIP.md) | Who may write which paths |
 
 Readiness vocabulary: `PLANNED → RESEARCHED → DESIGNED → IMPLEMENTED → TESTED → VERIFIED → PILOT_READY`, or `BLOCKED`.
