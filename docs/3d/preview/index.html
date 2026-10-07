@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wat Arun stylized preview (BOON SYSTEM)</title>
+<style>html,body{margin:0;height:100%;background:#f3e4cf;overflow:hidden;font:13px system-ui,sans-serif}
+#hud{position:fixed;left:12px;top:10px;color:#4a3526;background:#fff8ecd0;padding:6px 10px;border-radius:8px}
+#hud b{color:#a8672b}</style>
+<script type="importmap">{"imports":{"three":"./vendor/build/three.module.js","three/addons/":"./vendor/jsm/"}}</script></head>
+<body><div id="hud"><b>Wat Arun</b> - stylized placeholder (procedural, not survey-accurate) - drag to orbit, ?view=wide|close|top&amp;lod=1</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+const q = new URLSearchParams(location.search), view = q.get('view') || 'wide', lod = q.get('lod') === '1' ? 1 : 0;
+const r = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); r.setPixelRatio(Math.min(devicePixelRatio, 2));
+r.setSize(innerWidth, innerHeight); r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.05; r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild(r.domElement);
+const scene = new THREE.Scene();
+// sunrise sky gradient
+const cv = document.createElement('canvas'); cv.width = 2; cv.height = 256; const cx = cv.getContext('2d'); const gr = cx.createLinearGradient(0, 0, 0, 256);
+gr.addColorStop(0, '#6f9bc4'); gr.addColorStop(.55, '#f2c9a0'); gr.addColorStop(1, '#fbe3c0'); cx.fillStyle = gr; cx.fillRect(0, 0, 2, 256);
+const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace; scene.background = tex;
+scene.fog = new THREE.Fog(0xf5d9b8, 150, 420);
+scene.add(new THREE.HemisphereLight(0xcfe0ff, 0xd9b48a, .9));
+const sun = new THREE.DirectionalLight(0xffc48a, 3.2); sun.position.set(90, 38, -30); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -80, right: 80, top: 80, bottom: -80, near: 1, far: 300 }); sun.shadow.bias = -0.0005; scene.add(sun);
+const cam = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, .5, 800);
+const ctl = new OrbitControls(cam, r.domElement); ctl.enableDamping = true; ctl.maxPolarAngle = Math.PI / 2 - .02;
+const V = { wide: [[70, 45, 95], [0, 18, 0]], close: [[28, 30, 34], [0, 28, 0]], top: [[0.01, 150, 0.01], [0, 0, 0]] }[view] || [[70, 45, 95], [0, 18, 0]];
+cam.position.set(...V[0]); ctl.target.set(...V[1]); ctl.update();
+new GLTFLoader().load('../../../assets/3d/wat-arun/wat-arun-stylized.glb', g => {
+  g.scene.traverse(o => { if (o.isMesh) { const isL0 = o.name.endsWith('_LOD0'), isL1 = o.name.endsWith('_LOD1'); o.visible = lod ? isL1 : isL0; o.castShadow = true; o.receiveShadow = true; } });
+  scene.add(g.scene); window.__ready = true;
+}, undefined, e => { document.title = 'ERR ' + e; window.__ready = 'err'; });
+addEventListener('resize', () => { cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); r.setSize(innerWidth, innerHeight); });
+r.setAnimationLoop(() => { ctl.update(); r.render(scene, cam); });
+</script></body></html>
