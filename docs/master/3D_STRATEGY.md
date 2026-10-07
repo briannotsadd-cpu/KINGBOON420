@@ -47,9 +47,11 @@ Spline/Rive/Lottie only for UI motion, not the temple scene.
   use and modification, with attribution recorded.** "Free to download" is not a license.
 - Every asset gets a row in `assets/3d/LICENSES.md`: source, author, license, URL, date obtained, modifications,
   owner.
-- Wat Arun is a royal first-class temple; on-site photogrammetry or drone capture requires **written permission
-  from the temple** (and drone flights in Bangkok need CAAT registration / permits). Agent 05 must not plan a
-  capture without this.
+- Wat Arun is a royal first-class temple on UNESCO's Tentative List; on-site photogrammetry or drone capture
+  requires **written permission from the temple and confirmation with the Fine Arts Department (กรมศิลปากร)**.
+  Drones additionally need NBTC and CAAT registration and an airspace check (Agent 01, doc 06 — sources not yet
+  opened, verify). **No drone capture is planned for the pilot.**
+- Exclude CC BY-SA (share-alike conflicts with a proprietary app bundle) and any NC (non-commercial) models.
 - Realistic options, in order of preference:
   1. **Commissioned stylized model** built from public-domain reference (own photos taken from public areas,
      not detailed replicas), owned by the project.
@@ -60,7 +62,9 @@ Spline/Rive/Lottie only for UI motion, not the temple scene.
 
 ## 6. Wat Arun vertical slice — scope
 
-Scene: main prang + 4 minor prangs + ordination hall (ubosot) + riverfront; sunrise light; orbit camera;
+Scene: main prang + 4 satellite prangs (`WAT-ARUN.PRANG.SAT-01..04`, ordinal because no source states orientation) +
+4 mandapas + ordination hall (ubosot) + riverfront; heights/placement Unknown until the temple confirms (sources
+conflict: 66.8–86 m for the main prang) — placeholder massing must be labelled as such; sunrise light; orbit camera;
 fly-to building; markers for quest/event/maintenance from live data; tap building → side sheet with Event,
 Quest, people count, Maintenance, Assets, Readiness.
 

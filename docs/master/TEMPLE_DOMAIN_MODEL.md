@@ -1,6 +1,6 @@
 # TEMPLE DOMAIN MODEL — BOON SYSTEM
 
-Status: **DRAFT v0.1 (Wave 0, Opus)**. Agent 02 deepens this in Wave 1 under `docs/domain/`; changes to this
+Status: **v0.2 (Wave 1 gate, Opus)**. Agent 02 deepens this in Wave 1 under `docs/domain/`; changes to this
 file are made only by Opus after review.
 
 ## 1. Ubiquitous language (core terms)
@@ -19,8 +19,8 @@ file are made only by Opus after review.
 | `invitation` | กิจนิมนต์ | A request from outside for monks to attend a rite at a place and time. |
 | `ceremony` | พิธี | A rite performed by monks (inside or outside the temple). |
 | `availability` | สถานะพระ | The effective status of a monastic at a moment in time. |
-| `activity score` | แต้มบุญ (UI label) | `monastic_activity_score`. Progress indicator for monastics. **Not merit, not currency.** |
-| `boon points` | แต้มบุญชุมชน | `community_boon_points`. Participation points for lay people, redeemable for participation rewards. |
+| `activity score` | แต้มกิจวัตร (working UI label) | `monastic_activity_score`. Progress indicator for monastics. **Not merit, not currency.** "แต้มบุญ" is **not** used for monastics (Agent 01: implies quantified merit, sits beside redeemable lay points, invites ranking). Final label decided by a monk advisor (B3). |
+| `boon points` | แต้มบุญชุมชน (label under test vs แต้มร่วมกิจกรรม) | `community_boon_points`. Participation points for lay people, redeemable for participation rewards. Field-test whether "บุญ" next to a redeemable item reads as buying merit. |
 | `participation reward` | ของที่ระลึกจากการร่วมกิจกรรม | What community points can be exchanged for. Never "buying merit". |
 | `temple contact` | ช่องทางติดต่อวัด | The only default channel from the public to monastics; routed by the temple. |
 | `temple memory` | ความรู้ของวัด | Archived events, checklists and lessons, reused next year. |
@@ -130,8 +130,10 @@ Invariant: the sum of per-state counts equals the total. A dashboard test enforc
 free text), starts_at, due_at, priority, points (+ ledger), checklist, evidence_policy, verification_policy,
 status, parent_quest_id (boss quest), depends_on[], created_by, source (manual | template | ai_draft | recurring)`.
 
-`quest_type ∈ {monastic_daily, novice_learning, cleaning, kitchen, garden, maintenance, volunteer, event_task,
-ceremony_task, vehicle_task, office, general}`.
+`quest_type ∈ {monastic_daily, novice_learning, cleaning, kitchen, garden, maintenance, volunteer, event_root,
+event_task, ceremony_task, vehicle_task, office, security, general}` (`security` added from Agent 17; `event_root`
+was referenced in §5.3 but missing). Workforce quest templates default to 0 points until OQ-03 (do staff earn community
+points for paid work?) is decided.
 
 ### 5.2 Lifecycle
 
@@ -158,9 +160,11 @@ ceremony_task, vehicle_task, office, general}`.
 ### 5.3 Boss Quest (Event)
 
 - An `event` has exactly one root quest of type `event_root`; departments get child quests.
-- `readiness = completed_weight / total_weight` over child quests **plus hard gates** (e.g. monks confirmed ≥
-  required, volunteers filled ≥ required, venue maintenance issues = 0). Any failing hard gate caps readiness
-  display at "ไม่พร้อม" regardless of percentage.
+- Readiness is a **pure function** specified in `docs/domain/events/EVENT_BOSS_QUEST_SPEC.md` §5:
+  `percent = floor(100·(0.6·T + 0.4·S))` (T = completed task weight share, S = staffing fill), seven hard gates
+  (G-OWNER, G-VENUE, G-STAFF, G-MAINT, G-CRIT, G-CHECK, G-CONFLICT) each PASS/FAIL/UNKNOWN; states UNKNOWN /
+  NOT_READY / IN_PROGRESS / ALMOST_READY / READY. A failing gate → NOT_READY regardless of percent; an UNKNOWN gate
+  caps at ALMOST_READY. A freshly duplicated event is NOT_READY by construction.
 - Events can be duplicated from Temple Memory (copies structure, checklist and staffing targets, never people or
   evidence).
 
@@ -179,20 +183,32 @@ RECEIVED ─triage─▶ REVIEWING ─propose team─▶ TEAM_PROPOSED ─human 
   return buffer and vehicle availability. It produces a ranked suggestion with reasons. **Only an authorised
   human moves TEAM_PROPOSED → CONFIRMED.** AI never confirms.
 - On CONFIRMED the system creates schedule entries (ON_INVITATION window + TRAVELING legs) for each monk and
-  optionally a `trip` for the driver.
+  optionally a `trip` for the driver. Invitation CANCELLED → linked trip cancelled; invitation back to
+  REVIEWING/TEAM_PROPOSED → trip ON_HOLD (Agent 18). A monk is never assigned as a driver.
 
 ### 6.2 Schedule entry
 
-`schedule_entries(temple_id, person_id, kind ∈ {invitation, ceremony, teaching, class, duty, personal}, starts_at,
+`schedule_entries(temple_id, person_id, kind ∈ {invitation, ceremony, teaching, class, duty, personal, meal, leave,
+meeting}, starts_at,
 ends_at, venue, source_type, source_id)` — the single calendar table that availability resolution reads.
 
 ## 7. Facility
 
 - `buildings` (stable `code`, e.g. `WAT-ARUN.PRANG.MAIN`) are the shared key between data, 2D map and 3D scene.
+  Code regex `^[A-Z0-9]+(-[A-Z0-9]+)*(\.[A-Z0-9]+(-[A-Z0-9]+)*){1,4}$`; immutable; never reused. Detail:
+  `docs/domain/facility/SPATIAL_REGISTRY_SPEC.md`.
 - `zones` subdivide buildings/grounds (cleaning and garden assignments).
 - `assets` (QR code, building/zone, custodian, status), `maintenance_requests` (→ quest of type maintenance),
   `inventory_items` + `inventory_movements`, `vehicles`, `trips` (driver, vehicle, passengers, legs, status).
-- "Building has a problem" = open maintenance requests with severity ≥ configurable threshold.
+- "Building has a problem" = an open, non-duplicate maintenance request with severity S2 or worse (threshold
+  configurable per temple; untriaged severity counts as S2). Also feeds event gate G-MAINT.
+- Vehicle availability is UNKNOWN (never FREE) without an affirmative status and a known driver; departure time is
+  Unknown without a travel estimate or manual override (`VEHICLE_TRIP_SPEC.md`).
+- Staff presence mirrors monk availability: WORKING / FREE / ON_LEAVE / OFF_SITE_DUTY / UNKNOWN, with a sum
+  invariant (`docs/domain/workforce/STAFF_PRESENCE_SPEC.md`). **Decision (Opus): add a sixth state `OFF_SHIFT`** so
+  people who have checked out are not counted as UNKNOWN.
+- Kitchen headcount is a **range** [confirmed present … everyone not known to be away] plus a human-entered planned
+  number; nothing is estimated (`docs/domain/workforce/KITCHEN.md` §3).
 
 ## 8. Scoring — two ledgers, never merged
 
@@ -231,5 +247,6 @@ create API as the human who accepted it. AI output is labelled as AI-generated i
 2. Who in a typical temple confirms invitations — the abbot, secretary monk, or a lay office?
 3. Are monks comfortable with check-in signals at all? Alternative: availability purely from calendar + opt-in.
 4. Do vehicles belong to the temple or to lay supporters lending them? (affects ownership and liability)
-5. Kitchen headcount: is it derived from monk count + event registrations, or entered manually?
+5. ~~Kitchen headcount~~ — answered by Agent 17 (range + planned number, see §7). Needs availability at a future
+   instant from the resolver (OQ-06) and meal-required guest counts from events (OQ-07).
 6. Which rites can a สัปเหร่อ see, and must deceased-person data be restricted further (family privacy)?

@@ -1,0 +1,116 @@
+# BOON SYSTEM — Role/permission grants: SOURCE OF TRUTH (rev W1-gate, 2026-10-07)
+# ROLE_PERMISSION_MATRIX.md §4 is rendered from this file. Wave 3 seeds roles from it and generates the
+# tenant-isolation and scope test matrix from it. Edit here first, then re-render.
+#
+# Scopes: T temple · D department · Tm team · S self · A assigned-only (rows linked to the person's assignment)
+#         P public-only (items with visibility = public) · C counts/coarse only (no individual reasons)
+# Combined scopes are written "S+P", "A+P".
+# Any role not listed under a permission has no grant.
+
+modes:
+  monastic: [abbot, deputy_abbot, abbot_assistant, monk_secretary, bhikkhu, samanera]
+  community_staff: [waiyawatchakon, facility_manager, technician, department_lead, housekeeper, kitchen_staff,
+                    gardener, driver, ceremony_lead, ceremony_team, undertaker, office_staff, accountant,
+                    temple_admin, security_guard, traffic_staff, staff_general, temple_boy, lay_resident,
+                    volunteer, community_member]
+
+restricted: [invitation.confirm, ceremony.confirm_monks, event.approve, member.manage, finance.view,
+             finance.approve, audit.view, temple.settings, security.incident.view, funeral.register.view]
+
+# Groups. A grant keyed "@group" applies to every role in the group; an explicit role key overrides the group
+# value for that role; the value "-" removes the grant.
+groups:
+  "@monastic": [abbot, deputy_abbot, abbot_assistant, monk_secretary, bhikkhu, samanera]
+  "@staff": [waiyawatchakon, facility_manager, technician, department_lead, housekeeper, kitchen_staff, gardener,
+             driver, ceremony_lead, ceremony_team, undertaker, office_staff, accountant, temple_admin,
+             security_guard, traffic_staff, staff_general, temple_boy]
+  "@lay": ["@staff", lay_resident, volunteer, community_member]
+  "@all": ["@monastic", "@lay"]
+
+minor_overrides:   # membership flagged minor (PDPA s.20; Agent 01 doc 03) — applied after role grants
+  deny: [community.participate.p2p_chat, community.participate.calls, community.public_profile]
+
+grants:
+  quest.view:            {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, bhikkhu: S+P, samanera: S,
+                          waiyawatchakon: D, facility_manager: D, technician: A, department_lead: D, housekeeper: A,
+                          kitchen_staff: A, gardener: A, driver: A, ceremony_lead: D, ceremony_team: A, undertaker: A,
+                          office_staff: D, accountant: A, temple_admin: A, security_guard: A, traffic_staff: A,
+                          staff_general: A, temple_boy: A, lay_resident: A+P, volunteer: A+P, community_member: P}
+  quest.create:          {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, bhikkhu: S,
+                          facility_manager: D, department_lead: D, ceremony_lead: D, office_staff: D}
+  quest.request:         {bhikkhu: T, samanera: T, housekeeper: T, kitchen_staff: T, gardener: T, technician: T,
+                          driver: T, office_staff: T, security_guard: T, staff_general: T}
+  quest.assign:          {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, facility_manager: D,
+                          department_lead: D, ceremony_lead: D}
+  quest.complete:        {"@all": S}
+  quest.verify:          {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, facility_manager: D,
+                          department_lead: D, ceremony_lead: D}
+  quest.manage:          {abbot: T, deputy_abbot: T, abbot_assistant: T, facility_manager: D, department_lead: D,
+                          ceremony_lead: D}
+  event.view:            {"@all": T, undertaker: A, community_member: P}
+  event.manage:          {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, ceremony_lead: D,
+                          department_lead: D, facility_manager: D}
+  event.approve:         {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T(delegated)}
+  event.volunteer_approve: {ceremony_lead: D, department_lead: D, facility_manager: D}
+  invitation.view:       {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, bhikkhu: A, driver: A,
+                          office_staff: T}
+  invitation.manage:     {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, office_staff: T}
+  invitation.confirm:    {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T(delegated)}
+  ceremony.confirm_monks: {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T(delegated)}
+  funeral.assigned.view: {undertaker: A, ceremony_team: A, ceremony_lead: D}
+  funeral.register.view: {abbot: T, office_staff: T(create/edit)}
+  schedule.view:         {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, bhikkhu: S+P, samanera: S+P,
+                          facility_manager: P, ceremony_lead: P, office_staff: T, temple_admin: S, community_member: P,
+                          "@staff": S, lay_resident: S, volunteer: S}
+  schedule.manage:       {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, office_staff: T}
+  availability.view:     {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, bhikkhu: C,
+                          ceremony_lead: C, office_staff: C, driver: A}
+  availability.set_self: {"@monastic": S}
+  availability.set_others: {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T}
+  presence.view:         {abbot: T, deputy_abbot: T, abbot_assistant: T, temple_admin: T, facility_manager: D,
+                          department_lead: D, ceremony_lead: D}
+  presence.set_self:     {"@staff": S, lay_resident: S, volunteer: S}
+  presence.set_others:   {department_lead: D, facility_manager: D, temple_admin: T}
+  shift.manage:          {department_lead: D, facility_manager: D, temple_admin: T}
+  headcount.view:        {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, department_lead: D,
+                          kitchen_staff: D}
+  headcount.adjust:      {department_lead: D}
+  command_center.view:   {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, facility_manager: D,
+                          department_lead: D, ceremony_lead: D, temple_admin: D(staff panel)}
+  member.view:           {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, bhikkhu: T(monastics),
+                          waiyawatchakon: T, facility_manager: D, department_lead: D, ceremony_lead: D,
+                          office_staff: T, temple_admin: T, "@staff": Tm, undertaker: "-", accountant: "-"}
+  member.manage:         {abbot: T, deputy_abbot: T, temple_admin: T}
+  asset.view:            {abbot: T, deputy_abbot: T, abbot_assistant: T, waiyawatchakon: T, facility_manager: T,
+                          technician: T, department_lead: D, accountant: T, security_guard: A, traffic_staff: A,
+                          housekeeper: A, kitchen_staff: A, gardener: A, driver: A, ceremony_lead: D,
+                          ceremony_team: A, undertaker: A, temple_boy: A}
+  asset.manage:          {abbot: T, waiyawatchakon: T, facility_manager: T}
+  maintenance.report:    {"@all": T, community_member: "-"}
+  maintenance.manage:    {abbot: T, deputy_abbot: T, abbot_assistant: T, facility_manager: T, technician: A}
+  inventory.view:        {abbot: T, deputy_abbot: T, abbot_assistant: T, waiyawatchakon: T, facility_manager: T,
+                          technician: D, department_lead: D, housekeeper: D, kitchen_staff: D, gardener: D,
+                          ceremony_lead: D, accountant: T}
+  inventory.record:      {housekeeper: D, kitchen_staff: D, gardener: D, technician: D}
+  inventory.manage:      {facility_manager: T, department_lead: D}
+  vehicle.view:          {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, facility_manager: T,
+                          office_staff: T, driver: A}
+  vehicle.manage:        {abbot: T, facility_manager: T}
+  finance.view:          {abbot: T, deputy_abbot: T, waiyawatchakon: T, accountant: T}
+  finance.approve:       {abbot: T, waiyawatchakon: T(explicit grant)}
+  points.award_community: {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, facility_manager: D,
+                           department_lead: D, ceremony_lead: D}
+  reward.manage:         {abbot: T, office_staff: T}
+  moderation.manage:     {abbot: T, deputy_abbot: T, temple_admin: T}
+  contact_inbox.manage:  {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, office_staff: T}
+  community.participate: {"@lay": S}
+  security.log:          {security_guard: S, traffic_staff: S}
+  security.incident.view: {abbot: T, facility_manager: T, department_lead: D(security)}
+  document.view:         {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, office_staff: T,
+                          accountant: T}
+  document.manage:       {office_staff: T}
+  booking.manage:        {office_staff: T, monk_secretary: T}
+  report.view:           {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, waiyawatchakon: T,
+                          facility_manager: D, department_lead: D, ceremony_lead: D, office_staff: T, accountant: T}
+  audit.view:            {abbot: T}
+  temple.settings:       {abbot: T, temple_admin: T(non-restricted only)}
