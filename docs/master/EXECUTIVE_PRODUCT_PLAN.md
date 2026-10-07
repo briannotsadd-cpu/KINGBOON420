@@ -54,6 +54,17 @@ how many monks are free; how many are out on invitations; who must do what; whic
 buildings have problems; which vehicles are free; how many volunteers are still needed; what quests the
 community has; whether scores are correct; who may view each item; and whether temple A's data leaks to temple B.
 
+## 7a. Owner answers (2026-10-07)
+
+| # | Answer | Consequence |
+|---|---|---|
+| D-1 | Pilot temple: owner is preparing a questionnaire | Field kit `docs/research/08_FIELD_RESEARCH_KIT.md` available; R-03 still open |
+| D-3 | Use Supabase | ADR-0002 Accepted; real pilot personal data still needs a PDPA transfer basis (R-17) |
+| B3 | No monk advisor | Working decisions ("แต้มกิจวัตร", money lay-only, no monastic ranking) become owner-accepted defaults; R-04 accepted |
+| D-6 | Use Figma | Agent 04 designs in Figma |
+| D-2/D-4 | Owner builds the 3D model | Brief: `docs/3d/ASSET_BRIEF.md`; F-19 unblocks when the model + licence entry arrive |
+| — | Minimise token use | Wave 2 runs 2 agents (08, 04); 13 and 16 move to Wave 3; no separate audit agent per wave — Opus reviews |
+
 ## 7. Decisions needed from the owner
 
 | # | Decision | Recommendation |

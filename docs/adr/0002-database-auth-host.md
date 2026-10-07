@@ -1,6 +1,6 @@
 # ADR-0002 — Database, auth and realtime host
 
-Status: **Proposed — owner acknowledgement pending** (D-3; cross-border risk R-17). Date: 2026-10-07.
+Status: **Accepted** by owner 2026-10-07 (D-3). Cross-border risk R-17 stays open for real pilot data. Date: 2026-10-07.
 
 ## Context
 Tenancy relies on PostgreSQL RLS. Chat/Command Center need realtime; evidence photos need storage with policies.

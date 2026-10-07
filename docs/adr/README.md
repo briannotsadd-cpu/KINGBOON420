@@ -7,5 +7,5 @@ Accepted · Superseded. A vendor-committing ADR stays **Proposed** until the own
 | ADR | Title | Status |
 |---|---|---|
 | [0001](0001-monorepo-and-web-platform.md) | Monorepo layout and web platform | Accepted (vendor-neutral parts) / Proposed (Vercel hosting) |
-| [0002](0002-database-auth-host.md) | Database, auth and realtime host | Proposed — owner ack pending (D-3, R-17) |
+| [0002](0002-database-auth-host.md) | Database, auth and realtime host | Accepted (owner, 2026-10-07) |
 | [0003](0003-tenancy-enforcement.md) | Tenancy enforcement pattern | Accepted |
