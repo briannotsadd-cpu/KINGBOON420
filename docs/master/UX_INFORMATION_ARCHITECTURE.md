@@ -1,6 +1,7 @@
 # UX INFORMATION ARCHITECTURE — BOON SYSTEM
 
-Status: **DRAFT v0.1 skeleton (Wave 0, Opus)**. Agent 03 produces detailed flows and wireframes in Wave 1 under
+Status: **v0.2 (Wave 1 gate)** — detailed UX architecture lives in `docs/ux/` (Agent 03); this file keeps the
+ratified decisions. Agent 03 produces detailed flows and wireframes in Wave 1 under
 `docs/ux/`; Opus merges accepted changes here.
 
 ## 1. Platform assumption (ADR-0001)
@@ -21,6 +22,9 @@ Launch → Sign in (phone OTP / email / LINE?) → Temple picker (if >1 membersh
                  (ชุมชน hidden for minors or if community disabled by temple)
 ```
 No-membership user: Temple Discovery (search, follow, public events, 3D/2D visit) → request to join / volunteer.
+
+**Decision C-8:** the phone bottom bar holds 5 slots; extra destinations go under "เพิ่มเติม" (More). Exact slots per
+mode: `docs/ux/NAVIGATION.md` §4.
 
 ## 3. Screen inventory (P0 first)
 
@@ -67,3 +71,7 @@ No-membership user: Temple Discovery (search, follow, public events, 3D/2D visit
 | ช่าง | จุดไหนมีปัญหา? | Work orders + map maintenance layer |
 | อาสา | มีอะไรให้ผมช่วย? | Volunteer quests |
 | ญาติโยม | วันนี้วัดมีกิจกรรมอะไร? | Community home: Today at this temple |
+| คนสวน *(HYPOTHESIS, Agent 17)* | วันนี้ต้องดูแลโซนไหน รดน้ำที่ไหน? | Garden home: zones |
+| รปภ. *(HYPOTHESIS)* | เวรนี้ประจำจุดไหน เดินตรวจรอบไหน? | Security home: shift and rounds |
+| ธุรการ *(HYPOTHESIS)* | วันนี้มีกิจนิมนต์/นัดหมายอะไรเข้ามา? | Office home: intake |
+| เจ้าหน้าที่/เด็กวัด *(HYPOTHESIS)* | ตอนนี้ต้องทำอะไร? | My quests today |

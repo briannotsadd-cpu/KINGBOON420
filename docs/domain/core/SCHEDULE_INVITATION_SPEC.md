@@ -186,7 +186,7 @@ SCORING_SPEC forbidden uses).
 
 **Opted-in versus needs confirmation.** A monk whose `AVAILABLE` row covers the entire window is *opted-in*. A monk with
 no such row (no signal, a fresh check-in only, or only calendar entries) is **not excluded** but is placed in a
-separate `needs_confirmation` list with warning `NO_AVAILABILITY_SIGNAL`. He is never silently ranked among opted-in monks.
+separate `needs_confirmation` list with warning `NO_AVAILABILITY_SIGNAL`. He is never silently placed among opted-in monks.
 
 ### 5.4 Soft score (0-100, deterministic)
 
@@ -206,7 +206,7 @@ Fairness is a rotation aid, **not a merit judgment**; SMA never uses scores from
 
 ### 5.5 Team selection
 
-1. Take monks from `ranked` (opted-in) in order until `monks_required` is reached. Only if `ranked` is too short, continue
+1. Take monks from `suggested_order` (opted-in) in order until `monks_required` is reached. Only if `suggested_order` is too short, continue
    with `needs_confirmation` in order; each such member is marked `NEEDS_CONFIRMATION` and requires acknowledgement
    at confirm (a human should phone the monk first).
 2. If `requires_lead`: team suggests as `LEAD` the member with the highest known `ordination_date`-based vassa; if no
@@ -220,14 +220,15 @@ Fairness is a rotation aid, **not a merit judgment**; SMA never uses scores from
 ```
 { proposal_id, invitation_id, invitation_version, algorithm: "sma-v1", generated_at,
   window: {block_start, rite_end, travel_back_end, block_end},
-  ranked: [ {rank, person_id, score, breakdown:{F,S,C,W,L,K},
+  suggested_order: [ {position, person_id, score /* audit-only */, breakdown:{F,S,C,W,L,K} /* audit-only */,
              reasons:[{code, params}], warnings:[{code, requires_ack}] } ],
-  needs_confirmation: [ same shape as ranked, separate list ],
+  needs_confirmation: [ same shape as suggested_order, separate list ],
   travel: {source, out_min?, back_min?, return_buffer_check ∈ {PASS, FAIL, UNKNOWN}},
   team_suggestion: [person_id...], alternates: [person_id...],
   excluded: [ {person_id, violations:[{code, ref?}]} ],
   team_blockers: [ {code, detail} ] }
 ```
+- **`score` and the per-factor `breakdown` are audit-only: stored with the proposal for reproducibility, never displayed on the main screen (no ranking of monastics).** The UI shows the order (`position`) and the reasons only.
 - `reasons` are codes with parameters (for example `FAIRNESS{n30:1}`, `AVAILABLE_COVERS_WINDOW`); the UI renders
   Thai/English from templates. A natural-language summary, if ever added, is an `ai_draft` labelled AI-generated.
 - Input facts are stored with the proposal (`inputs_digest`) so the same inputs reproduce the same output.
@@ -250,9 +251,9 @@ Candidate facts at proposal time `now = 10-08 10:00`:
 
 | Monk | Facts | Expected |
 |---|---|---|
-| A | bhikkhu; n30 = 1; manual AVAILABLE 10-12 08:00-13:00 (covers the window); no entries on 10-12; served same host last year | **ranked**: F25 S25 C15 W15 L10 K5 = **95.00** |
+| A | bhikkhu; n30 = 1; manual AVAILABLE 10-12 08:00-13:00 (covers the window); no entries on 10-12; served same host last year | **suggested_order**: F25 S25 C15 W15 L10 K5 = **95.00** |
 | B | n30 = 0; no AVAILABLE; `duty` 13:00-15:00 on 10-12 (h = 2; gap to block_end = 55 min) | **needs_confirmation**: F30 S25 C0 W11.25 L5 K0 = **71.25** |
-| C | n30 = 3; AVAILABLE covering window; `teaching` 14:00-18:00 (h = 4; gap 115 min) | **ranked**: F15 S25 C15 W7.50 L10 K0 = **72.50** |
+| C | n30 = 3; AVAILABLE covering window; `teaching` 14:00-18:00 (h = 4; gap 115 min) | **suggested_order**: F15 S25 C15 W7.50 L10 K0 = **72.50** |
 | D | n30 = 0; no signal at all; no entries | **needs_confirmation**: F30 S25 C0 W15 L10 K0 = **80.00**, warning `NO_AVAILABILITY_SIGNAL` |
 | E | `ceremony` 10-12 11:30-12:30 | excluded HC-3 `COMMITMENT_OVERLAP` (overlaps 11:00-12:05) |
 | F | samanera | excluded HC-1 `NOT_ELIGIBLE` |
@@ -266,9 +267,9 @@ Candidate facts at proposal time `now = 10-08 10:00`:
 | INV-02 | I1 RECEIVED without `rite_type_id` | `office1.start_review` | rejected `INCOMPLETE_FIELDS[rite_type_id]`; status RECEIVED |
 | INV-03 | I1 RECEIVED complete | `office1.start_review` | REVIEWING, version 2 |
 | INV-04 | I1 RECEIVED | `M1.start_review` (invitation.view A only) | `FORBIDDEN`; status unchanged |
-| INV-05 | I1 REVIEWING, candidates A-I | `run_assignment` | `ranked` (opted-in) A 95.00, C 72.50; `needs_confirmation` D 80.00, B 71.25 (D scores higher than C but is **never** listed above it); `team_suggestion [A, C]`; `alternates [D, B]` (both marked needs confirmation); excluded E (HC-3), F (HC-1), G (HC-2), H (HC-1), I (HC-4); `travel {source: manual, out 35, back 35, return_buffer_check: PASS}`; breakdowns as table; I1 status still REVIEWING |
-| INV-06 | as INV-05 plus D2 with the same facts as D but `last_invited_at` older than D's | `run_assignment` | inside `needs_confirmation` D2 (80.00) ranks before D (80.00); if both never invited, smaller `person_id` first; `ranked` unchanged |
-| INV-07 | `monks_required = 3`; only A (opted-in) and D (no signal) eligible | `run_assignment` | `ranked [A]`; `needs_confirmation [D]`; `team_suggestion [A, D]` with D marked `NEEDS_CONFIRMATION`; `team_blockers [INSUFFICIENT_CANDIDATES{shortfall: 1}]`; no excluded monk appears in the suggestion |
+| INV-05 | I1 REVIEWING, candidates A-I | `run_assignment` | `suggested_order` (opted-in) A 95.00, C 72.50; `needs_confirmation` D 80.00, B 71.25 (D scores higher than C but is **never** listed above it); `team_suggestion [A, C]`; `alternates [D, B]` (both marked needs confirmation); excluded E (HC-3), F (HC-1), G (HC-2), H (HC-1), I (HC-4); `travel {source: manual, out 35, back 35, return_buffer_check: PASS}`; breakdowns as table; I1 status still REVIEWING |
+| INV-06 | as INV-05 plus D2 with the same facts as D but `last_invited_at` older than D's | `run_assignment` | inside `needs_confirmation` D2 (80.00) ranks before D (80.00); if both never invited, smaller `person_id` first; `suggested_order` unchanged |
+| INV-07 | `monks_required = 3`; only A (opted-in) and D (no signal) eligible | `run_assignment` | `suggested_order [A]`; `needs_confirmation [D]`; `team_suggestion [A, D]` with D marked `NEEDS_CONFIRMATION`; `team_blockers [INSUFFICIENT_CANDIDATES{shortfall: 1}]`; no excluded monk appears in the suggestion |
 | INV-08 | I1 with no manual override, no saved venue estimate, provider not available | `run_assignment` | SMA runs; `travel {source: unknown, return_buffer_check: UNKNOWN}` (not PASS); every candidate carries warning `RETURN_BUFFER_UNKNOWN`; windows use `[09:00, 11:00 + buffer]` only; confirm later needs that warning acknowledged and creates only the `invitation` entry (no `travel` entries) with the invitation flagged `TRAVEL_LEGS_MISSING`; no number is invented |
 | INV-09 | I1 REVIEWING | `sec1.propose_team([A, E])`; then `propose_team([A, D])` | first: rejected `HC_VIOLATION[E: COMMITMENT_OVERLAP]`; second: TEAM_PROPOSED, `source = MANUAL` (differs from the suggestion `[A, C]`), D flagged `NEEDS_CONFIRMATION`, version 3 |
 | INV-10 | I1 REVIEWING, `monks_required = 2` | `propose_team([A])` without `allow_partial` | rejected `TEAM_SIZE_MISMATCH`; with `allow_partial` -> TEAM_PROPOSED flagged PARTIAL |

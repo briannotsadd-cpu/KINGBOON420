@@ -19,6 +19,9 @@ modes:
 
 # Baseline for any authenticated person (no role needed): accept invitation to a temple, request to join, leave a
 # temple, switch active temple, request monastic attestation, manage own profile/consents.
+# Implicit for any ACTIVE membership (decisions G-UX-1/2): read own score/points history, own profile, own schedule
+# and assignments; open the temple map (each layer inside is gated by its own permission; community_member sees
+# public layers only).
 # Self check-in: monastics via availability.set_self, lay staff via presence.set_self. Self-claim of a claimable
 # quest: quest.view + quest.complete. Self-redemption: community.participate. revoke_completion: quest.manage.
 # Review of held community points: points.award_community. System actors (resolver, scheduler, ledger writer) act

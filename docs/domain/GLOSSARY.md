@@ -61,7 +61,7 @@ section; the Thai column is the UI label. Time zone for every business rule is *
 | `invitation status` | สถานะกิจนิมนต์ | `RECEIVED, REVIEWING, TEAM_PROPOSED, CONFIRMED, IN_PROGRESS, COMPLETED, DECLINED, CANCELLED`. | SCHEDULE §3 |
 | `host` | เจ้าภาพ | The person/family/organisation inviting. | SCHEDULE §3 |
 | `rite type` | ประเภทพิธี | e.g. house blessing, merit-making, funeral chanting. Temple-configurable list. | SCHEDULE §3 |
-| `Smart Monk Assignment` | ระบบแนะนำพระ | Deterministic rules that rank candidate monks with reasons. Not AI. A human confirms. | SCHEDULE §5 |
+| `Smart Monk Assignment` | ระบบแนะนำพระ | Deterministic rules that suggest an order of candidate monks with reasons (scores audit-only, never shown). Not AI. A human confirms. | SCHEDULE §5 |
 | `assignment proposal` | ข้อเสนอรายชื่อพระ | Ranked suggestion stored for review; not an entity commitment. | SCHEDULE §5 |
 | `return buffer` | เวลาเผื่อกลับ | Minutes reserved after travel back (default 30). | SCHEDULE §5 |
 | `vassa` / `พรรษา` | พรรษา | **HYPOTHESIS (no source consulted; Agent 01 to verify):** years of monastic seniority counted in rains retreats. Optional field; Unknown if not given. | TENANCY §2 |

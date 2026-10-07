@@ -197,7 +197,10 @@ RECEIVED ─triage─▶ REVIEWING ─propose team─▶ TEAM_PROPOSED ─human 
 - Additional transitions: TEAM_PROPOSED → REVIEWING (`revise_team`), IN_PROGRESS → CANCELLED, CONFIRMED self-loops
   `replace_monk`, `reschedule`. Assigned monks may acknowledge or request release on their own assignment. Spec + 27
   cases: `docs/domain/core/SCHEDULE_INVITATION_SPEC.md`.
-- **Smart Monk Assignment is rule-based, not AI**; it never reads either score ledger.
+- **Smart Monk Assignment is rule-based, not AI**; it never reads either score ledger. Proposals are shown to humans
+  as a suggested list with reasons; numeric scores and order are audit-only and never shown on the main screen
+  (decision C-6; output field `suggested_order`, not `ranked`). Monks without an availability signal appear in a
+  separate "needs confirmation" list.
 - Captures: host contact, rite type, venue + geo, start, expected duration, monks required, transport (host
   provides / temple vehicle), notes.
 - **Smart Monk Assignment** proposes candidates using availability, existing schedule, travel time estimate,
