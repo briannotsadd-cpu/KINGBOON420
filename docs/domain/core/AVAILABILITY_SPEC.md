@@ -22,7 +22,7 @@ master doc; **HYPOTHESIS** = default without real-world evidence.
 | Input | Type | Notes |
 |---|---|---|
 | `temple_id` | id | From the verified session, never from payload. |
-| `person_id` | id | Must have an ACTIVE membership in `temple_id` and `monastic_kind <> none`. |
+| `person_id` | id | Must have an ACTIVE membership in `temple_id` with `membership.monastic_kind <> none` (per-membership status, set by this temple's attestation). |
 | `at` | instant | The moment to resolve. |
 | `manual_statuses[]` | rows | `{id, state ∈ {UNAVAILABLE, PERSONAL, REST, AVAILABLE}, valid_from, valid_until, set_by, set_by_kind ∈ {SELF, ADMIN}, location_hint ∈ {IN_TEMPLE, OFF_SITE, null}, reason_code, truncated_at?}`. `valid_until` always present. |
 | `schedule_entries[]` | rows | From SCHEDULE_INVITATION_SPEC §2: `{id, kind, status, starts_at, ends_at, venue_kind ∈ {IN_TEMPLE, OFF_SITE, UNKNOWN}, source_type, source_id}`. Only `status = CONFIRMED` counts. |
@@ -51,7 +51,7 @@ Priority, highest first (identical to master §4.2):
 | 2 | `CEREMONY` | calendar `ceremony` |
 | 3 | `ON_INVITATION` | calendar `invitation` |
 | 4 | `TRAVELING` | calendar `travel` [EXT] |
-| 5 | `TEACHING` | calendar `teaching`, and [EXT] `class`, `duty` |
+| 5 | `TEACHING` | calendar `teaching`, and [EXT] `class`, `duty` (staff-only kinds `meal`, `leave`, `meeting` are not read) |
 | 6 | `PERSONAL` | manual, and calendar `personal` |
 | 7 | `REST` | manual |
 | 8 | `AVAILABLE` | manual opt-in |
@@ -74,8 +74,8 @@ Algorithm:
 6. `reason.valid_until` = end of the winning signal's interval (null for UNKNOWN). `reason.next_change_at` =
    the earliest instant after `at` at which any known signal starts, ends, expires or goes stale (null if none).
 
-Mapping gaps in the master (carried to REPORT): `class` (a novice attending class) and `duty` have no state in
-master §4.1; this spec maps them to TEACHING (UI label "เรียน/สอน") [EXT]. `travel` is not in master §6.2's list of
+Mapping extensions (carried to REPORT): `class` (a novice attending class), `duty` and `meeting` have no state in
+master §4.1; this spec maps them to TEACHING (UI label "เรียน/สอน") [EXT]; `meal`, `leave` and `meeting` are staff-only kinds read by Agent 17's staff presence and are not read by this resolver. `travel` is not in master §6.2's list of
 kinds but is needed for TRAVELING legs [EXT].
 
 Return buffer: the planning buffer after a trip (SCHEDULE_INVITATION_SPEC §5) is **not** a status; it only
@@ -96,9 +96,9 @@ constrains assignment. Inside the buffer the resolver returns whatever signals e
 | IN_TEMPLE | `check_in` | TTL | IN_TEMPLE | Only if the temple and the monk enabled check-in (master open question Q3). |
 | UNKNOWN | none | n/a | UNKNOWN | |
 
-Table-vs-prose note: master §4.1 says manual states "carry mandatory end time"; §4.2 says the default
-`valid_until` is end of the local day. Reading adopted: the **stored row** always has an end; the **command** fills
-the default when the user gives none (section 8).
+Opus decision S-3: every manual status row has `valid_until`. For **self-set** statuses the UI pre-fills the end of
+the local day (the user may change it before saving); a command without an end is rejected `VALID_UNTIL_REQUIRED`
+rather than silently defaulted. **Admin-set UNAVAILABLE requires an explicit end time** (no pre-fill).
 
 ## 5. Location
 
@@ -125,7 +125,15 @@ simple and explainable; revisit with Agent 07 if the board needs it).
 - An opt-in `AVAILABLE` overlapping a commitment is **not** a conflict; it is simply outranked.
 - `resolve()` reports conflicts whose overlap contains `at`. A separate `detect_conflicts(person|all, from, to)`
   returns every overlap intersecting the range (used by the secretary board and by the invitation confirm guard).
-- Conflicts are visible only to holders of `availability.set_others` (T) and the monk himself (section 9).
+- **Event-gate function (for Agent 19, gate G-CONFLICT):**
+  `unresolved_monk_conflicts(temple_id, event_window, monk_ids) -> integer | UNKNOWN`.
+  Counts the conflicts (both types in the table above) that intersect `event_window = [from, to)` for the given monks
+  and are **unresolved** (neither side edited or cancelled since detection; an acknowledged conflict still counts).
+  It is `detect_conflicts` restricted to `monk_ids`, counting distinct conflicts. It returns `UNKNOWN` (never 0) when
+  any listed monk cannot be resolved (not an active monastic member of the temple, or a resolver error) or when the
+  window is empty or malformed. It is called by the event readiness evaluator as a system actor (`system:event_readiness`); it returns only the
+  integer, never refs or reasons, so event staff at scope C or A learn no private detail.
+- Conflicts are visible only to holders of `availability.view` at scope T and the monk himself (section 9).
 - Resolving a conflict is a human act (edit the entry, shorten the block, or accept); the system never edits either
   side.
 
@@ -133,8 +141,8 @@ simple and explainable; revisit with Agent 07 if the board needs it).
 
 - **Manual expiry.** An expired manual row contributes nothing (`ignored: EXPIRED`). The status falls to the next
   signal, usually `UNKNOWN`.
-- **Default `valid_until`** when omitted by the command: the next local 00:00 after `now`
-  (`end_of_local_day`). If `now` is exactly 00:00 local, the end is `now + 24h`.
+- **UI pre-fill** for self-set statuses: the next local 00:00 after `now` (`end_of_local_day`; if `now` is exactly
+  00:00 local, `now + 24h`). It is a form default, not a server default: the command always carries `valid_until`.
 - **Caps** (HYPOTHESIS defaults): AVAILABLE, PERSONAL, REST at most `max_manual_hours` = 24 h from now;
   UNAVAILABLE at most `max_unavailable_days` = 120 days. Beyond cap -> `VALID_UNTIL_TOO_FAR`. `valid_until <= now`
   -> `VALID_UNTIL_IN_PAST`.
@@ -148,17 +156,17 @@ simple and explainable; revisit with Agent 07 if the board needs it).
 
 ## 8. Commands, authority and who may set what
 
-Permission codes and scopes from `docs/master/ROLE_PERMISSION_MATRIX.md`.
+Permission codes and scopes from `docs/master/role_permissions.yaml` v0.3.
 
 | Command | Permission (scope) | Allowed states | Rules |
 |---|---|---|---|
 | `set_status(self)` | `availability.set_self` (S) | UNAVAILABLE, PERSONAL, REST, AVAILABLE | Monastics only (matrix: abbot...samanera). Defaults and caps in section 7. |
-| `set_status(other)` | `availability.set_others` (T) | **UNAVAILABLE only** | Admin may block a sick monk. Admins may never set AVAILABLE (opt-in must be the monk's own act), PERSONAL or REST. Target must be an active monastic of the same temple. Row has `set_by_kind = ADMIN`. |
+| `set_status(other)` | `availability.set_others` (T) | **UNAVAILABLE only** | Admin may block a sick monk. Admins may never set AVAILABLE (opt-in must be the monk's own act), PERSONAL or REST. Target must be an active monastic of the same temple. Row has `set_by_kind = ADMIN`. **`valid_until` is required and explicit** (`VALID_UNTIL_REQUIRED` if missing); no end is pre-filled for admin-set rows. |
 | `clear_status` | self for own SELF rows; `availability.set_others` (T) for any row | n/a | Clearing sets `truncated_at = now`; rows are never deleted (audit). |
-| `check_in` / `check_out` | **gap G-A1**: no permission code | n/a | Self action of a monastic with check-in enabled. Recommend `availability.set_self`-like baseline or a new `presence.checkin`. |
-| `manage_schedule_entry` | `schedule.manage` — **gap G-A2**: code exists in the catalog but has no row in the matrix | n/a | Needed to create ceremony/teaching/class/duty entries. Proposed grant in REPORT. |
-| `view_availability` | `availability.view` (T, T³ coarse, T⁴ counts, A) | n/a | Section 9. |
-| `view_conflicts` | `availability.set_others` (T) holders, plus the monk for his own | n/a | Derived rule; matrix has no `conflict.view`. |
+| `check_in` / `check_out` | `availability.set_self` (S) | n/a | Opus mapping: monastic self check-in is `availability.set_self` (lay staff use `presence.set_self`, Agent 17). Only for a monastic with check-in enabled. |
+| `manage_schedule_entry` | `schedule.manage` (T; ceremony_lead D for kind ceremony) | n/a | Needed for ceremony/teaching/class/duty/meal/leave/meeting entries (exists in `role_permissions.yaml`). |
+| `view_availability` | `availability.view` (T full; C coarse; A assigned) | n/a | Section 9. |
+| `view_conflicts` | `availability.view` at scope T (abbot, deputy, assistant, secretary), plus the monk for his own | n/a | Opus mapping: no separate conflict code; holders of scope C or A never see conflicts. |
 
 Calendar-driven states are never writable via `set_status`: `CALENDAR_STATE_NOT_SETTABLE`.
 
@@ -171,12 +179,12 @@ Cases AV-34 and AV-35 encode B. If the Opus review picks A, those two cases flip
 
 ## 9. Visibility
 
-| Viewer | Matrix | What they see |
+| Viewer | `role_permissions.yaml` scope | What they see |
 |---|---|---|
 | abbot, deputy, assistant, secretary | T | Full result: status, location, conflicts, reason codes (including SICK). |
-| office_staff, ceremony_lead | T | Recommended **operational tier** (HYPOTHESIS): status and location; manual reason codes masked to "ไม่พร้อม"; no conflicts. Matrix grants T without saying which tier: gap G-A3. |
-| bhikkhu | T³ | **Coarse only**: FREE (AVAILABLE), BUSY (all others except next), UNKNOWN (UNKNOWN and IN_TEMPLE). No reason, no location, no conflicts. IN_TEMPLE maps to UNKNOWN because presence is not an opt-in to be free. |
-| kitchen_lead | T⁴ | Aggregate counts only (`location.in_temple`, total). |
+| office_staff, ceremony_lead | C | Coarse tier as in `role_permissions.yaml`: same as the bhikkhu row (FREE / BUSY / UNKNOWN), no reason, location or conflicts. (Replaces the earlier proposal of an operational tier; gap G-A3 closed.) |
+| bhikkhu | C | **Coarse only**: FREE (AVAILABLE), BUSY (all others except next), UNKNOWN (UNKNOWN and IN_TEMPLE). No reason, no location, no conflicts. IN_TEMPLE maps to UNKNOWN because presence is not an opt-in to be free. |
+| department_lead in the kitchen (the former `kitchen_lead`) | via `headcount.view` (D) | Aggregate counts only (`location.in_temple`, total) through the headcount feature, not `availability.view`. |
 | driver | A | Only monks on his own assigned trips: name and the trip window. |
 | samanera and all others | — | None (Command Center requires its own permission). |
 | the monk himself | S | Everything about himself. |
@@ -185,7 +193,7 @@ Cases AV-34 and AV-35 encode B. If the Opus review picks A, those two cases flip
 
 `snapshot(temple_id, at)`; every person is resolved with the **same** `at`.
 
-Population: ACTIVE memberships in the temple with `person.monastic_kind ∈ {bhikkhu, samanera}`, including
+Population: ACTIVE memberships in the temple with `membership.monastic_kind ∈ {bhikkhu, samanera}` (this temple's own attestation; a person who is monastic only in another temple is not counted here), including
 `visiting` ones (reported again as `of_which_visiting`). SUSPENDED, ENDED, INVITED are excluded.
 
 | Counter (Thai) | Definition |
@@ -251,7 +259,7 @@ Result notation: `status / location / conflicts / key reason`.
 | AV-22 | manual REST 12:00-16:00 and `invitation` 13:00-15:00 | at 14:00 | ON_INVITATION / OFF_SITE / `[MANUAL_BLOCK_OVER_COMMITMENT, HIGH]` |
 | AV-23 | manual AVAILABLE 08:00-18:00 and `teaching` 10:00-11:00 IN_TEMPLE | at 10:30 | TEACHING / IN_TEMPLE / [] / ignored `[{AVAILABLE row, SUPERSEDED_BY_HIGHER_PRIORITY}]` |
 | AV-24 | `teaching` 10:00-12:00 IN_TEMPLE and `travel` 11:00-12:00 | at 11:30 | TRAVELING / OFF_SITE / `[DOUBLE_BOOKED, MEDIUM]` |
-| AV-25 | at 20:00 M1 sets AVAILABLE with no end | read row; at 23:59:59; at 10-08 00:00:00 | row `valid_until = 10-08 00:00`; AVAILABLE; then UNKNOWN |
+| AV-25 | at 20:00 M1 saves AVAILABLE from the UI form, which pre-filled the end of day | read row; at 23:59:59; at 10-08 00:00:00 | row `valid_until = 10-08 00:00` (sent by the client); AVAILABLE; then UNKNOWN. A raw command without `valid_until` -> `VALID_UNTIL_REQUIRED` |
 | AV-26 | `ceremony` 10-07 22:00 to 10-08 02:00, venue OFF_SITE | at 10-08 00:30; at 10-08 02:00:00 | CEREMONY / OFF_SITE; UNKNOWN |
 | AV-27 | AVAILABLE valid until `2026-10-08T00:00:00+07:00` | at `2026-10-07T16:59:59Z`; at `2026-10-07T17:00:00Z` | AVAILABLE; UNKNOWN (UTC input converted before comparison) |
 | AV-28 | REST 09:00-10:00; check-in 06:00 | at 18:30 | UNKNOWN / UNKNOWN / [] / ignored `[{REST, EXPIRED}, {checkin, STALE}]` |
@@ -262,10 +270,10 @@ Result notation: `status / location / conflicts / key reason`.
 | AV-33 | check-in 08:00, check_out 09:00 | at 08:30; at 09:30 | IN_TEMPLE; UNKNOWN / UNKNOWN / ignored `[{checkin, CHECKED_OUT}]` |
 | AV-34 | M1 set REST 13:00-15:00 at 12:00; at 14:00 M1 sets AVAILABLE until 16:00 (reading B) | resolve at 14:30; at 13:30 | row REST gets `truncated_at = 14:00`; AVAILABLE / IN_TEMPLE; REST (history is preserved). Reading A would give REST at 14:30. |
 | AV-35 | Secretary set UNAVAILABLE 08:00 to 10-08 00:00 (ADMIN); at 10:00 M1 sets AVAILABLE until 18:00 | at 12:00 | UNAVAILABLE / UNKNOWN / []; ignored `[{AVAILABLE, SUPERSEDED_BY_HIGHER_PRIORITY}]`; ADMIN row not truncated |
-| AV-36 | secretary (set_others) | `set_status(M1, AVAILABLE)`; `set_status(M1, REST)`; `set_status(M1, UNAVAILABLE, valid_until 10-09 00:00)` | `FORBIDDEN_STATE_FOR_ACTOR`; `FORBIDDEN_STATE_FOR_ACTOR`; accepted |
-| AV-37 | now 14:20; M1 `set_status(REST)` without end; again with `valid_until 10-09 00:00`; UNAVAILABLE with now+100 days; with now+130 days | four commands | row valid_until `10-08 00:00`; `VALID_UNTIL_TOO_FAR` (more than 24 h); accepted; `VALID_UNTIL_TOO_FAR` |
+| AV-36 | secretary (set_others) | `set_status(M1, AVAILABLE)`; `set_status(M1, REST)`; `set_status(M1, UNAVAILABLE)` without end; `set_status(M1, UNAVAILABLE, valid_until 10-09 00:00)` | `FORBIDDEN_STATE_FOR_ACTOR`; `FORBIDDEN_STATE_FOR_ACTOR`; `VALID_UNTIL_REQUIRED`; accepted |
+| AV-37 | now 14:20; M1 `set_status(REST)` without end; with `valid_until 10-08 00:00`; with `valid_until 10-09 00:00`; UNAVAILABLE with now+100 days; with now+130 days | five commands | `VALID_UNTIL_REQUIRED`; accepted with `10-08 00:00`; `VALID_UNTIL_TOO_FAR` (more than 24 h); accepted (100 days); `VALID_UNTIL_TOO_FAR` (130 days) |
 | AV-38 | N1 (samanera), L1 (lay), M2 (bhikkhu) | N1 `set_status(M1, UNAVAILABLE)`; L1 `set_status(L1, REST)`; M2 `set_status(M1, UNAVAILABLE)`; M1 `set_status(CEREMONY)` | all rejected: FORBIDDEN, FORBIDDEN, FORBIDDEN, `CALENDAR_STATE_NOT_SETTABLE` |
-| AV-39 | M2 (bhikkhu, `availability.view` T³ coarse); M1 resolves to PERSONAL | M2 views M1; then M1 AVAILABLE; then M1 IN_TEMPLE | `{coarse: BUSY}`; `{coarse: FREE}`; `{coarse: UNKNOWN}`; no reason, location or conflicts in any response |
+| AV-39 | M2 (bhikkhu, `availability.view` scope C (coarse)); M1 resolves to PERSONAL | M2 views M1; then M1 AVAILABLE; then M1 IN_TEMPLE | `{coarse: BUSY}`; `{coarse: FREE}`; `{coarse: UNKNOWN}`; no reason, location or conflicts in any response |
 | AV-40 | five monastics: M1 bhikkhu AVAILABLE; M2 bhikkhu TEACHING (IN_TEMPLE); M3 bhikkhu ON_INVITATION; M4 samanera REST; N5 samanera no signal | snapshot at 10:30 | total 5 (bhikkhu 3, samanera 2); AVAILABLE 1, TEACHING 1, ON_INVITATION 1, REST 1, UNKNOWN 1, others 0; not_ready 1; location in_temple 3 (M1, M2, M4), off_site 1, unknown 1; CC-1..CC-5 hold |
 | AV-41 | AV-40 plus M6 visiting bhikkhu ACTIVE with fresh check-in, M7 SUSPENDED, M8 visiting membership ENDED | snapshot | total 6, `of_which_visiting` 1, status.IN_TEMPLE 1; M7 and M8 absent; CC-1 sum = 6 |
 | AV-42 | AV-40 where M3's resolution raises an internal error | snapshot | M3 counted UNKNOWN/UNKNOWN; `data_quality.errors = 1`; ON_INVITATION 0, UNKNOWN 2; CC-1 sum = 5 |
@@ -275,8 +283,10 @@ Result notation: `status / location / conflicts / key reason`.
 | AV-46 | at 10:00 all of: manual UNAVAILABLE, ceremony, invitation, travel, teaching, manual PERSONAL, REST, AVAILABLE, fresh check-in | resolve; then remove the current winner and resolve again, repeatedly | UNAVAILABLE, CEREMONY, ON_INVITATION, TRAVELING, TEACHING, PERSONAL, REST, AVAILABLE, IN_TEMPLE, UNKNOWN (rank order) |
 | AV-47 | check-in disabled in T1 config; fresh check-in row exists | at 10:00 | UNKNOWN / UNKNOWN (check-in ignored) |
 | AV-48 | M1 has REST 13:00-15:00 | M1 `clear_status` at 13:40; resolve at 13:50; resolve at 13:30 | row `truncated_at = 13:40`, not deleted; UNKNOWN; REST |
+| AV-49 | monks M1, M2 in T1; M1 has `ceremony` 10:00-11:00 and manual UNAVAILABLE 10:30-12:00 (unresolved HIGH conflict); M2 clean; event window 09:00-13:00 | `unresolved_monk_conflicts(T1, window, [M1, M2])` | 1 |
+| AV-50 | as AV-49 plus monk id `X` that has no active membership in T1 | same call with `[M1, M2, X]`; then with window `[13:00, 09:00)` | `UNKNOWN` (never 0); `UNKNOWN` |
 
-Case count: **48** (minimum 30).
+Case count: **50** (minimum 30).
 
 ## 12. Traceability
 
@@ -286,8 +296,8 @@ Case count: **48** (minimum 30).
 | §5 | §4.2 (location_state) |
 | §6 | §4.2 (conflicts) |
 | §7 | §4.2 (valid_until default, TTL) |
-| §8 | ROLE_PERMISSION_MATRIX §3-4 (`availability.*`, `schedule.*`) |
-| §9 | ROLE_PERMISSION_MATRIX notes 3, 4 |
+| §8 | role_permissions.yaml (`availability.*`, `schedule.*`) |
+| §9 | role_permissions.yaml scopes C and A |
 | §10 | TEMPLE_DOMAIN_MODEL §4.3; RISK_REGISTER R-13 |
 
 ## 13. Open questions (owner)
@@ -297,4 +307,4 @@ Case count: **48** (minimum 30).
 | OQ-A1 | Are monks comfortable with check-in at all (master Q3)? Spec supports calendar + opt-in only (check-in disabled). | Agent 01 |
 | OQ-A2 | Should reading A or B (section 8 supersession) apply? | Opus review |
 | OQ-A3 | A monk with commitments in two temples: should a cross-temple busy signal exist without leaking detail? | Opus, Agent 13 |
-| OQ-A4 | Operational tier for office_staff and ceremony_lead (section 9). | Opus |
+| OQ-A4 | *(closed: office_staff and ceremony_lead are scope C in role_permissions.yaml)* | closed |

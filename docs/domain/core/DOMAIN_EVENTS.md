@@ -13,7 +13,7 @@ Every event has:
 | `name` | `context.past_tense_fact`, lower dot-case (for example `quest.completed`). |
 | `version` | Integer; additive changes keep the version, breaking changes bump it. |
 | `occurred_at` | Instant (UTC). |
-| `temple_id` | **Always present** except `person.*` events, which carry `person_id` and are delivered per affected temple. |
+| `temple_id` | **Always present** except no events (there are no `person.*` monastic events; membership events carry `membership_id` and go to that temple only). |
 | `actor` | `{type: person \| system \| platform_admin, id}`. AI never appears as an actor on state-changing events; AI output is an `ai_draft.*` event. |
 | `correlation_id`, `causation_id` | Trace of the originating command and the event that triggered this one. |
 | `payload` | Event-specific; see tables. |
@@ -44,10 +44,10 @@ service · **AV** availability read model · **EXT** other agents (named).
 | `membership.ended` | `end_membership` / expiry | membership_id, reason_code ∈ {LEFT, REMOVED, EXPIRED, REJECTED} | N, A, CC, AV, SCH (cancel future entries), quest engine (release assignments) |
 | `membership.role_changed` | `assign_role` / `remove_role` | membership_id, added[], removed[] | A, N (affected person), CC |
 | `membership.role_ineligible` | monastic status change | membership_id, role_id | N (member.manage holders), A |
-| `person.monastic_attestation_requested` | `request_attestation` | attestation_id, person_id, attesting_temple_id | N (member.manage holders of that temple), A |
-| `person.monastic_attested` | verify | attestation_id, person_id, kind | A |
-| `person.monastic_attestation_revoked` | revoke | attestation_id, person_id | A, N |
-| `person.monastic_kind_changed` | derivation recompute | person_id, from_kind, to_kind | A, S (ledger guards), AV, CC, EXT 12 (community profile), quest engine (ledger compatibility flags) |
+| `membership.monastic_attestation_requested` | `request_attestation` (optionally presenting a prior attestation, by the person's choice) | attestation_id, membership_id, presented (bool) | N (member.manage holders of that temple), A |
+| `membership.monastic_attested` | verify | attestation_id, membership_id, kind, presented_from? (flag only) | A |
+| `membership.monastic_attestation_revoked` | revoke | attestation_id, membership_id | A, N (this temple's member.manage holders) |
+| `membership.monastic_kind_set` | attestation verify / revoke, in one temple | membership_id, from_kind, to_kind | A, S (ledger guards), AV, CC, quest engine (ledger compatibility flags), EXT 12 (that temple's profile); **delivered to this temple only, never to other temples of the person** |
 | `session.temple_switched` | `switch_temple` | person_id, from_temple_id, to_temple_id | A (security stream) |
 | `platform.break_glass_opened` / `_closed` | platform admin | ticket_ref, expires_at | A, N (abbot, audit.view holders), security stream |
 
@@ -139,7 +139,6 @@ helper only: OVERDUE itself is derived and never stored.
 | `scoring.award_held` | anti-cheat HOLD | hold_id, person_id, assignment_id, signal | N (reviewers), A |
 | `scoring.award_rejected` | guard | assignment_id, reason_code | A |
 | `scoring.signal_raised` | anti-cheat hooks | signal, person_id, ref | A, N (reviewers, community only) |
-| `scoring.milestone_suppressed` | milestone rule | person_id, milestone | A |
 | `scoring.achievement_granted` | achievement evaluator | person_id, code | N (self), A |
 | `scoring.redemption_requested` | `redeem` | redemption_id, reward_id, cost | N (reward.manage), A |
 | `scoring.redemption_fulfilled` / `_cancelled` | reward.manage | redemption_id | N (self), A |
@@ -147,17 +146,23 @@ helper only: OVERDUE itself is derived and never stored.
 Ordering note: no event of the monastic ledger reaches any consumer other than the monk's own notification and the
 audit log (no Command Center tile, no report), enforcing SCORING F-2 and F-3. No event ever carries both ledgers.
 
-## 8. Events owned by other agents that this domain consumes or expects
+## 8. Expected producer requirements (events this domain needs from Agents 17, 18, 19)
 
-| Event | Owner | Used by |
-|---|---|---|
-| `ceremony.staffed` / `ceremony.cancelled` | Agent 19 | creates/cancels `ceremony` schedule entries via `schedule.manage` path |
-| `event.created` / `event.cancelled` / `event.readiness_changed` | Agent 19 | quest tree (`event_root`), Command Center |
-| `attendance.recorded` | Agent 19 / 17 | quest verification method `attendance`, streak for `novice_learning` |
-| `trip.vehicle_held`, `trip.vehicle_unavailable` | Agent 18 | invitation confirm guard |
-| `maintenance.request_created` | Agent 18 | creates `maintenance` quest with extension |
-| `staff.shift_changed` | Agent 17 | not used by monastic availability (separate staff presence) |
-| `ai_draft.accepted` | Agent 10 | human-converted draft invokes normal commands (`source = ai_draft`) |
+The dot.case convention of this catalogue (`context.past_tense_fact`) is the convention for all agents. The events
+below are **requirements on future producers**, not agreed contracts: the producing agents will be assigned in
+Wave 2/3, and names may be adjusted then if payload semantics are kept. Until then the specs that depend on them use
+the synchronous interfaces named in the last column.
+
+| Expected event | Expected producer | Needed by | Requirement |
+|---|---|---|---|
+| `ceremony.staffed`, `ceremony.cancelled` | Agent 19 (ceremony assignment, `source_type = ceremony_assignment`; funerals `funeral_rite_session`) | schedule, availability | Entries are written through the `schedule.manage` / `ceremony.confirm_monks` path; payload: assignment_id, person_ids, window, venue_kind |
+| `event.created`, `event.cancelled`, `event.readiness_changed` | Agent 19 | quest engine (`event_root`), Command Center | Payload ids only; cancellation triggers `cancel_subtree` |
+| `attendance.recorded` | Agent 19 / 17 | quest verification `attendance`, `novice_learning` practice days | person_id, source ref, present flag |
+| `trip.vehicle_held`, `trip.vehicle_unavailable` | Agent 18 | invitation confirm guard (HC-7) | Also available synchronously as `find_vehicle(window, seats)` |
+| `maintenance.request_created` | Agent 18 | quest engine (`maintenance` quest + extension) | request_id, severity, location refs |
+| `shift.assigned`, `shift.changed` (kind `duty`, `source_type = shift`), `leave.recorded` (kind `leave`), `meal_service.scheduled` (kind `meal`) | Agent 17 | schedule, staff presence | Staff-only kinds; not read by the monastic resolver |
+| `ai_draft.accepted` | Agent 10 | quest/invitation commands (`source = ai_draft`) | A human accepts; AI never an actor |
+| `unresolved_monk_conflicts` (function, not event) | Agent 02 (this domain) | Agent 19 gate G-CONFLICT | AVAILABILITY_SPEC §6 |
 
 ## 9. Consumer matrix
 
@@ -166,7 +171,7 @@ audit log (no Command Center tile, no report), enforcing SCORING F-2 and F-3. No
 | Notification | assignment, submission, verification, overdue, conflict, invitation lifecycle, membership, achievements, redemptions; recipients derived from permissions at send time; never includes sensitive reasons |
 | Audit | every state-changing event above; see the audit row shape in QUEST §13 |
 | Command Center | membership, availability, schedule, invitation (inbox, awaiting decision), quest counts (open, overdue, unassigned), conflicts; **never** scoring |
-| Scoring | `quest.completed`, `quest.completion_revoked`, `person.monastic_kind_changed`, `availability.*` (streak excusal reads availability history), `membership.*` |
+| Scoring | `quest.completed`, `quest.completion_revoked`, `membership.monastic_kind_set`, `availability.*` (excused-day computation reads availability history), `membership.*` |
 | Schedule / Availability read models | `schedule.*`, `availability.*`, `membership.*` |
 
 ## 10. Count

@@ -90,7 +90,7 @@ person (§6, G-LEDGER). Per-person open-claim limit 5 (HYPOTHESIS, `CLAIM_LIMIT`
 ### 5.1 Transition table
 
 Actors: "assignee" = holder of the active assignment (`quest.complete`, scope S). Permission scopes follow
-`docs/master/ROLE_PERMISSION_MATRIX.md` (T temple, D department, S self).
+`docs/master/role_permissions.yaml` v0.3 (T temple, D department, S self; A assigned-only, P public-only, C coarse).
 
 | # | From | Command | To | Actor and permission (scope) | Guards (errors) |
 |---|---|---|---|---|---|
@@ -121,8 +121,8 @@ Any other (from, command) pair -> `ILLEGAL_TRANSITION`. COMPLETED and CANCELLED 
   themselves be assigned (`SELF_CREATED_NO_POINTS`); acyclic dependencies; checklist size <= 50; parent rules (§11).
 - **G-ASSIGN** assignee has an ACTIVE membership in the temple, holds `required_role_id`, capacity not full, no
   active assignment for the same person, assigner's `quest.assign` scope covers the quest's department.
-- **G-LEDGER** `MONASTIC_ACTIVITY` quests may be assigned only to persons with `monastic_kind <> none`;
-  `COMMUNITY_BOON` only to `monastic_kind = none` (`LEDGER_ASSIGNEE_MISMATCH`). Mirrors the database constraints in
+- **G-LEDGER** `MONASTIC_ACTIVITY` quests may be assigned only to members whose `membership.monastic_kind <> none`;
+  `COMMUNITY_BOON` only to members whose `membership.monastic_kind = none` (`LEDGER_ASSIGNEE_MISMATCH`). Mirrors the database constraints in
   master §8.
 - **G-DEP** all `depends_on` quests are `COMPLETED` (`DEPENDENCY_UNMET[ids]`, `DEPENDENCY_CANCELLED`).
 - **G-CHECK** every `required` checklist item is checked (`CHECKLIST_INCOMPLETE[item ids]`).
@@ -145,18 +145,18 @@ Any other (from, command) pair -> `ILLEGAL_TRANSITION`. COMPLETED and CANCELLED 
 ## 6. Commands and security
 
 Every command also requires an ACTIVE membership in the quest's temple and a `quest.view`-visible quest
-(cross-temple -> `NOT_FOUND`). Permissions from the matrix; **flag** = not covered.
+(cross-temple -> `NOT_FOUND`). Permissions from `role_permissions.yaml` v0.3; all commands are covered.
 
-| Command | Permission (scope) | Flag |
+| Command | Permission (scope, `role_permissions.yaml` v0.3) | Note |
 |---|---|---|
 | `create_draft`, `publish`, `discard_draft` | `quest.create` (S/D/T) | none |
 | `assign`, `reassign`, `unassign`, `close_claims` | `quest.assign` (D/T) | none |
-| `claim`, `release_claim`, `withdraw`, `start`, `submit`, `block` (own), `unblock` (own), `check_item` | `quest.complete` (S) | `claim` needs `quest.view` too; self-claim has no own code (G-Q1) |
+| `claim`, `release_claim`, `withdraw`, `start`, `submit`, `block` (own), `unblock` (own), `check_item` | `quest.complete` (S) | `claim` also needs `quest.view` (YAML baseline rule for self-claim) |
 | `verify_ok`, `verify_reject` | `quest.verify` (D/T) | none |
-| `cancel`, `block`/`unblock` (any), `edit` (any), `revoke_completion`, `cancel_subtree` | `quest.manage` (D/T); `cancel_subtree` additionally `event.manage` | `revoke_completion` has no explicit code (G-Q2) |
-| `manage_recurrence_template` | `quest.create` + `quest.manage` (same scope) | no code of its own (G-Q3) |
-| `expire`, recurring generation | system actor | system actors are not in the matrix (G-Q4) |
-| `view_quest` | `quest.view` (S/A/D/T, T¹ for public) | none |
+| `cancel`, `block`/`unblock` (any), `edit` (any), `revoke_completion`, `cancel_subtree` | `quest.manage` (D/T); `cancel_subtree` additionally `event.manage` | `revoke_completion` is `quest.manage` (YAML) |
+| `manage_recurrence_template` | `quest.create` + `quest.manage` (same scope) | none |
+| `expire`, recurring generation | system actor | audited as `system:<name>` (YAML preamble) |
+| `view_quest` | `quest.view` (S, S+P, A, D, T per role) | none |
 
 Samanera have `quest.create` none and `quest.assign` none (matrix): a samanera cannot create or assign quests, only
 start and submit his own (`quest.complete`).
@@ -267,7 +267,7 @@ cancel, withdraw, expire, revoke_completion, cancel_subtree, edit, dependency_ch
 
 ## 14. Cases (`Q`)
 
-Fixture: temple T1; `now = 2026-10-07 09:00` (+07:00). Actors: `kl` kitchen_lead (kitchen dept; quest.create/assign/
+Fixture: temple T1; `now = 2026-10-07 09:00` (+07:00). Actors: `kl` department_lead in the kitchen (the former `kitchen_lead`; kitchen dept; quest.create/assign/
 verify/manage D), `ks1`, `ks2` kitchen_staff, `hk1` housekeeper (cleaning dept), `cl1` ceremony_lead, `abbot1`,
 `deputy1`, `vol1`, `vol2`, `vol3`, `vol4` volunteers, `M1` bhikkhu, `N1` samanera, `office1`. Unless stated,
 quests have `capacity = 1` and `verification_policy = staff_verification`.

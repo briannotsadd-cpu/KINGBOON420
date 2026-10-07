@@ -89,7 +89,7 @@ thresholds are mine). Agent 01 should validate them (section 8).
 | 2 Who confirms invitations? | Answered as configuration: abbot, deputy, assistant always; secretary by delegation for routine rites (matrix note 2); lay office proposes only. Practice to validate. | Agent 01 validates |
 | 3 Check-in acceptable? | Answered by design: optional per temple and per monk; the resolver works with check-in disabled (AV-47). | Agent 01 validates |
 | 4 Vehicle ownership | Carried: interface `find_vehicle(window, seats)` only. | Agent 18 |
-| 5 Kitchen headcount | Carried; counters expose `location.in_temple` for kitchen_lead (matrix note 4). | Agent 17 |
+| 5 Kitchen headcount | Carried; counters expose `location.in_temple` to the kitchen department_lead via `headcount.view`. | Agent 17 |
 | 6 Undertaker visibility and deceased privacy | Carried; extension pattern (QUEST §12) composes visibility by AND so Agent 19 can mask. | Agent 19, Agent 13 |
 
 ## 6. Open questions raised by this work
@@ -108,21 +108,12 @@ thresholds are mine). Agent 01 should validate them (section 8).
 | OQ-Q2 | Do lay staff earn community points for staff quests (default none) | Opus, Agent 17 |
 | OQ-S1..S4 | SMA constants, samanera on rites, time-of-day policy, host data retention | Agent 01, Agent 13 |
 
-## 7. Permission-matrix gaps (commands the matrix does not cover)
+## 7. Permission-matrix gaps
 
-| ID | Gap | Proposal |
-|---|---|---|
-| G-1 | Pure self actions (accept invitation, request to join, leave temple, switch temple, claim monastic status) have no code | Add a baseline "authenticated person" capability set |
-| G-2 | Monastic verification: only `member.manage` (T) exists | Two-person rule when actor is `temple_admin` only |
-| G-3 | Break-glass platform access | Agent 13 |
-| G-4 | No `visiting_monastic` role | Add: `bhikkhu` minus `member.view` and `availability.view` |
-| G-A1 | `check_in` / `check_out` have no code | New `presence.checkin` (S) or fold into `availability.set_self` |
-| G-A2 / G-S2 | `schedule.manage` is in the catalog but absent from the matrix | abbot, deputy, assistant, secretary T; office_staff T; ceremony_lead D (ceremony kind) |
-| G-A3 | `availability.view` T for office_staff and ceremony_lead without a tier | Operational tier (masked reasons, no conflicts) |
-| G-S1 | Monk acknowledge / request-release on invitations | `invitation.view` (A) implies both on own assignments |
-| G-Q1..Q4 | Self-claim, `revoke_completion`, recurrence template management, system actors | Self-claim under `quest.complete` + `quest.view`; revoke under `quest.manage`; templates under `quest.create` + `quest.manage`; list system actors in the matrix intro |
-| G-SC1 | Self-redemption has no code | `community.participate` (S) |
-| G-SC2 | Reviewer of community point holds | `points.award_community` (D/T) |
+Closed by `role_permissions.yaml` v0.3 (fix round): G-1 (baseline self capabilities), G-2 (two-person rule), G-3 (break-glass is
+platform-level), G-4 (`visiting_monastic` exists), G-A1 (check-in = `availability.set_self`), G-A2/G-S2 (`schedule.manage`),
+G-A3 (office_staff and ceremony_lead are scope C), G-S1 (`invitation.view` A), G-Q1..Q4, G-SC1 (`community.participate`),
+G-SC2 (`points.award_community`). No open permission gap remains in the core specs.
 
 ## 8. Proposed changes to master docs (exact text; Opus applies)
 
@@ -154,3 +145,12 @@ who confirms invitations, attestation evidence.
 | QUEST_LIFECYCLE_SPEC | DESIGNED | Two-level assignment reading (S-4) pending |
 | SCORING_SPEC | DESIGNED | Caps, thresholds and score visibility unvalidated |
 | DOMAIN_EVENTS | DESIGNED | Awaits Agents 17/18/19 event names for sections 8 interfaces |
+
+## 11. Fix round (Opus decisions F-01, F-03, F-04, S-3 and others)
+
+Applied in the specs: monastic label "แต้มกิจวัตร"; monastic practice days without loss mechanics, lay streak with grace
+(SCORING §7); monastic status per membership, optional presentation of a prior attestation (TENANCY §5); every manual
+status has `valid_until`, admin UNAVAILABLE explicit (AVAILABILITY §7-8); SMA `needs_confirmation` list, single travel
+rule with Unknown handling (SCHEDULE §5); ten schedule kinds and source types; v0.3 permission codes and scopes;
+`unresolved_monk_conflicts` (AVAILABILITY §6, cases AV-49, AV-50). Case counts now AV 50, INV 27, Q 40, SC 25.
+Section 8 item 7 above (global attestation wording) is superseded by F-04.

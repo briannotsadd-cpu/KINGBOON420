@@ -1,6 +1,6 @@
 # SECURITY & PRIVACY MODEL — BOON SYSTEM
 
-Status: **DRAFT v0.1 (Wave 0)**. Owner after Wave 1: Agent 13 (Security/Privacy), reviewed by Opus.
+Status: **v0.2 (Wave 1 gate)**. Owner after Wave 1: Agent 13 (Security/Privacy), reviewed by Opus.
 
 ## 1. Security objectives (priority order)
 
@@ -29,7 +29,7 @@ Status: **DRAFT v0.1 (Wave 0)**. Owner after Wave 1: Agent 13 (Security/Privacy)
 
 | Threat | Example | Control |
 |---|---|---|
-| Spoofing | Lay user claims monastic status to get monk-only views | `monastic_kind` set only by temple admin verification; audited |
+| Spoofing | Lay user claims monastic status to get monk-only views | Per-membership attestation by the temple; two-person rule when attester is `temple_admin` only; audited; no cross-temple propagation (F-04) |
 | Tampering | Client sends another `temple_id` | RLS + composite FKs; server ignores client tenant unless membership active |
 | Tampering | Self-verifying quest to farm points | verifier ≠ assignee constraint; anti-cheat rules |
 | Repudiation | Admin denies changing a role | append-only `audit_logs` |
@@ -38,7 +38,19 @@ Status: **DRAFT v0.1 (Wave 0)**. Owner after Wave 1: Agent 13 (Security/Privacy)
 | DoS / abuse | Spam to Temple Contact; mass connection requests | rate limits per person & IP; moderation queue |
 | Elevation | `temple_admin` grants self `finance.approve` | restricted permissions need abbot approval; cannot self-grant |
 
-## 4. Controls by layer
+## 4. Data classes
+
+| Class | Examples | Rule |
+|---|---|---|
+| Religion-linked (PDPA s.26) | membership `monastic_kind`, attestation, ordination data | Visible only inside the attesting temple; never propagated; explicit consent; excluded from analytics |
+| Health-adjacent | optional height/weight/body information, sickness as UNAVAILABLE reason | Optional, default PRIVATE; reasons shown only to T-scope availability viewers (coarse `C` for others) |
+| Minor | `is_minor` memberships (samanera, temple boys) | `minor_overrides`: no P2P chat, calls or public profile; no location tracking; guardian consent (PDPA s.20) |
+| Funeral (restricted) | deceased name, family contacts | Assignment-scoped (`funeral.assigned.view` alias list); register 🔒; family contact purged 7 days after close (HYPOTHESIS); excluded from AI and Temple Memory |
+| Security records | incidents, gate log | `security.incident.view` 🔒, `security.log.view` 🔒; retention to be set with legal review |
+| Financial | finance records | Lay-only approval (`waiyawatchakon`, explicit grant); abbot view for oversight |
+| Hosting location | all of the above | Singapore hosting is a cross-border transfer (PDPA s.28) — basis unconfirmed (R-17) |
+
+## 5. Controls by layer
 
 | Layer | Control |
 |---|---|
@@ -52,17 +64,17 @@ Status: **DRAFT v0.1 (Wave 0)**. Owner after Wave 1: Agent 13 (Security/Privacy)
 | Privacy | Per-field visibility `PUBLIC/CONNECTIONS/PRIVATE`; optional sensitive fields default PRIVATE; never required |
 | Communication | Connection-gated chat; block/mute/report everywhere; monastic DM off by default; minors restricted |
 | Calls | Provider tokens minted server-side per call with room-scoped grants; no recording by default |
-| AI | Only temple-scoped context passed; no cross-temple retrieval; drafts only; prompt-injection-safe tool design |
+| AI | Funeral, minor and security-record classes never sent to AI; only temple-scoped context passed; no cross-temple retrieval; drafts only; prompt-injection-safe tool design |
 | Secrets | Environment secrets only; never in repo; secret scanning in CI |
 | Monitoring | Sentry with PII scrubbing; security-relevant events alertable |
 
-## 5. Anti-cheat (community points)
+## 6. Anti-cheat (community points)
 
 Signals: duplicate check-in, check-in outside geofence, impossible travel between check-ins, many accounts per
 device, bursts of awards by one verifier, self-verification attempts. Outcome: hold the award for human review
 — never auto-punish.
 
-## 6. Security gates
+## 7. Security gates
 
 | Gate | Evidence required |
 |---|---|

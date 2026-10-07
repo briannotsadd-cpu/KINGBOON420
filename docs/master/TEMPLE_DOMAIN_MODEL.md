@@ -212,6 +212,10 @@ RECEIVED ─triage─▶ REVIEWING ─propose team─▶ TEAM_PROPOSED ─human 
 `schedule_entries(temple_id, person_id, kind ∈ {invitation, ceremony, teaching, class, duty, personal, travel,
 meal, leave, meeting}, starts_at,
 ends_at, venue, source_type, source_id)` — the single calendar table that availability resolution reads.
+The monastic availability resolver reads 7 kinds (invitation, ceremony, teaching, class, duty, personal, travel);
+`meal`, `leave`, `meeting` are staff-only and read by staff presence. A monastic meeting is recorded as `duty`; monastic
+absence is a manual PERSONAL/UNAVAILABLE status. Funeral sessions are kind `ceremony` with source_type
+`funeral_rite_session`. Normative enum: `docs/domain/core/SCHEDULE_INVITATION_SPEC.md` §2.
 
 ## 7. Facility
 

@@ -9,7 +9,7 @@ temple-configurable and need pilot validation). No SQL, no code.
 
 1. Two separate ledgers: `monastic_activity_score` and `community_boon_points`. **No table, view, function or API
    may sum or join them into one number.**
-2. The monastic score is never redeemable, never ranked, never public, never used for promotion or discipline.
+2. The monastic score is never redeemable, **never ranked or compared, internally or publicly**, never public, never used for promotion or discipline.
 3. Points are written only by server-side functions, only on `quest.completed` (or the other sources in §3-4),
    exactly once, in append-only rows. Rows are never updated or deleted.
 4. Every row has `temple_id`. Balances are per `(temple_id, person_id)`.
@@ -21,9 +21,9 @@ temple-configurable and need pilot validation). No SQL, no code.
 
 | Field | Rule |
 |---|---|
-| `entry_id`, `temple_id`, `person_id` | `person.monastic_kind <> none` at write time (`LEDGER_KIND_MISMATCH` otherwise). |
+| `entry_id`, `temple_id`, `person_id` | `membership.monastic_kind <> none` in this temple at write time (`LEDGER_KIND_MISMATCH` otherwise). |
 | `amount` | integer; positive for earn, negative only for a reversal row. |
-| `reason_code` | `QUEST_COMPLETION, STREAK_MILESTONE, ACHIEVEMENT, REVERSAL` |
+| `reason_code` | `QUEST_COMPLETION, ACHIEVEMENT, REVERSAL` |
 | `source_type`, `source_id` | for example `quest_assignment`, id. |
 | `idempotency_key` | unique within the ledger (§5). |
 | `reverses_entry_id` | set only on `REVERSAL`. |
@@ -34,7 +34,7 @@ temple-configurable and need pilot validation). No SQL, no code.
 
 | Field | Rule |
 |---|---|
-| `txn_id`, `temple_id`, `person_id` | `person.monastic_kind = none` at write time. |
+| `txn_id`, `temple_id`, `person_id` | `membership.monastic_kind = none` in this temple at write time. |
 | `amount` | signed integer. |
 | `txn_type` | `EARN, MANUAL_AWARD, REDEEM, REFUND, REVERSAL` |
 | `source_type`, `source_id`, `idempotency_key`, `reverses_txn_id`, `actor_id`, `reason`, `occurred_at` | |
@@ -46,12 +46,12 @@ because wrongful awards must be correctable; flagged to reward.manage as `NEGATI
 
 ## 3. Monastic activity score: earning rules
 
-Label in UI: "แต้มบุญ" per master, always accompanied by the text "ตัวชี้วัดความก้าวหน้าส่วนตัว ไม่ใช่การนับบุญและแลกไม่ได้" (progress indicator, not a merit count, not exchangeable).
+Label in UI: **"แต้มกิจวัตร"** (Opus decision F-01). "แต้มบุญ" is never used for monastics (it stays reserved for lay community points, "แต้มบุญชุมชน"). The label is accompanied by "ตัวชี้วัดความก้าวหน้าส่วนตัว แลกไม่ได้" (personal progress indicator, not exchangeable).
 
 | Rule | Trigger | Amount (HYPOTHESIS defaults) |
 |---|---|---|
 | ME-1 | assignment COMPLETED on a quest whose ledger is MONASTIC_ACTIVITY | `quest.points.amount` (suggested 1-10), subject to the daily cap |
-| ME-2 | streak reaches 7, 30, 100 counted days (§7) | +5, +20, +50; once per person per milestone per 90 days |
+| ME-2 | *(removed, F-03)* streak milestones never write the monastic ledger; they are achievements only (§8) | 0 |
 | ME-3 | achievement with `reward_points > 0` (§8) | per achievement; default 0 |
 
 - **Daily cap** `monastic_daily_cap` = 30 points per local day (Asia/Bangkok, by `completed_at`). An award that would
@@ -71,7 +71,7 @@ Label in UI: "แต้มบุญ" per master, always accompanied by the text 
 | CB-3 `REDEEM` | recipient requests a participation reward | `-cost`, guards below |
 | CB-4 `REFUND` | redemption cancelled before fulfilment | `+cost`, links the REDEEM row |
 
-Redemption guards: recipient `monastic_kind = none`; ACTIVE membership in the temple; reward is active and in stock in
+Redemption guards: recipient `membership.monastic_kind = none` in this temple; ACTIVE membership in the temple; reward is active and in stock in
 this temple; `available_balance >= cost` evaluated and written in one **serializable** transaction; per-person
 limits from the reward definition. A monastic can never redeem (`FORBIDDEN_MONASTIC`).
 Rewards are "ของที่ระลึกจากการร่วมกิจกรรม" (participation rewards); copy such as "buy merit" is forbidden (Agent 04/12).
@@ -82,7 +82,6 @@ Points are not transferable between persons or between temples.
 | Row | Key |
 |---|---|
 | quest completion (either ledger) | `quest_completion:{quest_assignment_id}` |
-| streak milestone | `streak_milestone:{person_id}:{N}:{streak_start_date}` plus the 90-day suppression rule |
 | achievement | `achievement:{person_id}:{code}` |
 | reversal | `reversal:{original_entry_id}` |
 | manual award | `award:{request_id}` (client-generated uuid) |
@@ -103,32 +102,36 @@ mechanism that prevents double credit.
   (`CANNOT_REVERSE_REVERSAL`). Redemptions are undone by `REFUND`, not `REVERSAL`.
 - Original rows stay unchanged; balances change only by new rows.
 
-## 7. Streak (monastic only)
+## 7. Practice days and streaks
 
-Streak is a **derived read model** (recomputable), not a ledger. Only milestone bonuses (ME-2) touch the ledger.
+Derived read models (recomputable), not ledgers. **No streak ever writes either ledger**; milestones are achievements
+(§8) only, non-redeemable and unranked.
+
+### 7.1 Monastic: cumulative practice days, no loss mechanics (Opus decision F-03)
 
 Definitions (time zone Asia/Bangkok):
-- **Qualifying completion**: an assignment of a quest of type `monastic_daily` or `novice_learning`, status COMPLETED,
-  not revoked, assignee monastic. Its **work date** is the local date of `submitted_at` (so slow verification never
-  costs the monk a day).
-- **Counted day** `d`: at least `streak_min_quests` (default 1) qualifying completions with work date `d`.
-- **Excused day**: effective status was `UNAVAILABLE` for the **whole** local day `[d 00:00, d+1 00:00)` (union of
-  UNAVAILABLE intervals from the availability history covers it). Excused days are skipped: not counted, not missed.
-- **Missed day**: a non-excused, non-counted day that has ended. **Today** is never missed; it is *pending* until
-  it ends.
-- **Grace**: one missed day is tolerated within any window of 7 local dates `[d-6, d]`. Scan days in order, skipping
-  excused ones, with `L` = length and `last_miss` = date of the previous tolerated miss:
-  - counted day -> `L += 1`;
-  - missed day `d`: if `last_miss` is absent or `d - last_miss > 6` days -> tolerated (`last_miss = d`, `L` unchanged);
-    else the streak **breaks**: `L = 0`, `last_miss` cleared.
-- Displayed streak = `L` at the end of yesterday, plus 1 if today is already counted.
-- A break deducts nothing and removes no milestone already awarded. UI wording is encouraging ("เริ่มใหม่ได้เสมอ"),
-  never shaming; streak is visible to the monk only.
-- Recomputation after a late verification, a revocation or an availability edit may raise or lower `L`; a milestone
-  row is created when `L` first reaches 7/30/100 and its key does not exist. Milestone `N` is not awarded again within
-  90 days of the previous award of the same `N` for that person (`scoring.milestone_suppressed`) — anti-farming by
-  break-and-restart.
-- Lay people have no streak in this spec. (A community participation streak is not defined; carried as OQ-SC3.)
+- **Qualifying completion**: assignment of a `monastic_daily` or `novice_learning` quest, COMPLETED, not revoked,
+  assignee monastic. **Work date** = local date of `submitted_at` (slow verification never costs a day).
+- **Practice day** `d`: at least `streak_min_quests` (default 1) qualifying completions with work date `d`.
+- **Excused day**: effective status `UNAVAILABLE` for the whole local day; skipped by the run computation.
+- Shown to the monk: `practice_days_this_month` (count of practice days in the current local month, "ปฏิบัติแล้ว N วันในเดือนนี้")
+  and `practice_days_total`. The **current run** (consecutive practice days ending today or yesterday, skipping
+  excused days) is computed silently and shown only as a plain number when it is 2 or more.
+- **No loss mechanics.** When a day is not a practice day: nothing is reset on screen, no "streak broken" message, no
+  notification, no domain event, no score change, no red state. The run simply restarts from the next practice day
+  without comment. There is no grace-day concept for monastics because nothing is lost. Counts are visible to the monk only.
+- Recomputation after late verification, revocation or availability edit may change the numbers silently.
+- Milestones (run reaches 7, 30, 100 days; 10, 20 practice days in a month) grant achievements (§8) with
+  `reward_points = 0`, once per person per code per 90 days for repeatable ones; nothing else.
+
+### 7.2 Lay: forgiving streak
+
+- A lay **participation day** is a local day with at least one verified community quest completion (`volunteer`).
+- Streak `L` counts consecutive participation days with **one grace day per 7 local dates**: scan days in order; a
+  participation day -> `L += 1`; a non-participation day `d` (day ended) is tolerated if no tolerated miss occurred
+  within `[d-6, d-1]` (`L` unchanged), otherwise `L = 0`.
+- A lay streak awards achievements only (no points). Visibility follows profile settings (default PRIVATE).
+  Wording is encouraging; a reset is shown as "เริ่มใหม่ได้เสมอ".
 
 ## 8. Achievements
 
@@ -136,7 +139,7 @@ Definitions (time zone Asia/Bangkok):
 threshold, window), reward_points (default 0), repeatable (default false), visibility}`.
 
 - Evaluated from domain events; granting is idempotent on `achievement:{person_id}:{code}`.
-- Starter catalogue (HYPOTHESIS): `M-FIRST-QUEST`, `M-WEEK-STREAK` (7 counted days), `M-LEARN-10` (10 completed
+- Starter catalogue (HYPOTHESIS): `M-FIRST-QUEST`, `M-WEEK-RUN` (current run of 7 practice days), `M-LEARN-10` (10 completed
   `novice_learning`), `C-FIRST-VOLUNTEER`, `C-EVENT-HELPER-5` (5 verified volunteer shifts).
 - Monastic achievements are visible **only to the monk**. Community achievements follow the profile visibility
   (default PRIVATE, Agent 12 may relax).
@@ -179,19 +182,18 @@ until reviewed), `REJECT` (hard guard).
 HOLD semantics: no ledger row; `scoring.award_held` event; review item `{person, quest_assignment, signal}`. Reviewer
 accepts -> the award is written with the original idempotency key; rejects -> nothing is written (completion stays;
 a manager may separately `revoke_completion`). Monastic score has **no HOLD and no human reviewer**, only CAP/FLAG, to
-avoid a review process over a personal progress indicator. Reviewer authority for community holds is **gap G-SC2**
-(proposal: `points.award_community`, D/T).
+avoid a review process over a personal progress indicator. Reviewer authority for community holds is `points.award_community` (D/T), per the YAML preamble.
 
 ## 11. Commands and security
 
-| Command | Actor and permission (scope) | Gap |
+| Command | Actor and permission (scope, `role_permissions.yaml` v0.3) | Note |
 |---|---|---|
-| `award_for_completion`, `credit_streak_milestone`, `credit_achievement`, `reverse_on_revocation` | system | system actors are not in the matrix |
+| `award_for_completion`, `credit_achievement`, `reverse_on_revocation` | system | audited as `system:<name>` |
 | `manual_award_community` | `points.award_community` (D/T) | none |
 | `manual_reverse_community` | `points.award_community` (D/T) | none |
-| `review_hold` (accept/reject) | proposed `points.award_community` (D/T) | **G-SC2** |
-| `redeem`, `cancel_own_redemption` | the lay member himself | **G-SC1**: no permission code for self-redemption (proposal: `community.participate` S) |
-| `fulfil_redemption`, `cancel_redemption`, manage catalogue | `reward.manage` (T: abbot, office_staff) | none |
+| `review_hold` (accept/reject) | `points.award_community` (D/T) | none |
+| `redeem`, `cancel_own_redemption` | the lay member himself: `community.participate` (S) | none |
+| `fulfil_redemption`, `cancel_redemption`, manage catalogue | `reward.manage` (T: office_staff, waiyawatchakon; lay-only grant) | none |
 | `view_my_ledger` | self | none (self action) |
 | `view_person_ledger` (community only) | `points.award_community` (D/T) or `reward.manage` (T) | monastic ledger: **no viewer other than the person** |
 | `enable_leaderboard` | `temple.settings` (T, restricted) | none |
@@ -206,18 +208,19 @@ volunteer; `abbot1`; `kl` verifier; `now = 2026-10-07 10:00` (+07:00) unless sta
 | SC-01 | Q7 (5 points MONASTIC_ACTIVITY) assignment A7 for M1 reaches COMPLETED | `quest.completed{A7}` is processed | one monastic row `{amount +5, QUEST_COMPLETION, key quest_completion:A7}`; balance 5; event `scoring.activity_awarded` |
 | SC-02 | SC-01 done | the same event is delivered again | no new row; `DUPLICATE_IGNORED`; balance 5; no second event |
 | SC-03 | Q4 (10 COMMUNITY_BOON, `organizer_approval`) assignment A4 for vol1 COMPLETED | process event | one boon row `{EARN, +10}` for (T1, vol1); balance 10 |
-| SC-04 | A5 community quest assigned to M1 **before** M1 was verified as bhikkhu (kind changed to bhikkhu afterwards); A5 reaches COMPLETED | process event | no row (`LEDGER_KIND_MISMATCH`); event `scoring.award_rejected`; quest stays COMPLETED; direct attempts to write activity score for vol1 or boon points for M1 are rejected the same way |
+| SC-04 | A5 community quest assigned to M1 **before** M1 was verified as bhikkhu (this temple's attestation made him bhikkhu afterwards); A5 reaches COMPLETED | process event | no row (`LEDGER_KIND_MISMATCH`); event `scoring.award_rejected`; quest stays COMPLETED; direct attempts to write activity score for vol1 or boon points for M1 are rejected the same way |
 | SC-05 | SC-01 done; `kl` revokes A7 completion | `quest.completion_revoked{A7}`; replayed; then attempt to reverse the reversal | one `REVERSAL` row `{-5, reverses SC-01 row, key reversal:<id>}`; balance 0; replay ignored; `CANNOT_REVERSE_REVERSAL` |
 | SC-06 | vol1 earned 10 (SC-03), redeemed a reward costing 10 (balance 0) | A4 completion revoked | `REVERSAL -10`; balance -10; flag `NEGATIVE_BALANCE` to `reward.manage`; `available_balance 0`; next redeem of cost 10 -> `INSUFFICIENT_BALANCE` until balance >= cost |
 | SC-07 | vol1 balance 50; reward cost 30 in stock | `redeem(request r1)` | row `{REDEEM, -30}`; balance 20; redemption PENDING |
 | SC-08 | vol1 balance 50; reward cost 60 | `redeem` | `INSUFFICIENT_BALANCE`; no row |
 | SC-09 | vol1 balance 50; two simultaneous redemptions of cost 30 with different request ids; plus a duplicate of the first request id | run concurrently | exactly one succeeds, the other gets `INSUFFICIENT_BALANCE`; duplicate request id returns the first result; final balance 20; one REDEEM row |
 | SC-10 | M1 (monastic) | `redeem(...)`; any call to move activity score | `FORBIDDEN_MONASTIC`; no command exists for the activity score (F-1) |
-| SC-11 | M1 submits `monastic_daily` completions at `2026-10-01T16:50:00Z` and `2026-10-01T17:10:00Z` (both COMPLETED) | compute work dates | first is 10-01 23:50 local -> work date 10-01; second is 10-02 00:10 local -> work date 10-02; two different counted days |
-| SC-12 | M1 counted on 10-01, 10-02, 10-03; no completion 10-04; counted 10-05; no completion 10-06 (day over); counted 10-07 | compute streak at end of 10-07 | after 10-03 `L=3`; 10-04 missed, no previous miss -> tolerated, `L=3`; 10-05 `L=4`; 10-06 missed, `10-06 − 10-04 = 2 <= 6` -> break, `L=0`; 10-07 -> `L=1` |
-| SC-13 | M1 counted 10-01 and 10-02; UNAVAILABLE for the whole of 10-03 and 10-04; counted 10-05 | compute streak at end of 10-05 | `L = 3` (10-03 and 10-04 are excused: skipped, neither counted nor missed; no break) |
-| SC-13b | M1 counted 10-01 and 10-02; UNAVAILABLE only 06:00-24:00 on 10-03 (not a whole day); counted 10-04 and 10-05 | compute streak at end of 10-05 | 10-03 not excused, not counted -> missed, no earlier miss -> tolerated (`L` stays 2); 10-04 `L = 3`; 10-05 `L = 4` |
-| SC-14 | M1 counted for 10-01 through 10-07 (7 counted days, streak start 10-01); later a break, new run reaches 7 counted days on 10-30 | compute at end of 10-07, replay, then 10-30 | 10-07: one row `{+5, STREAK_MILESTONE, key streak_milestone:M1:7:2026-10-01}`; replay no duplicate; 10-30 (within 90 days of 10-07 award): no row, `scoring.milestone_suppressed` |
+| SC-11 | M1 submits `monastic_daily` completions at `2026-10-01T16:50:00Z` and `2026-10-01T17:10:00Z` (both COMPLETED) | compute work dates | first is 10-01 23:50 local -> work date 10-01; second is 10-02 00:10 local -> work date 10-02; two different practice days |
+| SC-12 | M1 practice days 10-01, 10-02, 10-03; none on 10-04; practice 10-05; none 10-06; practice 10-07 | read the monk's view at end of 10-07 | `practice_days_this_month = 5`; current run = 1 (shown as nothing); no event, no notification, no "broken" text, no ledger row at any point |
+| SC-13 | M1 practice 10-01 and 10-02; UNAVAILABLE for the whole of 10-03 and 10-04; practice 10-05 | read at end of 10-05 | run = 3 (excused days skipped); `practice_days_this_month = 3` |
+| SC-13b | M1 practice 10-01 and 10-02; UNAVAILABLE only 06:00-24:00 on 10-03; practice 10-04 and 10-05 | read at end of 10-05 | 10-03 not excused, no practice -> run restarts silently at 10-04; run = 2; `practice_days_this_month = 4` |
+| SC-14 | M1 practice 10-01 through 10-07 | recompute, replay | run = 7 -> achievement `M-WEEK-RUN` granted once; **no ledger row**; replay creates nothing |
+| SC-14b | lay `vol1` participation days 10-01, 10-02; none 10-03 (tolerated); 10-04 participation; none 10-05 | compute lay streak | `L` = 3 after 10-04 (grace used on 10-03); 10-05 is a second miss within 7 dates -> `L = 0`; UI shows "เริ่มใหม่ได้เสมอ"; no points involved |
 | SC-15 | M1 already earned 24 today (10-07); quest QA = 10 points; later QB = 5 points the same day; next day QC = 5 | complete QA, QB, then QC on 10-08 | QA row `+6`, `capped = true`, `DAILY_CAP_HIT`; QB no row (`awarded 0`); QC `+5` (cap resets at 00:00 local); all three quests COMPLETED |
 | SC-16 | quest created by M1 himself with residual `points 5` (legacy data) completes | process event | no row; signal `SELF_CREATED`; event `scoring.award_rejected` |
 | SC-17 | `abbot1` (points.award_community T) | award vol1 20 (reason); award vol1 80; award himself; award M1 20 | `+20 MANUAL_AWARD`; `AMOUNT_EXCEEDS_LIMIT`; `SELF_AWARD_FORBIDDEN`; `LEDGER_KIND_MISMATCH` |
@@ -225,10 +228,10 @@ volunteer; `abbot1`; `kl` verifier; `now = 2026-10-07 10:00` (+07:00) unless sta
 | SC-19 | vol1 has boon balance 40 at T1; vol1 verified as samanera; later attestation REVOKED | evaluate earning and redemption at each stage | after verification: earning and redemption rejected, balance stays 40, no activity score created from it (activity score starts at 0); after revocation: balance 40 usable again; activity rows retained and hidden; never merged |
 | SC-20 | vol1 has 10 completions, 9 verified by `kl` (90%); an 11th verified by `kl` | process event | `VERIFIER_CONCENTRATION`; no row; `scoring.award_held`; reviewer accepts -> row with the original key; reviewer rejects -> no row; accept replay -> no duplicate |
 | SC-21 | vol1 balance T1 = 20, T2 = 0; vol1 active in both | `redeem` cost 10 in T2; T1 staff reads T2 rows | `INSUFFICIENT_BALANCE`; denied (no cross-temple read) |
-| SC-22 | M1 reaches `L=7` | achievement evaluation, replay, other viewer reads M1 profile | one `M-WEEK-STREAK` grant (reward 0); replay ignored; other viewers see nothing about it |
+| SC-22 | M1 reaches `L=7` | achievement evaluation, replay, other viewer reads M1 profile | one `M-WEEK-RUN` grant (reward 0); replay ignored; other viewers see nothing about it |
 | SC-23 | community quest evidence hash equals one used on another quest 10 days ago | complete | `DUPLICATE_EVIDENCE_HASH`; award HELD; no row until reviewed |
 
-Case count: **24** including SC-13b (minimum 15).
+Case count: **25** including SC-13b and SC-14b (minimum 15).
 
 ## 13. Traceability and open questions
 
@@ -243,6 +246,6 @@ Case count: **24** including SC-13b (minimum 15).
 |---|---|---|
 | OQ-SC1 | May the abbot see an individual's activity score? Spec: no. | Opus, Agent 01 |
 | OQ-SC2 | Negative balance after reversal vs forbidding reversal after spending (§2.2). | Opus |
-| OQ-SC3 | Community participation streak for lay members? Not defined. | Agent 12 |
+| OQ-SC3 | Is a daily lay participation streak right for lay members (vs weekly)? | Agent 12 |
 | OQ-SC4 | Are all numeric defaults (caps, milestone amounts, thresholds) acceptable to temples and not demotivating? | Agent 01 pilot |
 | OQ-SC5 | Minors in community points (guardian consent). | Agent 13 |
