@@ -1,6 +1,6 @@
 # AGENT PROMPT PACK — BOON SYSTEM
 
-Pack revision: **W1-r3** (2026-10-07). Covers Wave 1 (1a: Agents 01, 02, 17, 18, 19 · 1b: Agents 03, 20).
+Pack revisions: **W1-r3** (Wave 1, executed) · **W2-r1** (Wave 2, ready, not launched). 2026-10-07.
 Prompts for later waves are written only after the previous gate, from the repository state at that time.
 
 ---
@@ -388,9 +388,76 @@ File-collision check: owned paths of 01, 02, 17, 18, 19, 03, 20 are pairwise dis
 
 ---
 
-## Wave 2 preview (to be rewritten after the Wave 1 gate)
+## WAVE 2 PROMPTS — revision W2-r1 (written at the Wave 1 gate, 2026-10-07; not yet launched)
 
-Agents 04 (3 design directions: Sacred Minimal, Thai Neo-Future, Living Temple), 05 (3D feasibility + placeholder
-massing scene + license register), 08 (schema v1 SQL + RLS isolation tests on local PG16), 13 (security
-architecture + threat model detail), 16 (monorepo scaffold, CI with typecheck/lint/test/db-test). ADR-0001..0003
-written by Opus before 08/16 start.
+### COMMON RULES (Wave 2) — prepended to every Wave 2 prompt
+
+- Repo state: documentation only (Wave 1 closed). Read `docs/master/SPEC.md`, `EXECUTIVE_PRODUCT_PLAN.md`,
+  `GAP_ANALYSIS.md` §4 (decisions + carried items), `TEMPLE_DOMAIN_MODEL.md` v0.3, `role_permissions.yaml` v0.3,
+  `docs/adr/*`, `FILE_OWNERSHIP.md`, plus the inputs your prompt names.
+- Write only your owned paths (below). Never edit `docs/master/**`, `docs/adr/**` or other agents' paths; propose
+  changes in your REPORT.md. No `git add/commit/push`; Opus commits.
+- Code is allowed only where your prompt says so. No secrets, no cloud accounts, no external services created.
+- Evidence = command output you actually ran (tests, `tsc`, lint, `psql`), pasted into REPORT.md. Never claim a test
+  passed without its output. Readiness vocabulary only.
+- Product rules from Wave 1 remain binding (two ledgers; "แต้มกิจวัตร"; no ranking/comparison of monastics; Unknown
+  never invented; AI drafts only; Temple Contact for monks; minors restricted; money lay-only).
+- If the harness refuses REPORT.md, return its full text in your final message.
+
+### Agent 08 — Database + RLS (owns `supabase/migrations/**`, `supabase/tests/**`, `supabase/seed/**`, `docs/db/**`)
+IDENTITY: PostgreSQL/RLS architect. MISSION: schema v1 for Wave 3 foundation, proven on the local PostgreSQL 16.
+CURRENT STATE: no schema; plan in `DATABASE_PLAN.md` v0.2; ADR-0002 (portable SQL), ADR-0003 (tenancy) accepted.
+REQUIRED RESULT: (1) migrations for identity/tenancy (persons, temples, memberships incl. `monastic_kind`,
+`is_minor`, monastic_attestations), roles/permissions/role_permissions/departments seeded **from
+role_permissions.yaml via a generator script you write in `supabase/seed/`**, audit_logs (append-only),
+quests + quest_assignments + quest_evidence (meta only), schedule_entries, availability_manual, checkins,
+boon_point_transactions, monastic_activity_ledger; (2) helpers `app.current_person_id()`, `app.is_member()`,
+`app.has_permission(temple, code, scope)` reading `request.jwt.claims`; (3) composite FKs + forced RLS everywhere;
+(4) tests in `supabase/tests/` runnable with `psql` against a throwaway local cluster: tenant isolation matrix
+generated from the YAML (every tenant table × role: other temple → 0 rows, writes denied), schema test (every tenant
+table has temple_id + forced RLS), ledger invariants (no monastic in community ledger and vice-versa; no negative
+balance; no UPDATE/DELETE), quest transition guards (verifier ≠ assignee); (5) `docs/db/SCHEMA_V1.md` +
+`supabase/tests/README.md` with the exact commands. Fictional seed temples `demo-a`, `demo-b` only.
+FORBIDDEN: app code, cloud projects. DEPENDS ON: none (YAML final). FEEDS: 07, 16, 13.
+DoD: all tests pass locally with pasted output; a deliberately broken policy makes the isolation test fail (show it).
+STOP: if a domain rule cannot be expressed in SQL without guessing, document and stop that table.
+
+### Agent 16 — DevOps (owns `.github/**`, root `package.json`, `pnpm-workspace.yaml`, `turbo.json`, `tsconfig*.json`, lint/format config, `apps/web/` **scaffold only**, `packages/domain/` scaffold, `packages/ui/` scaffold)
+MISSION: monorepo per ADR-0001 with CI that runs typecheck, lint, unit tests (Vitest), `python3 docs/master/tools/role_matrix.py --check`,
+and a `db-test` job that starts PostgreSQL 16 in CI and runs Agent 08's `supabase/tests` command. `apps/web`: Next.js
+App Router hello page in Thai ("ระบบบุญ — อยู่ระหว่างพัฒนา") only — no features. DoD: `pnpm install && pnpm -r typecheck
+&& pnpm -r lint && pnpm -r test` pass locally (paste output); workflow YAML validated (`actionlint` if available).
+STOP: if Agent 08's test command is not yet final, wire the job to `supabase/tests/run.sh` and note the dependency.
+
+### Agent 13 — Security / Privacy (owns `docs/security/**`)
+MISSION: security architecture v1 from `SECURITY_MODEL.md` v0.2: threat model per bounded context; RLS review
+checklist for Agent 08's PR; data-classification register (religion-linked, minor, funeral, security, finance,
+health-adjacent) with retention proposals (HYPOTHESIS until lawyer); upload pipeline spec; rate-limit table;
+break-glass procedure for platform_admin; PDPA consent texts inventory (not legal advice). DoD: each item mapped
+to feature IDs and to a Wave 3 test. STOP: legal conclusions → list for lawyer (D-5).
+
+### Agent 04 — Visual Design (owns `docs/design/**`, `packages/ui/tokens/**`)
+MISSION: three directions — Sacred Minimal, Thai Neo-Future, Living Temple — each with: palette (light/dark, contrast
+checked with a script you write and run), Thai+Latin type pairing with Google-Fonts-available families, spacing/radius
+scale, motion principles (calm; no casino effects), iconography approach, and **static HTML mock-ups of 4 screens**
+(Command Center W01, My Day, housekeeper home, community home) from `docs/ux/WIREFRAMES.md`, rendered to PNG with
+the preinstalled Playwright Chromium for evidence. No Figma workspace is available (D-6) — if the owner provides
+one later, port the chosen direction. Opus selects/hybridises; you do not choose. DoD: 3 directions × 4 screens
+PNGs + WCAG contrast table. STOP: do not invent Thai cultural motifs without labelling their source/meaning.
+
+### Agent 05 — 3D Technical Art (owns `docs/3d/**`, `assets/3d/LICENSES.md`)
+MISSION: 3D feasibility only — performance budget validation plan, scene-manifest consumption design (from
+`SPATIAL_REGISTRY_SPEC.md`), LOD/compression pipeline (glTF, Meshopt/Draco, KTX2), fallback switching rules, license
+register skeleton, and an options memo for the Wat Arun asset (commissioned stylized / temple-authorised / licensed)
+with cost/time ranges labelled HYPOTHESIS. **No model downloads.** DoD: memo + register + budget table. STOP: any
+asset without verified commercial licence.
+
+Launch order: 08 + 13 + 04 + 05 in parallel (disjoint paths); 16 after 08 publishes its test command (or in
+parallel with the STOP rule). Gate 2: Opus picks a design direction (owner ack), ADR-0002 owner ack or stays
+Proposed, schema v1 tests green with evidence, CI green.
+
+### Opus review of W2-r1
+- Paths pairwise disjoint: 08 `supabase/**`+`docs/db/**`; 16 root config + scaffolds + `.github/**`; 13 `docs/security/**`;
+  04 `docs/design/**` + `packages/ui/tokens/**` (16 must not create `packages/ui/tokens/`); 05 `docs/3d/**` + `assets/3d/LICENSES.md`. ✔
+- Vendor-dependent work avoided (ADR-0002 Proposed): SQL portable, no cloud project. ✔
+- Figma unavailable → HTML/PNG mock-ups as evidence; port later. ✔
