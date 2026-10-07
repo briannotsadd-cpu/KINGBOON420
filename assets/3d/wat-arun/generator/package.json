@@ -1,16 +1,17 @@
 {
-  "name": "generator",
+  "name": "wat-arun-generator",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Procedural stylized Wat Arun GLB (BOON SYSTEM)",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "node generate.mjs",
+    "verify": "node verify.mjs",
+    "shoot": "node shoot.mjs"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "license": "UNLICENSED",
   "dependencies": {
     "playwright-core": "^1.63.0",
     "three": "^0.186.1"
-  }
+  },
+  "private": true,
+  "type": "module"
 }

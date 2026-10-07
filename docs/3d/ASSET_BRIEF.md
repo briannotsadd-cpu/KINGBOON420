@@ -24,3 +24,10 @@ only; no downloaded models or scans), licence granted to the project. Heights/pl
 
 ## Hand-over
 Put the `.glb` in `assets/3d/wat-arun/` and the licence row in `assets/3d/LICENSES.md`; the 2D map uses the same codes.
+
+## Notes after first build (Opus, 2026-10-07)
+- Code reconciliation: the registry draft uses `WAT-ARUN.UBOSOT.MAIN`; this brief said `WAT-ARUN.UBOSOT`. **The registry
+  wins** — rename the node in the generator at the next model iteration.
+- three.js `GLTFLoader` strips dots from node names. Wave 5 must also write the building code into each node's glTF
+  `extras` (`userData.buildingCode`) and look nodes up by that, not by name.
+- Art follow-ups: tropical trees instead of conifers; rounder, ribbed prang profile.
