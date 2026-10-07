@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { myThreads, templeNames, type MyThread } from "@/components/contact/queries";
+import { myThreads, type MyThread } from "@/components/contact/queries";
 import { STATUS_TH, topicLabel } from "@/lib/contact";
 
 export const dynamic = "force-dynamic";
@@ -12,8 +12,8 @@ const WAIT: Record<string, string> = { NEW: "วัดยังไม่ได�
 export default async function MyContacts() {
   const s = await getSession();
   if (!s) redirect("/login");
-  let rows: MyThread[] | null = null, names = new Map<string, string>();
-  try { rows = await myThreads(s.authUserId); names = await templeNames([...new Set(rows.map((r) => r.temple_id))]); }
+  let rows: MyThread[] | null = null;
+  try { rows = await myThreads(s.authUserId); }
   catch (e) { console.error("[page]", e); rows = null; }
   return (
     <main className="stack">
@@ -30,7 +30,7 @@ export default async function MyContacts() {
         <ul className="list">
           {rows.map((r) => (
             <li key={r.id} className="card" data-testid={`my-thread-${r.ref_code}`}>
-              <div className="row"><h3>{names.get(r.temple_id) ?? "วัด"} · {topicLabel(r.topic)}</h3>
+              <div className="row"><h3>{r.temple_name} · {topicLabel(r.topic)}</h3>
                 <span className={`badge ${TONE[r.status] ?? "b-unknown"}`}>{STATUS_TH[r.status] ?? r.status}</span></div>
               <p className="meta">รหัสอ้างอิง {r.ref_code} · ส่งเมื่อ {when(r.created_at)}</p>
               <p style={{ whiteSpace: "pre-line" }}>{r.message}</p>

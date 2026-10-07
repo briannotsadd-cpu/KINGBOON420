@@ -26,3 +26,26 @@ export function grantRole(email, templeId, role, opts = {}) {
     insert into public.membership_roles(temple_id, membership_id, role_code) select '${templeId}', id, '${role}' from m
     on conflict do nothing returning (select id from p)`).split("\n")[0];
 }
+
+/** Click a link/button that navigates and wait until the URL matches. If the click landed before the page was
+ *  interactive and nothing happened, click once more (the second click is logged, so flakiness stays visible). */
+export async function clickNav(page, selector, url, { timeout = 20000, retry = false } = {}) {
+  const wait = page.waitForURL(url, { waitUntil: "commit", timeout });
+  await page.click(selector);
+  if (retry) {   // only for plain links: re-clicking a form submit could submit twice
+    const first = await Promise.race([wait.then(() => true), new Promise((r) => setTimeout(() => r(false), 8000))]);
+    if (!first) { console.log("note - navigation did not start after first click, clicking again:", selector); await page.click(selector); }
+  }
+  try { await wait; }
+  catch (e) { console.error("CLICK-NAV FAILED:", selector, "| URL:", page.url(), "| MAIN:", ((await page.textContent("main").catch(() => "")) ?? "").replace(/\s+/g, " ").slice(0, 600)); throw e; }
+}
+
+/** Wait for visible text; on timeout print the URL and the page's main text so a failure explains itself. */
+export async function waitText(page, text, timeout = 20000) {
+  try { await page.waitForSelector(`text=${text}`, { timeout }); }
+  catch (e) {
+    console.error("WAIT-TEXT FAILED:", text, "| URL:", page.url());
+    console.error("MAIN:", ((await page.textContent("main").catch(() => "")) ?? "").replace(/\s+/g, " ").slice(0, 800));
+    throw e;
+  }
+}

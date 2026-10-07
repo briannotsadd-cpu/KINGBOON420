@@ -31,7 +31,7 @@ export function InboxActions({ templeId, threadId, status }: { templeId: string;
         </Field>
       )}
       <div className="btn-row" style={{ marginTop: 0 }}>
-        {canReply && <SubmitButton name="op" value="reply" pendingText="กำลังส่ง…"><MessageSquareReply aria-hidden />ส่งคำตอบ</SubmitButton>}
+        {canReply && <SubmitButton name="op" value="reply" pendingText="กำลังส่ง…" variant="secondary"><MessageSquareReply aria-hidden />ส่งคำตอบ</SubmitButton>}
         {canAssign && status === "NEW" && <SubmitButton name="op" value="assign" pendingText="กำลังบันทึก…" variant="secondary"><UserCheck aria-hidden />รับเรื่อง</SubmitButton>}
         {status !== "CLOSED" && <SubmitButton name="op" value="close" pendingText="กำลังบันทึก…" variant="secondary"><Archive aria-hidden />ปิดเรื่อง</SubmitButton>}
       </div>

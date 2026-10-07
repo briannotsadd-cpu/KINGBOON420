@@ -1,20 +1,8 @@
 // E2E: Temple Contact + follow temple. FICTIONAL data in a throwaway DB (reset by e2e/run.sh). Phone viewport.
 import { chromium } from "playwright-core";
 import { readFileSync } from "node:fs";
-import { grantRole, sql } from "./seed.mjs";
+import { clickNav, grantRole, seedVerifiedTemple, sql, waitText } from "./seed.mjs";
 
-// seed.mjs#seedVerifiedTemple currently violates temple_field_values_check (TEMPLE_CONFIRMED needs verified_by), so this spec
-// carries the same fixture with a fixture verifier person. Same data, only verified_by added.
-function seedVerifiedTemple(slug, nameTh) {
-  sql(`insert into public.persons(display_name) select 'ผู้ตรวจสอบ (ข้อมูลทดสอบ)' where not exists (select 1 from public.persons where display_name = 'ผู้ตรวจสอบ (ข้อมูลทดสอบ)')`);
-  return sql(`with t as (insert into public.temples(slug, name_th, status, is_listed, province) values ('${slug}', '${nameTh}', 'approved', true, 'จังหวัดทดสอบ') returning id),
-    s as (insert into public.data_sources(temple_id, source_type, source_name, source_url, evidence)
-          select id, 'onab_registry', 'TEST FIXTURE (fictional)', 'https://registry.example.invalid/${slug}', 'fixture' from t returning temple_id, id),
-    v as (insert into public.temple_field_values(temple_id, field_key, value, source_id, status, verified_at, last_reviewed_at, verified_by)
-          select s.temple_id, k, to_jsonb(val), s.id, 'TEMPLE_CONFIRMED', now(), now(), (select id from public.persons where display_name = 'ผู้ตรวจสอบ (ข้อมูลทดสอบ)') from s,
-          (values ('temple.name_th', '${nameTh}'), ('temple.province', 'จังหวัดทดสอบ'), ('temple.address', 'ที่อยู่สมมติสำหรับทดสอบ')) x(k, val) returning 1)
-    select id from t, (select count(*) from v) c`).split("\n")[0];
-}
 
 const [chrome, shots, LOG] = process.argv.slice(2);
 const BASE = process.env.BASE ?? "http://localhost:3000";
@@ -30,11 +18,9 @@ const text = async (p) => { await p.waitForFunction(() => !document.querySelecto
 const shot = (p, n) => p.screenshot({ path: `${shots}/${n}.png`, fullPage: true, animations: "disabled" });
 async function login(p, email, name) {
   await p.goto(BASE + "/login");
-  await p.fill("#email", email); await p.click("button[type=submit]");
-  await p.waitForURL("**/login/code**");
-  await p.fill("#code", codeFor(email)); await p.click("button[type=submit]");
-  await p.waitForURL(/\/(welcome|me)$/);
-  if (p.url().endsWith("/welcome")) { await p.fill("#name", name); await p.click("button[type=submit]"); await p.waitForURL("**/me"); }
+  await p.fill("#email", email); await clickNav(p, "button[type=submit]", "**/login/code**");
+  await p.fill("#code", codeFor(email)); await clickNav(p, "button[type=submit]", /\/(welcome|me)$/);
+  if (p.url().endsWith("/welcome")) { await p.fill("#name", name); await clickNav(p, "button[type=submit]", "**/me"); }
 }
 async function send(p, slug, { topic = "invite_monk", message, name = "", phone = "" }) {
   await p.goto(`${BASE}/t/${slug}/contact`);
@@ -54,7 +40,7 @@ await v.goto(`${BASE}/t/${SLUG}`);
 let t = await text(v);
 ok(t.includes("ติดต่อวัด") && t.includes("เข้าสู่ระบบเพื่อติดตามวัด"), "temple page: contact link + 'login to follow' when logged out");
 await shot(v, "k-01-temple-page");
-await v.click("a:has-text('ติดต่อวัด')"); await v.waitForURL(`**/t/${SLUG}/contact`);
+await clickNav(v, "a:has-text('ติดต่อวัด')", `**/t/${SLUG}/contact`, { retry: true });
 t = await text(v);
 ok(t.includes("ข้อความส่งถึงเจ้าหน้าที่ของวัด ไม่ได้ส่งถึงพระโดยตรง") && t.includes("ใส่ถ้าต้องการให้วัดติดต่อกลับ"), "contact form works logged out, explainer present");
 const topics = await v.$$eval("#topic option", (o) => o.map((x) => x.textContent));
@@ -119,7 +105,7 @@ grantRole("staff@example.com", T, "staff_general");
 await sec.goto(`${BASE}/me`);
 ok((await text(sec)).includes("กล่องข้อความ วัดทดสอบระบบ"), "/me lists the inbox for a user with contact_inbox.manage");
 await shot(sec, "k-07-me-inbox-link");
-await sec.click("a:has-text('กล่องข้อความ วัดทดสอบระบบ')"); await sec.waitForURL(`**/temple/${T}/inbox`);
+await clickNav(sec, "a:has-text('กล่องข้อความ วัดทดสอบระบบ')", `**/temple/${T}/inbox`);
 t = await text(sec);
 ok(t.includes(ref) && t.includes("+66 81 000 0000".replace(/\s/g, "")) && t.includes("สอบถามเวลาทำวัตรเย็น"), "secretary sees the new thread incl. phone (phone shown to inbox staff)");
 ok(t.includes("ไม่มีช่องส่งตรงถึงพระ"), "inbox states there is no direct-to-monk channel");
@@ -132,7 +118,7 @@ await sec.waitForSelector("text=รับเรื่องแล้ว");
 ok(sql(`select status from public.temple_contact_threads where ref_code = '${ref}'`) === "ASSIGNED", "assign -> ASSIGNED");
 await sec.goto(`${BASE}/temple/${T}/inbox?tab=new`);
 ok((await text(sec)).includes("ยังไม่มีข้อความใหม่") || !(await text(sec)).includes(ref), "thread left the 'ใหม่' tab");
-await sec.click("a:has-text('มอบหมายแล้ว')"); await sec.waitForURL(/tab=assigned/);
+await clickNav(sec, "a:has-text('มอบหมายแล้ว')", /tab=assigned/);
 ok((await card(sec).count()) === 1, "thread is under มอบหมายแล้ว");
 
 // reply validation keeps input, then a real reply
@@ -189,20 +175,20 @@ ok(sql(`select count(*) from public.temple_contact_threads where status <> 'NEW'
 await sender.goto(`${BASE}/t/${SLUG}`);
 t = await text(sender);
 ok(t.includes("ติดตามวัด") && !t.includes("เข้าสู่ระบบเพื่อติดตามวัด"), "logged in: follow button instead of login prompt");
-await sender.click("button:has-text('ติดตามวัด')");
-await sender.waitForSelector("text=เลิกติดตามวัด");
+await sender.click("button:text-is('ติดตามวัด')");
+await waitText(sender, "เลิกติดตามวัด");
 ok(sql(`select count(*) from public.memberships m join public.persons p on p.id = m.person_id join authx.users u on u.id = p.auth_user_id where u.email = 'sender@example.com' and m.temple_id = '${T}' and m.status = 'active'`) === "1", "follow -> active community membership");
 await shot(sender, "k-13-following");
 await sender.reload();
 ok((await text(sender)).includes("คุณกำลังติดตามวัดนี้"), "following state survives reload");
 await sender.click("button:has-text('เลิกติดตามวัด')");
-await sender.waitForSelector("button:has-text('ติดตามวัด')");
+await sender.waitForSelector("button:text-is('ติดตามวัด')");
 ok(sql(`select count(*) from public.memberships m join public.persons p on p.id = m.person_id join authx.users u on u.id = p.auth_user_id where u.email = 'sender@example.com' and m.temple_id = '${T}' and m.status = 'active'`) === "0", "unfollow -> membership left");
-// DB gap, shown honestly: join_temple_community does not re-activate a 'left' membership
-await sender.click("button:has-text('ติดตามวัด')");
-await sender.waitForSelector(".notice-error");
-ok((await text(sender)).includes("เคยเลิกติดตามไปแล้ว"), "re-follow after leaving is refused honestly (DB gap), not shown as success");
-await shot(sender, "k-14-refollow-gap");
+// re-follow after leaving (fixed in migration 0010): membership is re-activated
+await sender.click("button:text-is('ติดตามวัด')");
+await waitText(sender, "คุณกำลังติดตามวัดนี้");
+ok(sql(`select count(*) from public.memberships m join public.persons p on p.id = m.person_id join authx.users u on u.id = p.auth_user_id where u.email = 'sender@example.com' and m.temple_id = '${T}' and m.status = 'active'`) === "1", "re-follow after leaving re-activates the membership");
+await shot(sender, "k-14-refollow");
 
 // staff member cannot leave via follow button: DB refusal shown
 await gen.goto(`${BASE}/t/${SLUG}`);

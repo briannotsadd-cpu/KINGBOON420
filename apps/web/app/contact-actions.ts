@@ -72,12 +72,12 @@ export async function followAction(_: ContactState, fd: FormData): Promise<Conta
     if (!id) return { error: "วัดนี้ยังไม่เปิดให้ติดตาม เพราะข้อมูลวัดยังตรวจสอบไม่ครบ" };
     await asUser(s.authUserId, (c) => c.query(op === "follow" ? "select app.join_temple_community($1)" : "select app.leave_temple_community($1)", [id]));
     const now = await isFollowing(s.authUserId, id);
-    if (op === "follow" && !now) return { error: "ติดตามวัดนี้ไม่ได้ในตอนนี้ เพราะเคยเลิกติดตามไปแล้ว ระบบยังไม่รองรับการกลับมาติดตามเอง กรุณาติดต่อเจ้าหน้าที่วัด" };
+    if (op === "follow" && !now) return { error: "ติดตามวัดนี้ไม่ได้ในตอนนี้ กรุณาติดต่อเจ้าหน้าที่วัด" };
     return { ok: op === "follow" ? "ติดตามวัดแล้ว" : "เลิกติดตามวัดแล้ว" };
   } catch (e) {
     console.error("[action:follow]", e);
     if (code(e) === "55000" && op === "leave") return { error: "เลิกติดตามเองไม่ได้ เพราะคุณมีบทบาทอื่นในวัดนี้ด้วย (เช่น เจ้าหน้าที่หรือกรรมการ) กรุณาติดต่อผู้ดูแลวัดถ้าต้องการเปลี่ยน" };
-    if (code(e) === "55000") return { error: "วัดนี้ยังไม่เปิดให้ติดตาม เพราะข้อมูลวัดยังตรวจสอบไม่ครบ" };
+    if (code(e) === "55000") return { error: "ติดตามไม่ได้: วัดนี้ยังไม่เปิดให้ติดตาม หรือสมาชิกภาพของคุณในวัดนี้ถูกระงับ กรุณาติดต่อเจ้าหน้าที่วัด" };
     if (code(e) === "42501") return { error: "กรุณาเข้าสู่ระบบก่อนติดตามวัด" };
     return { error: NET_ERR };
   }
