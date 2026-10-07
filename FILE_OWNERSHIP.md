@@ -31,7 +31,6 @@ specs are specification data/tooling, allowed in documentation waves.
 | `docs/security/**` | Agent 13 | 2 |
 | `docs/3d/**`, `assets/3d/**`, `packages/temple-scene/**` | Agent 05 | 2 / 5 |
 | `supabase/migrations/**`, `supabase/tests/**`, `supabase/seed/**`, `docs/db/**` | Agent 08 | 2–3 |
-| `docs/security/**` | Agent 13 | 2 |
 | `.github/**`, `turbo.json`, root `package.json`, `pnpm-workspace.yaml` | Agent 16 | 2 |
 | `apps/web/**` (split by route group when parallel) | Agent 06 | 3+ |
 | `apps/web/src/server/**`, `supabase/functions/**` | Agent 07 | 3+ |
