@@ -99,6 +99,11 @@ textarea.input { min-height: 120px; }
   .brand-mark { width: 30px; height: 30px; }
   .nav a { padding: 0 8px; gap: 4px; }
 }
+@media (max-width: 560px) {               /* signed-in nav has 4 items: give it its own full-width row, text only */
+  .topbar-in { flex-wrap: wrap; row-gap: 0; }
+  .nav { width: 100%; justify-content: space-between; }
+  .nav a svg { display: none; }
+}
 details.more { margin-top: 12px; }
 details.more > summary { cursor: pointer; min-height: 48px; display: inline-flex; align-items: center; font-weight: 700; color: var(--muted); }
 details.more[open] > summary { margin-bottom: 8px; }
