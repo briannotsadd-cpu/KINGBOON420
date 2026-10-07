@@ -14,7 +14,7 @@ by the database and API; the client hides UI only (matrix §1).
 | # | Principle | Consequence for navigation |
 |---|---|---|
 | N-1 | One account, many temples, **one active temple at a time** | Temple switcher is always reachable; switching clears all client caches (TENANCY §7.4). |
-| N-2 | Mode is derived, never chosen | Mode badge is a label, not a toggle. `monastic_kind <> none` -> Monastic Mode; otherwise Community & Staff Mode (TENANCY §8). |
+| N-2 | Mode is derived, never chosen | Mode badge is a label, not a toggle. Mode is derived **per membership**: `membership.monastic_kind <> none` -> Monastic Mode in that temple; otherwise Community & Staff Mode (TENANCY §8, Opus F-04). The same person can be Monastic Mode in one temple and Community & Staff Mode in another. |
 | N-3 | Show only what the person may use | No disabled tabs or modules. A hidden module has no teaser. |
 | N-4 | Everything is reachable three ways | List, map, and deep link reach the same screen (matches 3D_STRATEGY §1: 3D is never the only path). |
 | N-5 | Same-answer rule for foreign or missing items | A deep link to another temple's item, a deleted item, and a never-existing item show the same generic "ไม่พบรายการ" (no hint it exists; TENANCY §7, ASSET_INVENTORY §2). |
@@ -76,17 +76,21 @@ Rules:
 3. Switching shows a one-second neutral transition "กำลังเปลี่ยนเป็นวัด X" and **clears every client cache**
    (queries, drafts in memory, offline queue is per-temple and stays attached to its temple; it is never replayed
    into another temple). The landing tab is recomputed from the new membership.
-4. Mode may change on switch (a person who is a bhikkhu is Monastic Mode in every temple where active; a lay person
-   is never monastic). Role set changes entirely: nothing carries across temples (matrix §1; M-1 in TENANCY §6).
-5. A visiting monk sees the host temple only through the permissions of his visiting membership; the label "พระอาคันตุกะ"
+4. Mode may change on switch: monastic status is **attested per temple** (TENANCY §5), so a monk can be Monastic Mode at
+   temple B and plain Community & Staff Mode at temple A until A attests him too; neither temple is told about the other.
+   Role set changes entirely: nothing carries across temples (matrix §1; M-1 in TENANCY §6). The switcher never shows
+   one temple's attestation to another.
+5. A visiting monk (role `visiting_monastic`: own schedule and quests, no directory, no colleague availability) sees the
+   host temple only through the permissions of his visiting membership; the label "พระอาคันตุกะ"
    appears under his name on host-temple screens. A host-flagged dispute shows "ยังไม่ได้ตรวจสอบโดยวัดนี้" to the abbot only.
-6. Monastic claim pending (`CLAIMED`/`PENDING_REVIEW`): the person behaves as lay in every rule and the mode badge is
-   the community one; ฉัน shows "รอการยืนยันสถานะ" (FLOWS F-01).
+6. Monastic claim pending (`PENDING_REVIEW`) **for this temple's membership**: the person behaves as lay in every rule here
+   and the mode badge is the community one; ฉัน shows "รอวัดนี้ยืนยันสถานะ" (FLOWS F-01). Presenting an attestation
+   held at another temple is the person's explicit choice at join time and is off by default (TENANCY §5.4).
 7. `TEMPLE_MISMATCH` (client-sent temple differs from session): show the switch prompt, never silently correct (section 6).
 
 ## 4. Tab sets per mode
 
-### 4.1 Monastic Mode (abbot, deputy_abbot, abbot_assistant, monk_secretary, bhikkhu, samanera)
+### 4.1 Monastic Mode (abbot, deputy_abbot, abbot_assistant, monk_secretary, bhikkhu, samanera, visiting_monastic)
 
 | Slot | Tab (TH) | EN | Content | Visible to |
 |---|---|---|---|---|
@@ -123,8 +127,8 @@ Phone order (first four plus More): C1 หน้าหลัก · C2 ภาร�
 Landing tab: C1 for everyone; C0 only for roles whose home composition begins with a management module
 (abbot-level; none in this mode by default, so C1).
 
-Minor-flagged membership (any role; `minor_overrides` deny `community.participate.p2p_chat`, `.calls`,
-`.public_profile`): C5 is **hidden**. Points, volunteer quests, events and Temple Contact remain reachable through
+Minor-flagged membership (any role; `minor_overrides` deny `community.p2p_chat`, `community.calls`,
+`community.public_profile`): C5 is **hidden**. Points, volunteer quests, events and Temple Contact remain reachable through
 C2, C3 and ฉัน. No entry point to chat, call, DM, connection request or public profile appears anywhere (also
 not in search, not in "people at this temple"). Guardian and sponsor details are visible only in ฉัน to the minor
 as "ผู้ปกครองที่ให้ความยินยอม: (ชื่อ)".
@@ -144,7 +148,7 @@ sections whose gate is met:
 | ศูนย์บัญชาการ / Command Center | `command_center.view` (T for abbot, deputy, assistant, secretary; D for facility_manager, department_lead, ceremony_lead; D(staff panel) for temple_admin) | Panels inside are gated individually (COMMAND_CENTER_UX §3). |
 | กิจนิมนต์ / Invitations | `invitation.manage` (T) or `invitation.view` (T) | Inbox, intake, Smart Assignment proposal, calendar. `invitation.view` A roles (bhikkhu, driver) see only their own through ตาราง / Driver home, not this section. |
 | ตารางพระ / Availability board | `availability.view` (T for the four management monastics; C for ceremony_lead and office_staff, which gives counts and coarse states only) | |
-| กำลังคน / Staff presence | `presence.view` (T, D) | Names need `presence.view` in scope; counts come from the Command Center panel. |
+| กำลังคน / Staff presence | `presence.view` (T, D; C for every staff role = coarse team counts only) | Names and six-state detail need `presence.view` at D or T; counts come from the Command Center panel. |
 | งานและภารกิจ / Quests admin | `quest.assign`, `quest.verify`, `quest.manage` (D or T) | Verify queue, assignment boards, claimable pool. |
 | กิจกรรม / Events admin | `event.manage` (D or T), `event.approve` (restricted) | Event list, department boards, staffing gaps, approvals, duplicate from Temple Memory. |
 | พิธี / Ceremonies | `ceremony.confirm_monks` (restricted), `event.manage` | Roster confirm. `ceremony_lead` can propose, not confirm. |
@@ -153,13 +157,14 @@ sections whose gate is met:
 | ผู้คน / People | `member.view` (T, D, Tm) / `member.manage` (restricted) | Directory scoped; monk directory vs lay directory per matrix note 5. |
 | รายงาน / Reports | `report.view` | |
 | กล่องข้อความวัด / Temple Contact inbox | `contact_inbox.manage` | Routing and replies; public messages to monastics land here. |
-| รางวัล / Rewards admin | `reward.manage`, `points.award_community` | Catalog, fulfilment, award queue. |
+| รางวัล / Rewards admin | `reward.manage` (office_staff, waiyawatchakon; lay-only), `points.award_community` | Catalog, fulfilment, award queue. |
 | ตรวจสอบเนื้อหา / Moderation | `moderation.manage` | Reports and blocks review. |
 | เอกสารและการจอง / Documents and bookings | `document.view` / `document.manage` / `booking.manage` | **P2**, hidden until F-42. |
-| การเงิน / Finance | `finance.view` (restricted) | **P2 / post-pilot**, hidden until F-43; never rendered in any monastic user's own balance. |
+| การเงิน / Finance | `finance.view` (restricted: abbot oversight, waiyawatchakon, accountant) | **P2 / post-pilot**, hidden until F-43; never rendered in any monastic user's own balance. |
 | บันทึกตรวจสอบ / Audit log | `audit.view` (abbot only) | |
 | ตั้งค่าวัด / Temple settings | `temple.settings` | `temple_admin` sees non-restricted items only. |
-| ความเสี่ยงเอกสารพิธีศพ / Funeral register | `funeral.register.view` (abbot; office_staff create/edit) | Restricted; counts only elsewhere (FUNERAL §4). |
+| ทะเบียนพิธีฌาปนกิจ / Funeral register | `funeral.register.view` (abbot; office_staff create/edit) | Restricted; counts only elsewhere (FUNERAL §4). Rite lists (alias names only) need `funeral.assigned.view`. |
+| ความปลอดภัย / Security records | `security.log.view` (D; abbot, deputy T), `security.incident.view` (restricted: abbot, deputy, security department lead) | Gate log and incident records; guards add entries with `security.log` (S). |
 
 ### 5.2 Management navigation shape
 
@@ -246,7 +251,7 @@ Temple page (public): ชื่อวัด · ที่อยู่ · แผ�
    อาสาที่ต้องการ (เฉพาะ "ต้องการอาสา N คน (ฝ่าย X)") · [ติดตาม] · [ขอเข้าร่วม] · [ติดต่อวัด]
 ```
 Available without membership: search, follow, public events, public volunteer needs, 2D/3D visit of public areas,
-Temple Contact compose, request to join (default role `community_member` only), request to volunteer.
+Temple Contact compose, request to join (default role `community_member` only; a person who is a monk may optionally present an attestation from another temple, default off), request to volunteer.
 Not available: quests, schedule, any people list, chat, points. Public pages show no monk names, no counts of monks,
 no readiness detail, no maintenance (EVENT spec §7).
 A pending join request appears in the switcher as "รออนุมัติ" with a withdraw action. Rejection shows the reason
@@ -270,7 +275,7 @@ given by the admin (reason is mandatory, TENANCY §4).
 |---|---|---|
 | abbot, deputy_abbot, abbot_assistant | วัด | Command Center overview (W01), then approvals |
 | monk_secretary | วัด | Invitations inbox, then availability board |
-| bhikkhu, samanera | วันนี้ | My Day (W02) |
+| bhikkhu, samanera, visiting_monastic | วันนี้ | My Day (W02) |
 | facility_manager, department_lead, ceremony_lead | หน้าหลัก | Own role home; วัด tab available (scope D Command Center) |
 | temple_admin | หน้าหลัก | Member admin, moderation queue |
 | office_staff, accountant, waiyawatchakon | หน้าหลัก | Per registry composition |
