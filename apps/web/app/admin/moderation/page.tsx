@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { LiftButton } from "@/components/community/people";
 import { ModerationItem } from "@/components/community/moderation-item";
 import { Notice } from "@/components/ui";
-import { shortId } from "@/lib/community";
 import { getSession } from "@/lib/auth";
 import { loadModeration } from "../../community/data";
 import s from "@/components/community/community.module.css";
@@ -38,7 +37,7 @@ export default async function ModerationPage() {
             {data.suspensions.length === 0 ? <p className="lead" style={{ margin: 0 }}>ไม่มีผู้ถูกระงับ</p> : (
               <ul className="list">{data.suspensions.map((x) => (
                 <li key={x.person_id} className="card"><div className={s.item}>
-                  <div><span className={s.itemName}>ผู้ใช้รหัส {shortId(x.person_id)}</span><p className={s.when}>ระงับเมื่อ {x.since}</p><p style={{ margin: 0 }}>เหตุผล: {x.reason}</p></div>
+                  <div><span className={s.itemName}>{x.name}</span><p className={s.when}>ระงับเมื่อ {x.since}</p><p style={{ margin: 0 }}>เหตุผล: {x.reason}</p></div>
                   <LiftButton id={x.person_id} />
                 </div></li>
               ))}</ul>

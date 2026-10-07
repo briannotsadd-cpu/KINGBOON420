@@ -97,7 +97,7 @@ export const searchPeople = (authUserId: string, q: string) => asUser(authUserId
   "select person_id, display_name from app.search_people($1)", [q])).rows);
 
 export interface ConnRow { other: string; name: string | null; status: string; mine: boolean; when: string }
-export interface BlockedRow { id: string; when: string }
+export interface BlockedRow { id: string; name: string; when: string }
 export const loadConnections = (authUserId: string) => asUser(authUserId, async (c) => {
   const conns = (await c.query<{ other: string; name: string | null; status: string; mine: boolean; at: Date }>(
     `select o.other, pc.display_name as name, c.status, c.requester = app.current_person_id() as mine, coalesce(c.responded_at, c.created_at) as at
@@ -105,20 +105,20 @@ export const loadConnections = (authUserId: string) => asUser(authUserId, async 
        cross join lateral (select case when c.requester = app.current_person_id() then c.addressee else c.requester end as other) o
        left join lateral app.profile_card(o.other) pc on true
       order by at desc`)).rows.map((r): ConnRow => ({ other: r.other, name: r.name, status: r.status, mine: r.mine, when: formatThaiDateTime(r.at) }));
-  const blocked = (await c.query<{ id: string; at: Date }>(
-    "select blocked as id, created_at as at from public.person_blocks where blocker = app.current_person_id() order by created_at desc")).rows
-    .map((r): BlockedRow => ({ id: r.id, when: formatThaiDateTime(r.at) }));
+  const blocked = (await c.query<{ id: string; name: string; at: Date }>(
+    "select person_id as id, display_name as name, blocked_at as at from app.my_blocks()")).rows
+    .map((r): BlockedRow => ({ id: r.id, name: r.name, when: formatThaiDateTime(r.at) }));
   return { conns, blocked };
 });
 
 export interface QueueRow { id: string; target_kind: string; target_id: string; target_person: string; target_name: string | null;
   content: string | null; reason: string; note: string | null; created_at: Date; prior_actions: number }
-export interface SuspensionRow { person_id: string; reason: string; since: string }
+export interface SuspensionRow { person_id: string; name: string; reason: string; since: string }
 export const loadModeration = (authUserId: string) => asUser(authUserId, async (c) => ({
   queue: (await c.query<QueueRow>(
     `select id, target_kind, target_id, target_person, target_name, content, reason, note, created_at, prior_actions::int as prior_actions
        from app.moderation_queue()`)).rows.map((r) => ({ ...r, when: formatThaiDateTime(r.created_at) })),
-  suspensions: (await c.query<{ person_id: string; reason: string; created_at: Date }>(
-    "select person_id, reason, created_at from public.community_suspensions where until is null or until > now() order by created_at desc")).rows
-    .map((r): SuspensionRow => ({ person_id: r.person_id, reason: r.reason, since: formatThaiDateTime(r.created_at) })),
+  suspensions: (await c.query<{ person_id: string; display_name: string; reason: string; created_at: Date }>(
+    "select person_id, display_name, reason, created_at from app.suspensions_list() where until is null or until > now()")).rows
+    .map((r): SuspensionRow => ({ person_id: r.person_id, name: r.display_name, reason: r.reason, since: formatThaiDateTime(r.created_at) })),
 }));

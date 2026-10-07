@@ -2,11 +2,11 @@
 // comments, mute, block, report -> admin moderation (remove content / suspend / lift). FICTIONAL data in a throwaway DB.
 import { chromium } from "playwright-core";
 import { readFileSync } from "node:fs";
-import { sql, grantRole } from "./seed.mjs";
+import { sql, grantRole, seedVerifiedTemple } from "./seed.mjs";
 
 // seed.mjs#seedVerifiedTemple currently violates temple_field_values_check (verified_by is required), so this spec inserts a plain
 // approved temple itself; community permissions only need an active membership, not the temple's field data.
-const seedTemple = () => sql("insert into public.temples(slug, name_th, status, is_listed, province) values ('community-test', 'วัดทดสอบระบบ', 'approved', true, 'จังหวัดทดสอบ') returning id").split("\n")[0];
+const seedTemple = () => seedVerifiedTemple("community-test", "วัดทดสอบระบบ");
 
 const [chrome, shots, LOG] = process.argv.slice(2);
 const BASE = process.env.BASE ?? "http://localhost:3000";
@@ -188,7 +188,7 @@ await go(A, "/community/connections");
 ok((await text(A)).includes("เชื่อมต่อกันแล้ว (0)"), "block removed the connection");
 await go(B, "/community/connections");
 t = await text(B);
-ok(t.includes("คนที่บล็อก (1)"), "blocked list shows one entry");
+ok(t.includes("คนที่บล็อก (1)") && t.includes(NA), "blocked list shows one entry with the person's name");
 await shot(B, "c-11-blocked-list");
 await B.click("button:has-text('ยกเลิกการบล็อก')");
 await B.waitForSelector("text=คุณยังไม่ได้บล็อกใคร");

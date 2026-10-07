@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Ineligible } from "@/components/community/ineligible";
 import { ListActions } from "@/components/community/people";
 import { Notice } from "@/components/ui";
-import { shortId } from "@/lib/community";
 import { checkGate, loadConnections, type ConnRow } from "../data";
 import s from "@/components/community/community.module.css";
 
@@ -46,10 +45,9 @@ export default async function ConnectionsPage() {
         <h2 id="bl-h" style={{ margin: 0 }}>คนที่บล็อก ({data.blocked.length})</h2>
         {data.blocked.length === 0 ? <p className="lead" style={{ margin: 0 }}>คุณยังไม่ได้บล็อกใคร</p> : (
           <>
-            <p className="meta" style={{ margin: 0 }}>เพื่อความเป็นส่วนตัว ระบบไม่แสดงชื่อของคนที่ถูกบล็อก แสดงเพียงรหัสสั้นและวันที่บล็อก</p>
             <ul className="list">{data.blocked.map((b) => (
               <li key={b.id} className="card"><div className={s.item}>
-                <div><span className={s.itemName}>ผู้ใช้ที่ถูกบล็อก (รหัส {shortId(b.id)})</span><p className={s.when}>บล็อกเมื่อ {b.when}</p></div>
+                <div><span className={s.itemName}>{b.name}</span><p className={s.when}>บล็อกเมื่อ {b.when}</p></div>
                 <ListActions kind="blocked" id={b.id} />
               </div></li>
             ))}</ul>
