@@ -25,7 +25,7 @@ const sun = new THREE.DirectionalLight(0xffc48a, 3.2); sun.position.set(90, 38, 
 sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -80, right: 80, top: 80, bottom: -80, near: 1, far: 300 }); sun.shadow.bias = -0.0005; scene.add(sun);
 const cam = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, .5, 800);
 const ctl = new OrbitControls(cam, r.domElement); ctl.enableDamping = true; ctl.maxPolarAngle = Math.PI / 2 - .02;
-const V = { wide: [[70, 45, 95], [0, 18, 0]], close: [[28, 30, 34], [0, 28, 0]], top: [[0.01, 150, 0.01], [0, 0, 0]] }[view] || [[70, 45, 95], [0, 18, 0]];
+const V = { wide: [[70, 45, 95], [0, 18, 0]], close: [[30, 24, 44], [0, 17, 0]], top: [[0.01, 150, 0.01], [0, 0, 0]] }[view] || [[70, 45, 95], [0, 18, 0]];
 cam.position.set(...V[0]); ctl.target.set(...V[1]); ctl.update();
 new GLTFLoader().load('../../../assets/3d/wat-arun/wat-arun-stylized.glb', g => {
   g.scene.traverse(o => { if (o.isMesh) { let n = '', a = o; while (a && !n.includes('_LOD')) { n = a.name || ''; a = a.parent; } const isL0 = n.includes('_LOD0'), isL1 = n.includes('_LOD1'); o.visible = lod ? isL1 : isL0; o.castShadow = true; o.receiveShadow = true; } });

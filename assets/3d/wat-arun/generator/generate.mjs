@@ -12,7 +12,7 @@ const OUT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'wa
 const C = h => new THREE.Color(h);
 // Material table: colours are baked in vertex colours; materials differ in PBR params only.
 const MATS = {
-  MOSAIC:{r:.55,m:0}, GOLD:{r:.3,m:.85}, ROOF:{r:.6,m:0}, STONE:{r:.85,m:0}, WALL:{r:.7,m:0},
+  MOSAIC:{r:.55,m:0}, GOLD:{r:.4,m:.3}, ROOF:{r:.6,m:0}, STONE:{r:.85,m:0}, WALL:{r:.7,m:0},
   WATER:{r:.12,m:.1}, GROUND:{r:.95,m:0}, WOOD:{r:.7,m:0}, FOLIAGE:{r:.9,m:0},
 };
 const MAT_KEYS = Object.keys(MATS);
@@ -48,28 +48,28 @@ class Part { constructor(){ this.items = []; }
 function prang(P, s, D, tiers) {
   const mosaic = { accents:[PAL.blue,PAL.teal,PAL.terra,PAL.rose,PAL.gold], rate:.22, jitter:.05, cell:.9*s };
   // terraces
-  let y = 0; const tw = [14,11.5,9.4].map(w=>w*s);
+  let y = 0; const tw = [26,22,18.5].map(w=>w*s);
   tw.forEach((w,i)=>{ const h=.9*s; P.add('STONE', box(w,h,w,0,y,0), PAL.stone, {jitter:.03}); y+=h; });
   // tiers
-  let w = 7.6*s; const th = 5.6*s*(tiers>5?1:1.25);
+  let w = 15.5*s; const th = 4.7*s*(tiers>5?1:1.2);
   for (let i=0;i<tiers;i++) {
-    const wt = w*0.8; const h = th*(1-i*0.06);
+    const wt = w*0.8; const h = th*(1-i*0.05);
     P.add('MOSAIC', frustum(w, wt, h, y, 4), PAL.white, mosaic);
     if (D.orn) { // band + cornice
       P.add('WALL', box(w*1.04,.28*s,w*1.04,0,y+h-.05*s,0), PAL.warm, {jitter:.02});
       // niche panels on each face
       for (let f=0; f<4; f++) { const a=f*Math.PI/2; const g=box(w*.34,h*.55,.22*s,0,y+h*.18,w*.5*.92); place(g,0,0,0,a); P.add('GOLD', g, PAL.gold, {jitter:.03}); }
       // corner mini-prangs (khmer tier ornaments)
-      if (i < tiers-1) for (let q=0;q<4;q++) { const a=q*Math.PI/2+Math.PI/4, rr=w*.5*Math.SQRT2*.82; const x=Math.cos(a)*rr, z=Math.sin(a)*rr;
-        P.add('MOSAIC', place(frustum(w*.18,w*.1,h*.5,0,4),x,y+h,z), PAL.white, mosaic);
-        P.add('GOLD', cone(w*.06,h*.4,x,y+h+h*.5,z,D.seg), PAL.gold, {jitter:.02}); }
+      if (i < tiers-1) for (let q=0;q<4;q++) { const a=q*Math.PI/2+Math.PI/4, rr=w*.5*Math.SQRT2*.80; const x=Math.cos(a)*rr, z=Math.sin(a)*rr;
+        P.add('MOSAIC', place(frustum(w*.2,w*.12,h*.55,0,4),x,y+h,z), PAL.white, mosaic);
+        P.add('GOLD', cone(w*.07,h*.5,x,y+h+h*.55,z,D.seg), PAL.gold, {jitter:.02}); }
     }
     y += h; w = wt*0.94;
   }
   // crown: lathe bell + spire
-  const prof = [[0,0],[.5,0],[.62,.35],[.5,1.0],[.3,1.7],[.22,2.2],[0,2.5]].map(([r,yy])=>new THREE.Vector2(r*w*.9, yy*w*.55));
+  const prof = [[0,0],[.5,0],[.66,.3],[.58,.8],[.38,1.5],[.2,2.1],[0,2.6]].map(([r,yy])=>new THREE.Vector2(r*w*.9, yy*w*.7));
   P.add('MOSAIC', place(new THREE.LatheGeometry(prof, D.seg*2), 0, y, 0), PAL.white, mosaic);
-  const y2 = y + 2.5*w*.55;
+  const y2 = y + 2.6*w*.7;
   P.add('GOLD', place(new THREE.CylinderGeometry(w*.04,w*.12,w*.5,D.seg),0,y2+w*.25-w*.05,0), PAL.gold, {jitter:.02});
   P.add('GOLD', cone(w*.1,w*.5,0,y2+w*.45,0,D.seg), PAL.gold, {jitter:.02});
   // vajra-like finial
@@ -100,7 +100,7 @@ function ubosot(P, D) { // hall with two-tier sweeping roof
 }
 function groundPart(P, D) {
   P.add('GROUND', box(112,1.2,112,0,-1.2,0), PAL.ground, {jitter:.03, cell:3});
-  P.add('STONE', box(60,.1,60,0,0,0), PAL.stone, {jitter:.03, cell:1.5}); // inner court
+  P.add('STONE', box(60,.1,60,0,0,0), C('#d6c9ae'), {jitter:.03, cell:1.5}); // inner court
   P.add('STONE', box(8,.12,50,0,0,-30), PAL.warm, {cell:1.5});
   // trees
   const n = D.orn ? 56 : 14; seed = 99;
@@ -118,8 +118,8 @@ function riverPart(P, D) {
 
 // ---- assemble
 const LOD = [
-  { orn:true,  seg:12, tiers:7 },
-  { orn:false, seg:5,  tiers:5 },
+  { orn:true,  seg:16, tiers:6 },
+  { orn:false, seg:6,  tiers:4 },
 ];
 function build(code, fn, lod) { const P = new Part(); const h = fn(P, LOD[lod]); return { P, h }; }
 function toMesh(name, P) {
@@ -135,12 +135,12 @@ const SHARED = {}; MAT_KEYS.forEach(k=>{ SHARED[k]=new THREE.MeshStandardMateria
 const scene = new THREE.Scene(); scene.name = 'WAT-ARUN';
 const specs = [
   ['WAT-ARUN.PRANG.MAIN', [0,0,0], (P,D)=>prang(P,1.0,D,D.tiers), ],
-  ['WAT-ARUN.PRANG.SAT-01', [16,0,16], (P,D)=>prang(P,.42,D,Math.min(D.tiers,4))],
-  ['WAT-ARUN.PRANG.SAT-02', [-16,0,16], (P,D)=>prang(P,.42,D,Math.min(D.tiers,4))],
-  ['WAT-ARUN.PRANG.SAT-03', [-16,0,-16], (P,D)=>prang(P,.42,D,Math.min(D.tiers,4))],
-  ['WAT-ARUN.PRANG.SAT-04', [16,0,-16], (P,D)=>prang(P,.42,D,Math.min(D.tiers,4))],
-  ['WAT-ARUN.MANDAPA.01', [0,0,24], mandapa], ['WAT-ARUN.MANDAPA.02', [24,0,0], mandapa],
-  ['WAT-ARUN.MANDAPA.03', [0,0,-24], mandapa], ['WAT-ARUN.MANDAPA.04', [-24,0,0], mandapa],
+  ['WAT-ARUN.PRANG.SAT-01', [18,0,18], (P,D)=>prang(P,.5,D,Math.min(D.tiers,4))],
+  ['WAT-ARUN.PRANG.SAT-02', [-18,0,18], (P,D)=>prang(P,.5,D,Math.min(D.tiers,4))],
+  ['WAT-ARUN.PRANG.SAT-03', [-18,0,-18], (P,D)=>prang(P,.5,D,Math.min(D.tiers,4))],
+  ['WAT-ARUN.PRANG.SAT-04', [18,0,-18], (P,D)=>prang(P,.5,D,Math.min(D.tiers,4))],
+  ['WAT-ARUN.MANDAPA.01', [0,0,30], mandapa], ['WAT-ARUN.MANDAPA.02', [30,0,0], mandapa],
+  ['WAT-ARUN.MANDAPA.03', [0,0,-30], mandapa], ['WAT-ARUN.MANDAPA.04', [-30,0,0], mandapa],
   ['WAT-ARUN.UBOSOT', [-2,0,-42], ubosot],
   ['WAT-ARUN.GROUND', [0,0,0], groundPart],
   ['WAT-ARUN.RIVER', [80,0,0], riverPart],
