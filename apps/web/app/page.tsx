@@ -14,7 +14,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ q
       <p className="lead">พิมพ์ชื่อวัดหรือจังหวัด แล้วกดค้นหา เพื่อดูข้อมูลวัดและที่จอดรถ</p>
       <form className="search" role="search" action="/">
         <label htmlFor="q" className="sr-only" style={{ position: "absolute", left: -9999 }}>ชื่อวัดหรือจังหวัด</label>
-        <input id="q" name="q" className="input" defaultValue={q} placeholder="เช่น วัดอรุณ หรือ นนทบุรี" />
+        <input id="q" name="q" className="input" defaultValue={q} placeholder="พิมพ์ชื่อวัด หรือ ชื่อจังหวัด" />
         <button className="btn btn-primary" type="submit"><Search aria-hidden />ค้นหา</button>
       </form>
       {temples === null ? (

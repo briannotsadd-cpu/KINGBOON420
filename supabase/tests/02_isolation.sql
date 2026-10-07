@@ -45,6 +45,9 @@ begin
           when 'monastic_activity_ledger' then format('insert into monastic_activity_ledger(temple_id, person_id, amount, reason, idempotency_key) values (%L, %L, 5, ''x'', ''k'')', B, me)
           when 'parking_lots' then format('insert into parking_lots(temple_id, code, name_th) values (%L, ''PX'', ''x'')', B)
           when 'parking_status_reports' then format('insert into parking_status_reports(temple_id, lot_id, status, reported_by) values (%L, ''bbbbbbbb-0000-0000-0000-0000000000e1'', ''FULL'', %L)', B, me)
+          when 'data_sources' then format('insert into data_sources(temple_id, source_type, source_name) values (%L, ''temple_admin_entry'', ''x'')', B)
+          when 'temple_field_values' then format('insert into temple_field_values(temple_id, field_key, value, source_id, status) select %L, ''temple.name_th'', ''"x"'', id, ''DISCOVERED'' from data_sources limit 1', B)
+          when 'temple_field_value_history' then format('insert into temple_field_value_history(temple_id, value_id, field_key, action, actor) values (%L, gen_random_uuid(), ''x'', ''x'', ''x'')', B)
           else null end;
       exception when insufficient_privilege then ok := true;
                 when others then raise exception 'role % table %: write into B failed with % (%), expected 42501', r.code, ins, sqlstate, sqlerrm;
