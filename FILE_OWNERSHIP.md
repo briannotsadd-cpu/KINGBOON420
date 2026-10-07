@@ -1,0 +1,39 @@
+# FILE OWNERSHIP — BOON SYSTEM
+
+One writer per path. An agent may **read** anything, but may **write** only its paths. To change a file owned
+by someone else, write a proposal in your own output; Opus applies it. Agents do not commit or push — Opus does.
+
+Current wave: **Wave 1** (updated 2026-10-07).
+
+## Active locks
+
+| Path | Owner | Wave | Lock |
+|---|---|---|---|
+| `docs/master/**` | Opus (Lead Orchestrator) | all | permanent |
+| `FILE_OWNERSHIP.md`, `README.md`, `docs/adr/**` | Opus | all | permanent |
+| `docs/research/**` | Agent 01 — Product Research | 1a | active |
+| `docs/domain/core/**`, `docs/domain/GLOSSARY.md` | Agent 02 — Temple Domain | 1a | active |
+| `docs/domain/workforce/**` | Agent 17 — Temple Workforce | 1a | active |
+| `docs/domain/facility/**` | Agent 18 — Facility / Asset | 1a | active |
+| `docs/domain/events/**` | Agent 19 — Ceremony / Event Operations | 1a | active |
+| `docs/ux/**` | Agent 03 — UX Architecture | 1b | reserved (starts after 1a review) |
+| `docs/reviews/wave-1/**` | Agent 20 — Governance Auditor | 1b | reserved |
+
+## Reserved for later waves (no writes yet)
+
+| Path | Planned owner | Wave |
+|---|---|---|
+| `docs/design/**`, `packages/ui/**` | Agent 04 | 2 |
+| `docs/3d/**`, `assets/3d/**`, `packages/temple-scene/**` | Agent 05 | 2 / 5 |
+| `supabase/migrations/**`, `supabase/tests/**`, `supabase/seed/**` | Agent 08 | 2–3 |
+| `docs/security/**` | Agent 13 | 2 |
+| `.github/**`, `turbo.json`, root `package.json`, `pnpm-workspace.yaml` | Agent 16 | 2 |
+| `apps/web/**` (split by route group when parallel) | Agent 06 | 3+ |
+| `apps/web/src/server/**`, `supabase/functions/**` | Agent 07 | 3+ |
+| `packages/domain/**` (pure domain logic: availability resolver, quest FSM, readiness) | Agent 02 → 11 | 3+ |
+| `tests/e2e/**` | Agent 14 | 3+ |
+
+## Conflict rule
+
+If two agents need the same file, Opus splits the file or sequences the work. No agent edits a locked path,
+even "just one line".
