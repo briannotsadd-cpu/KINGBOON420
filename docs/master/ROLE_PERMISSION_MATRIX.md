@@ -1,6 +1,6 @@
 # ROLE & PERMISSION MATRIX — BOON SYSTEM
 
-Status: **v0.2 (Wave 1 gate, Opus)** — incorporates Agents 01/17/18/19 findings. Source of truth for grants: [`role_permissions.yaml`](role_permissions.yaml). Model: **RBAC + scoped permissions, per temple** (spec §30).
+Status: **v0.3 (Wave 1 gate, Opus)** — incorporates Wave 1a findings and the governance audit (Agent 20). Source of truth for grants: [`role_permissions.yaml`](role_permissions.yaml). Model: **RBAC + scoped permissions, per temple** (spec §30).
 
 ## 1. Model
 
@@ -10,15 +10,19 @@ person ──< membership(temple_id) ──< membership_roles >── roles(temp
 roles ──< role_permissions(permission_code, scope)
 ```
 
-- A permission grant is `(permission_code, scope)`. Scope ∈ `self ⊂ team ⊂ department ⊂ temple`.
+- A permission grant is `(permission_code, scope[(condition)])`. Scope chain `self ⊂ department ⊂ temple`, with
+  orthogonal modifiers A (assigned-only), P (public-only), C (counts/coarse). The *team* scope was removed at the
+  Wave 1 gate (no data model). Conditions come from a closed list (`condition_keys` in the YAML).
+- Validator + renderer: `python3 docs/master/tools/role_matrix.py --check` (enforces known roles, scope grammar,
+  and invariants: samanera holds no management permission; monastics hold no lay-only permission
+  (`finance.approve`, `reward.manage`, community capabilities); undertaker is assigned-only; audit is abbot-only).
 - Effective permission = union over all roles of the membership in the **active temple only**. Nothing carries
   across temples.
 - System role templates (below) are copied into a temple on onboarding; a temple may rename or extend them but
-  cannot grant a permission marked **restricted** (`finance.approve`, `member.manage`, `temple.settings`,
-  `audit.view`) without an abbot-level approval that is itself audited.
+  cannot grant any permission marked 🔒 **restricted** (the YAML `restricted` list) without an abbot-level approval that is itself audited.
 - The client uses permissions only to hide UI. **Authority is enforced in the database (RLS + SECURITY DEFINER
   functions) and API.**
-- Mode: `monastic_kind <> none` → **Monastic Mode**; otherwise **Community & Staff Mode**. A lay staff role never
+- Mode is **per membership**: a membership with a temple-attested `monastic_kind` (decision F-04) → **Monastic Mode**; otherwise **Community & Staff Mode**. A lay staff role never
   switches someone into Monastic Mode, and a monastic never gets community boon points.
 
 ## 2. Roles
@@ -28,7 +32,7 @@ roles ──< role_permissions(permission_code, scope)
 | Code | Thai | Notes |
 |---|---|---|
 | `abbot` | เจ้าอาวาส | Full temple authority; Command Center |
-| `deputy_abbot` | รองเจ้าอาวาส | As abbot minus `temple.settings` restricted items unless delegated |
+| `deputy_abbot` | รองเจ้าอาวาส | Most abbot grants; exact differences are in the YAML (no finance, audit, asset/vehicle manage) |
 | `abbot_assistant` | ผู้ช่วยเจ้าอาวาส | Operations management |
 | `monk_secretary` | พระเลขานุการ | Invitations, schedules, assignment proposals, reports |
 | `bhikkhu` | พระภิกษุ | My Day, quests, own availability, own schedule |
@@ -110,16 +114,17 @@ roles ──< role_permissions(permission_code, scope)
 
 ## 4. Matrix (scope per role)
 
-Legend: **T** temple · **D** department · **Tm** team · **S** self · **A** assigned-only · **P** public items
-only · **C** counts/coarse states only (ว่าง / ไม่ว่าง / ไม่ทราบ — never reasons such as PERSONAL) · `(delegated)` only if
-the abbot delegates it in temple settings · 🔒 restricted · — none.
+Legend: **T** temple · **D** department · **S** self · **A** assigned-only · **P** public items only · **C** counts/
+coarse states only (ว่าง / ไม่ว่าง / ไม่ทราบ — never reasons such as PERSONAL) · `(condition)` from `condition_keys` ·
+🔒 restricted · — none. Legacy v0.1 footnotes in domain specs map as: T¹ = P · T³ = C · T⁴ = C · T⁶ = T(monastics_only)
+· D⁵ = D(panel_staff)/D.
 
 <!-- GENERATED from role_permissions.yaml — do not edit the table by hand -->
 | Permission | abbot | deputy | asst | secr | bhik | sam | visit | waiya | fac_mgr | tech | dept_lead | house | kitchen | garden | driver | cer_lead | cer_team | undert | office | acct | t_admin | guard | traffic | staff | t_boy | resident | vol | comm |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | `quest.view` | T | T | T | T | S+P | S | S+P | D | D | A | D | A | A | A | A | D | A | A | D | A | A | A | A | A | A | A+P | A+P | P |
 | `quest.create` | T | T | T | T | S | — | — | — | D | — | D | — | — | — | — | D | — | — | D | — | — | — | — | — | — | — | — | — |
-| `quest.request` | — | — | — | — | T | T | — | — | — | T | — | T | T | T | T | — | — | — | T | — | — | T | — | T | — | — | — | — |
+| `quest.request` | — | — | — | — | T | — | — | — | — | T | — | T | T | T | T | — | — | — | T | — | — | T | — | T | — | — | — | — |
 | `quest.assign` | T | T | T | T | — | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | — | — | — | — | — | — | — | — |
 | `quest.complete` | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S |
 | `quest.verify` | T | T | T | T | — | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | — | — | — | — | — | — | — | — |
@@ -132,21 +137,21 @@ the abbot delegates it in temple settings · 🔒 restricted · — none.
 | `invitation.manage` | T | T | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — |
 | `invitation.confirm` 🔒 | T | T | T | T(delegated) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 | `ceremony.confirm_monks` 🔒 | T | T | T | T(delegated) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| `funeral.assigned.view` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | D | A | A | — | — | — | — | — | — | — | — | — | — |
-| `funeral.register.view` 🔒 | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T(create/edit) | — | — | — | — | — | — | — | — | — |
+| `funeral.assigned.view` | T | T | T | T | A | A | — | — | — | — | — | — | — | — | — | D | A | A | — | — | — | — | — | — | — | — | — | — |
+| `funeral.register.view` 🔒 | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T(create_edit) | — | — | — | — | — | — | — | — | — |
 | `schedule.view` | T | T | T | T | S+P | S+P | S+P | S | P | S | S | S | S | S | S | P | S | S | T | S | S | S | S | S | S | S | S | P |
-| `schedule.manage` | T | T | T | T | — | — | — | — | — | — | — | — | — | — | — | D(ceremony kind) | — | — | T | — | — | — | — | — | — | — | — | — |
+| `schedule.manage` | T | T | T | T | — | — | — | — | — | — | — | — | — | — | — | D(kind_ceremony) | — | — | T | — | — | — | — | — | — | — | — | — |
 | `availability.view` | T | T | T | T | C | — | — | — | — | — | — | — | — | — | A | C | — | — | C | — | — | — | — | — | — | — | — | — |
 | `availability.set_self` | S | S | S | S | S | S | S | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 | `availability.set_others` | T | T | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| `presence.view` | T | T | T | — | — | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | T | — | — | — | — | — | — | — |
+| `presence.view` | T | T | T | — | — | — | — | C | D | C | D | C | C | C | C | D | C | C | C | C | T | C | C | C | C | — | — | — |
 | `presence.set_self` | — | — | — | — | — | — | — | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | — |
-| `presence.set_others` | — | — | — | — | — | — | — | — | D | — | D | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — |
+| `presence.set_others` | T | T | T | — | — | — | — | — | D | — | D | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — |
 | `shift.manage` | — | — | — | — | — | — | — | — | D | — | D | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — |
 | `headcount.view` | T | T | T | T | — | — | — | — | — | — | D | — | D | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 | `headcount.adjust` | — | — | — | — | — | — | — | — | — | — | D | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| `command_center.view` | T | T | T | T | — | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | D(staff panel) | — | — | — | — | — | — | — |
-| `member.view` | T | T | T | T | T(monastics) | — | — | T | D | Tm | D | Tm | Tm | Tm | Tm | D | Tm | — | T | — | T | Tm | Tm | Tm | Tm | — | — | — |
+| `command_center.view` | T | T | T | T | — | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | D(panel_staff) | — | — | — | — | — | — | — |
+| `member.view` | T | T | T | T | T(monastics_only) | — | — | T | D | D | D | D | D | D | D | D | D | — | T | — | T | D | D | D | D | — | — | — |
 | `member.manage` 🔒 | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — |
 | `asset.view` | T | T | T | — | — | — | — | T | T | T | D | A | A | A | A | D | A | A | — | T | — | A | A | — | A | — | — | — |
 | `asset.manage` | T | — | — | — | — | — | — | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
@@ -157,30 +162,42 @@ the abbot delegates it in temple settings · 🔒 restricted · — none.
 | `inventory.manage` | — | — | — | — | — | — | — | — | T | — | D | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 | `vehicle.view` | T | T | T | T | — | — | — | — | T | — | — | — | — | — | A | — | — | — | T | — | — | — | — | — | — | — | — | — |
 | `vehicle.manage` | T | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| `finance.view` 🔒 | T | T | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — |
-| `finance.approve` 🔒 | T | — | — | — | — | — | — | T(explicit grant) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `finance.view` 🔒 | T | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — |
+| `finance.approve` 🔒 | — | — | — | — | — | — | — | T(explicit_grant) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 | `points.award_community` | T | T | T | T | — | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | — | — | — | — | — | — | — | — |
-| `reward.manage` | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — |
+| `reward.manage` | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — |
 | `moderation.manage` | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — |
 | `contact_inbox.manage` | T | T | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — |
 | `community.participate` | — | — | — | — | — | — | — | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S |
+| `community.p2p_chat` | — | — | — | — | — | — | — | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S |
+| `community.calls` | — | — | — | — | — | — | — | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S |
+| `community.public_profile` | — | — | — | — | — | — | — | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S |
 | `security.log` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | S | S | — | — | — | — | — |
-| `security.incident.view` 🔒 | T | — | — | — | — | — | — | — | T | — | D(security) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `security.log.view` 🔒 | T | T | — | — | — | — | — | — | — | — | D(dept_security) | — | — | — | — | — | — | — | — | — | — | D | D | — | — | — | — | — |
+| `security.incident.view` 🔒 | T | T | — | — | — | — | — | — | — | — | D(dept_security) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 | `document.view` | T | T | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T | T | — | — | — | — | — | — | — | — |
 | `document.manage` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — |
 | `booking.manage` | — | — | — | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — |
 | `report.view` | T | T | T | T | — | — | — | T | D | — | D | — | — | — | — | D | — | — | T | T | — | — | — | — | — | — | — | — |
 | `audit.view` 🔒 | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| `temple.settings` 🔒 | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T(non-restricted only) | — | — | — | — | — | — | — |
+| `temple.settings` 🔒 | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T(non_restricted) | — | — | — | — | — | — | — |
+
+<!-- 59 permissions × 28 roles -->
 
 Rules that the table cannot express:
 1. **Minor flag overrides roles:** a membership flagged `minor` never gets person-to-person chat, calls or a
    public profile, whatever the role (`minor_overrides` in the YAML; PDPA s.20 per Agent 01).
-2. `waiyawatchakon` `finance.approve` requires an explicit, audited grant by the abbot; default off.
+2. **Money is lay-only (decision F-02, Vinaya per Agent 01; monk-advisor confirmation pending):** `finance.approve`
+   and `reward.manage` are never granted to a monastic role; the abbot keeps `finance.view` for oversight.
+   `waiyawatchakon` `finance.approve` requires an explicit, audited grant; default off.
 3. Trip creation from a CONFIRMED invitation is a system action on behalf of the confirming human;
    `facility_manager` assigns vehicle and driver (Agent 18). A driver sees passenger names only for own trips.
 4. `kitchen_staff` `headcount.view` shows the aggregate range only, never individual monk states.
 5. `bhikkhu` `member.view` T covers the monastic directory only; lay contact details need `member.view` ≥ D.
+6. `funeral.assigned.view` shows the rite list with alias names only; deceased/family data needs
+   `funeral.register.view` 🔒.
+7. Roles proposed and **rejected**: `staff_supervisor`, `event_department_lead`, `kitchen_lead` — all expressed as
+   `department_lead` scoped to a department. Samanera do not hold `quest.request` (minors; R-22).
 
 Cross-check rule: `undertaker` sees only funeral ceremonies they are assigned to (A); deceased and family data
 is masked outside that assignment.
