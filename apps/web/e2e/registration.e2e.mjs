@@ -26,7 +26,7 @@ async function login(page, email, name) {
 async function clickIn(loc, label, expect) {
   await loc.locator(`button:has-text("${label}")`).first().click();
   try { await loc.page().waitForSelector(`text=${expect}`, { timeout: 15000 }); }
-  catch (e) { console.error("HOME-WHILE-STUCK:", execSync("curl -s -m 10 -o /dev/null -w '%{http_code} %{time_total}s' http://localhost:3000/").toString()); console.error("CONNS:", execSync(`psql -h localhost -p 54322 -U postgres -d boon -Atc "select count(*)||' conns, '||count(*) filter (where state like 'idle in%')||' idle-in-tx' from pg_stat_activity where datname='boon'"`).toString()); console.error("DBSTATE:", execSync(`psql -h localhost -p 54322 -U postgres -d boon -Atc "select field_key||'='||status from temple_field_values order by created_at; select state||' | '||wait_event_type||' | '||left(query,90) from pg_stat_activity where datname='boon' and pid<>pg_backend_pid()"`).toString()); console.error("URL:", loc.page().url()); console.error("FIELD:", (await loc.textContent()).slice(0, 600)); throw e; }
+  catch (e) { console.error("HOME-WHILE-STUCK:", execSync(`curl -s -m 10 -o /dev/null -w '%{http_code} %{time_total}s' ${BASE}/`).toString()); console.error("CONNS:", execSync(`psql -h localhost -p 54322 -U postgres -d ${process.env.E2E_DB ?? 'boon'} -Atc "select count(*)||' conns, '||count(*) filter (where state like 'idle in%')||' idle-in-tx' from pg_stat_activity where datname='${process.env.E2E_DB ?? 'boon'}'"`).toString()); console.error("DBSTATE:", execSync(`psql -h localhost -p 54322 -U postgres -d ${process.env.E2E_DB ?? 'boon'} -Atc "select field_key||'='||status from temple_field_values order by created_at; select state||' | '||wait_event_type||' | '||left(query,90) from pg_stat_activity where datname='${process.env.E2E_DB ?? 'boon'}' and pid<>pg_backend_pid()"`).toString()); console.error("URL:", loc.page().url()); console.error("FIELD:", (await loc.textContent()).slice(0, 600)); throw e; }
 }
 
 // 1 empty + honest
@@ -118,8 +118,11 @@ ok(!t.includes("02 000 0001") && !t.includes("02 000 0002"), "phone not shown: c
 await shot(v, "v-09-public-temple");
 
 // 7 database down
-execSync("bash ../../supabase/dev/local-db.sh stop", { stdio: "ignore" });
+// Only THIS suite's database becomes unreachable (other suites may share the cluster): refuse + drop its connections.
+const DBN = process.env.E2E_DB ?? "boon";
+const pgc = (sql) => execSync(`psql -X -q -h localhost -p 54322 -U postgres -d postgres -c "${sql}"`, { stdio: "ignore" });
+pgc(`alter database ${DBN} allow_connections false`); pgc(`select pg_terminate_backend(pid) from pg_stat_activity where datname = '${DBN}'`);
 await v.goto(BASE + "/"); ok((await text(v)).includes("ตอนนี้ดึงข้อมูลวัดไม่ได้"), "DB down: clear message");
-execSync("bash ../../supabase/dev/local-db.sh start", { stdio: "ignore" });
+pgc(`alter database ${DBN} allow_connections true`);
 await browser.close();
 console.log("E2E VERIFICATION PASSED");
