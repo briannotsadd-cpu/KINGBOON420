@@ -17,7 +17,8 @@ sh "$PGBIN/pg_ctl -D $WORK/data -o \"-p $PORT -k $WORK -c listen_addresses=''\" 
 PSQL="$PGBIN/psql -X -q -v ON_ERROR_STOP=1 -h $WORK -p $PORT -U postgres"
 sh "$PGBIN/createdb -h $WORK -p $PORT -U postgres boon_test"
 run() { echo "== $1"; local out rc=0; out="$(sh "$PSQL -d boon_test -f $2" 2>&1)" || rc=$?; [ -n "$out" ] && echo "$out"; [ $rc = 0 ] || { echo "FAILED: $1"; exit 1; }; }
-for f in "$ROOT"/supabase/migrations/*.sql; do run "migration $(basename "$f")" "$f"; done
+MIG="${MIGRATIONS_DIR:-$ROOT/supabase/migrations}"
+for f in "$MIG"/*.sql; do run "migration $(basename "$f")" "$f"; done
 for f in "$ROOT"/supabase/seed/*.sql; do run "seed $(basename "$f")" "$f"; done
 # fictional demo data for tests only - never loaded by the dev/prod database
 for f in "$ROOT"/supabase/tests/fixtures/*.sql; do run "fixture $(basename "$f")" "$f"; done

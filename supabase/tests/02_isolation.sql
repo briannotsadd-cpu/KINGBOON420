@@ -48,6 +48,7 @@ begin
           when 'data_sources' then format('insert into data_sources(temple_id, source_type, source_name) values (%L, ''temple_admin_entry'', ''x'')', B)
           when 'temple_field_values' then format('insert into temple_field_values(temple_id, field_key, value, source_id, status) select %L, ''temple.name_th'', ''"x"'', id, ''DISCOVERED'' from data_sources limit 1', B)
           when 'temple_field_value_history' then format('insert into temple_field_value_history(temple_id, value_id, field_key, action, actor) values (%L, gen_random_uuid(), ''x'', ''x'', ''x'')', B)
+          when 'temple_contact_threads' then format('insert into temple_contact_threads(temple_id, ref_code, topic, message) values (%L, ''X1'', ''other'', ''hello there'')', B)
           else null end;
       exception when insufficient_privilege then ok := true;
                 when others then raise exception 'role % table %: write into B failed with % (%), expected 42501', r.code, ins, sqlstate, sqlerrm;

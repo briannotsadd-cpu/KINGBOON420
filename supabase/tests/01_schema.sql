@@ -1,6 +1,10 @@
 -- every tenant table has temple_id + enabled AND forced RLS; tenant->tenant FKs are composite on temple_id
 do $$
 declare t record; bad text := ''; n int := 0;
+  globals text[] := array['persons','temples','roles','permissions','role_permissions','platform_admins','data_field_catalog',
+    -- person-to-person community tables: RLS by participation, no tenant (DATABASE_PLAN.md:89-90)
+    'community_profiles','community_suspensions','connections','person_blocks','person_mutes','conversations','conversation_members',
+    'messages','community_posts','post_comments','moderation_reports','call_sessions','call_signals'];
 begin
   for t in select c.oid, c.relname, c.relrowsecurity, c.relforcerowsecurity,
                   exists (select 1 from pg_attribute a where a.attrelid = c.oid and a.attname = 'temple_id' and not a.attisdropped) as has_tid
@@ -8,7 +12,7 @@ begin
            where s.nspname = 'public' and c.relkind in ('r','p') loop
     n := n + 1;
     if not (t.relrowsecurity and t.relforcerowsecurity) then bad := bad || format(' [%s: RLS not enabled+forced]', t.relname); end if;
-    if not t.has_tid and t.relname not in ('persons','temples','roles','permissions','role_permissions','platform_admins','data_field_catalog') then
+    if not t.has_tid and not (t.relname = any (globals)) then
       bad := bad || format(' [%s: no temple_id and not an allowlisted global table]', t.relname); end if;
   end loop;
   perform test.assert(bad = '', 'schema rules violated:' || bad);
@@ -17,6 +21,7 @@ begin
            from pg_constraint c
            where c.contype = 'f' and c.connamespace = 'public'::regnamespace
              and c.confrelid::regclass::text not in ('temples','persons','roles','permissions','data_field_catalog')
+             and not (c.conrelid::regclass::text = any (globals))
              and not exists (select 1 from pg_attribute a where a.attrelid = c.conrelid and a.attname = 'temple_id' and a.attnum = any (c.conkey)) loop
     bad := bad || format(' [%s.%s not composite on temple_id]', t.tbl, t.conname);
   end loop;
