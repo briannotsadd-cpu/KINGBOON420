@@ -85,7 +85,7 @@ Act section numbers (e.g. s.31) against the Royal Gazette.
 
 ## Self-assessed readiness
 
-01–06 RESEARCHED (partial; 04 shallow) · 07 Personas RESEARCHED as HYPOTHESIS, unvalidated · 08 Field kit
+01–06 PLANNED — desk summary, sources unopened (relabelled per R-18; 04 shallow) · 07 Personas PLANNED as HYPOTHESIS, unvalidated · 08 Field kit
 DESIGNED (unused; needs Thai native, monk-advisor and lawyer review) · Field research BLOCKED.
 
 ## Blockers

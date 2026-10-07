@@ -2,7 +2,7 @@
 
 Owner: Agent 19. Status: **DESIGNED (paper)**; **requires Thai legal/PDPA review (D-5) before pilot**.
 Features: F-26 (ceremony team and undertaker views). Roles: `undertaker` (สัปเหร่อ), `ceremony_lead`, abbot-level,
-`office_staff`. Master rules used: undertaker sees **only funeral rites assigned to them**; deceased and family
+`office_staff`. Permission codes are exactly those of `docs/master/role_permissions.yaml` v0.3: `funeral.assigned.view` (T abbot/deputy/assistant/secretary; A rostered bhikkhu/samanera, undertaker, ceremony_team; D ceremony_lead; alias names only), `funeral.register.view` (restricted; abbot T, office_staff T create_edit), `ceremony.confirm_monks` (restricted). Master rules used: undertaker sees **only funeral rites assigned to them**; deceased and family
 data masked outside the assignment (`ROLE_PERMISSION_MATRIX.md` cross-check rule).
 
 ## 0. Evidence and honesty
@@ -42,10 +42,10 @@ States (`funeral_rite.status`): `RECEIVED → ARRANGING → CONFIRMED → IN_PRO
 
 | Step | Actor | Action | Data written |
 |---|---|---|---|
-| 1 Intake | office_staff (or abbot office) | Family contacts temple (by phone/in person; *Temple Contact* channel when via app); office creates `RECEIVED` record | deceased display name, family contact (1), requested dates/times, venue wish, rite wishes (free text, bounded) |
-| 2 Arrange | office + ceremony_lead + abbot-level | Choose sala/hall, crematorium slot (Agent 18 building), days of chanting, cremation date | rite schedule entries (restricted) |
-| 3 Roster | secretary/abbot confirm monks (same flow as Ceremony spec §6; `ceremony.confirm_monks`) | Monk team per chanting session and for cremation | `schedule_entries kind=ceremony`, `source_type='funeral_rite_session'` |
-| 4 Assign staff | ceremony_lead | Assign undertaker (สัปเหร่อ), ceremony_team, housekeeper, kitchen if meals, driver if transport | `funeral_assignments` (person, role, tasks) with `valid_until = closed_at + 7 d` |
+| 1 Intake | `office_staff` via `funeral.register.view` T (create/edit); abbot-level may also create through the same function | Family contacts temple (by phone/in person; *Temple Contact* channel when via app); office creates `RECEIVED` record | deceased display name, family contact (1), requested dates/times, venue wish, rite wishes (free text, bounded) |
+| 2 Arrange | `ceremony_lead` (`funeral.assigned.view` D, `quest.assign` D) with the abbot's decision recorded by `ceremony.confirm_monks` holders | Choose sala/hall, crematorium slot (Agent 18 building), days of chanting, cremation date | rite schedule entries (restricted) |
+| 3 Roster | holders of `ceremony.confirm_monks` (abbot, deputy, assistant; secretary if delegated) confirm monks, same flow as Ceremony spec §6 | Monk team per chanting session and for cremation | `schedule_entries kind=ceremony`, `source_type='event'`, `source_id = funeral_session id` (core's enum has no funeral value; a dedicated `funeral_session` value or a `restricted` flag on the row is an **open request to Agent 02**; the row exposes only kind, time and venue alias, never the rite name) |
+| 4 Assign staff | `ceremony_lead` (`quest.assign` D) | Assign undertaker (สัปเหร่อ), ceremony_team, housekeeper, kitchen if meals, driver if transport | `funeral_assignments` (person, role, tasks) with `valid_until = closed_at + 7 d` |
 | 5 Prepare | assignees | Checklist: hall, coffin stand, flowers (as family wishes), sound, chanting materials, crematorium readiness, guest seating, water/refreshments, parking | quests (`ceremony_task`) |
 | 6 Run | assignees | Sessions and cremation; status IN_PROGRESS | attendance headcount (optional number) |
 | 7 Complete | ceremony_lead | Mark COMPLETED; ash/remains handling task closed per family wishes (free text note, not data about remains) | |
@@ -69,26 +69,29 @@ one contact, payments/donations (finance domain, post-pilot).
 
 Legend: Y full · M masked (alias only / initials) · P partial (fields listed) · — none.
 
-| Role | Rite list | Deceased name | Family contact | Schedule & venue | Checklist | Monk roster | Register |
+| Role (YAML v0.3) | Rite list (`funeral.assigned.view`; **alias names only**) | Deceased name | Family contact | Schedule & venue | Checklist | Monk roster | Register (`funeral.register.view`) |
 |---|---|---|---|---|---|---|---|
-| abbot / deputy / assistant | all | Y | Y | Y | Y | Y | Y (abbot only; others M) |
-| monk_secretary | all | M | — | Y | — | Y | — |
-| office_staff (intake) | rites they created/in ARRANGING | Y | Y | Y | — | — | Y create/edit |
-| ceremony_lead | rites assigned to department lead | Y | P (first name + phone) | Y | Y | Y (names) | — |
-| undertaker | **assigned rites only** | Y | P (first name + phone, from CONFIRMED until closed_at) | Y (their sessions) | Y (their tasks) | P (number of monks and session times, no names unless needed) | — |
-| ceremony_team / housekeeper / kitchen / driver (assigned) | assigned rite only | M ("ผู้ล่วงลับ", initials) | — | Y (own tasks/time/venue) | own tasks | — | — |
-| bhikkhu / samanera (rostered) | own sessions | M | — | Y (time, venue) | — | — | — |
-| facility_manager / technician | — (sees only a maintenance quest if one is raised: "เตรียมสถานที่งานพิธี") | — | — | venue/time | — | — | — |
-| community_member / volunteer / others | — | — | — | — | — | — | — |
+| abbot / deputy_abbot / abbot_assistant / monk_secretary | **T**: all rites, listed as "งานฌาปนกิจ #ref" with time, venue, status | via register only (abbot) | — | Y | — (own tasks if assigned) | Y (names; roster confirmation needs `ceremony.confirm_monks`) | abbot Y T (audited read); others — |
+| bhikkhu / samanera | **A**: rites where rostered (own sessions) | — | — | Y own sessions | — | — | — |
+| office_staff (intake) | — | Y (writes at intake) | Y (writes at intake; no read-back after hand-over) | — | — | — | Y T create/edit |
+| ceremony_lead | **D**: rites in own department | Y (operational need) | P (first name + phone) | Y | Y | Y (names) | — |
+| undertaker | **A**: assigned rites only | Y | P (first name + phone, from CONFIRMED until `closed_at`) | Y (their sessions) | Y (their tasks) | P (number of monks and session times, no names) | — |
+| ceremony_team | **A**: assigned rites only | M ("ผู้ล่วงลับ", initials) | — | Y (own tasks/time/venue) | own tasks | — | — |
+| housekeeper / kitchen_staff / driver / other staff with a task | — no rite access; only their own quest (`quest.view` A) titled with the alias | — | — | own task time/venue | own task | — | — |
+| facility_manager / technician | — (only a maintenance quest "เตรียมสถานที่งานพิธี") | — | — | venue/time | — | — | — |
+| community_member / volunteer / lay_resident / others | — | — | — | — | — | — | — |
 | accountant / platform_admin | — (platform_admin: no implicit access; break-glass audited) | — | — | — | — | — | — |
 
+The rite list never returns the deceased's name or any family field: those live only in the rite detail
+(assignment-scoped, roles above) and the register (`funeral.register.view`).
+
 Command Center / Home counters show **counts only** ("งานฌาปนกิจวันนี้ 2"), no names.
-The undertaker's list query is `WHERE assignment.person_id = me AND assignment.valid_until >= now()`; RLS enforces
+The undertaker's list is restricted to rites with an active, unexpired assignment of that person (`funeral.assigned.view` scope A); row-level security enforces
 (test: `undertaker` cannot list non-assigned funerals — Wave 3 gate item in the matrix).
 
 ## 5. Security requirements
 
-- Every funeral table carries `temple_id` (cross-temple leakage = P0). Access via SECURITY DEFINER functions,
+- Every funeral table (`funeral_rite`, `funeral_session`, `funeral_assignment`, `funeral_register_entry`) carries `temple_id` with composite FKs (cross-temple leakage = P0). Access via SECURITY DEFINER functions,
   never direct table access from the client.
 - Audit log every read of deceased name/family contact by non-assignee roles, and every export (none planned).
 - No full-text search over funeral data; no AI processing of funeral data (AI Secretary excluded by default).
@@ -114,9 +117,9 @@ The undertaker's list query is `WHERE assignment.person_id = me AND assignment.v
 |---|---|---|
 | FN-01 | Undertaker opens list | only assigned rites |
 | FN-02 | Undertaker queries a non-assigned rite by id | not found (no existence leak) |
-| FN-03 | Housekeeper assigned to hall prep | sees "ผู้ล่วงลับ" initials, time, venue, own tasks; no contact |
+| FN-03 | Housekeeper assigned to hall prep | no rite access (no `funeral.assigned.view`); sees only own quest titled with the alias, time, venue |
 | FN-04 | Command Center | count only; no names |
-| FN-05 | Monk secretary roster view | alias + time + venue; names masked |
+| FN-05 | Secretary with delegated `ceremony.confirm_monks` opens roster | alias + time + venue; deceased name and contact not returned |
 | FN-06 | Assignment expires (valid_until passed) | access ends; list empty |
 | FN-07 | Family contact purge | 7 days after close, phone and name deleted; job audited |
 | FN-08 | Rite cancelled | assignments revoked; contact purged on cancel + 7 d |

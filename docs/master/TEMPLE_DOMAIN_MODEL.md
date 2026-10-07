@@ -1,6 +1,6 @@
 # TEMPLE DOMAIN MODEL — BOON SYSTEM
 
-Status: **v0.2 (Wave 1 gate, Opus)**. Agent 02 deepens this in Wave 1 under `docs/domain/`; changes to this
+Status: **v0.3 (Wave 1 gate, Opus — after governance audit)**. Agent 02 deepens this in Wave 1 under `docs/domain/`; changes to this
 file are made only by Opus after review.
 
 ## 1. Ubiquitous language (core terms)
@@ -23,6 +23,9 @@ file are made only by Opus after review.
 | `boon points` | แต้มบุญชุมชน (label under test vs แต้มร่วมกิจกรรม) | `community_boon_points`. Participation points for lay people, redeemable for participation rewards. Field-test whether "บุญ" next to a redeemable item reads as buying merit. |
 | `participation reward` | ของที่ระลึกจากการร่วมกิจกรรม | What community points can be exchanged for. Never "buying merit". |
 | `temple contact` | ช่องทางติดต่อวัด | The only default channel from the public to monastics; routed by the temple. |
+| `staffing target` | เป้าหมายกำลังคน | Required/minimum people by category or skill for an event department. |
+| `gate` | เงื่อนไขบังคับ | A hard readiness condition (PASS/FAIL/UNKNOWN) that overrides the readiness percent. |
+| `funeral rite` | พิธีฌาปนกิจ | Restricted ceremony type; deceased/family data assignment-scoped (`FUNERAL_OPERATIONS_SPEC.md`). |
 | `temple memory` | ความรู้ของวัด | Archived events, checklists and lessons, reused next year. |
 
 ## 2. Bounded contexts
@@ -57,10 +60,12 @@ Rules:
 - `person` is global (one auth account). `membership(person_id, temple_id)` is the unit of access.
 - A person may hold memberships in many temples with **different roles in each** (spec §29: Brian = maintenance at
   A, volunteer at B, community member at C).
-- **Monastic status is attested by a temple** (decision S-7, HYPOTHESIS until Agent 01 validates attestation
-  evidence): two-person rule when the attester is a `temple_admin` without abbot/deputy role; `person.monastic_kind ∈
-  {none, bhikkhu, samanera}` is **derived** from attestations of temples where the person holds an ACTIVE
-  membership, so one temple's false attestation cannot silently persist. Detail: `docs/domain/core/TENANCY_IDENTITY_SPEC.md`. Mode is derived per membership: monastic person → Monastic Mode in any temple where they hold
+- **Monastic status is attested per membership** (decisions S-7 + F-04; HYPOTHESIS until Agent 01 validates
+  attestation evidence): `membership.monastic_kind ∈ {none, bhikkhu, samanera}` is set by that temple's attestation
+  (two-person rule when the attester is a `temple_admin` without abbot/deputy role). There is **no global flag and
+  no cross-temple propagation or notification** — religion-linked data (PDPA s.26) stays inside the temple that
+  attested it. A person joining another temple may *choose* to present a prior attestation; that temple accepts or
+  re-attests. Detail: `docs/domain/core/TENANCY_IDENTITY_SPEC.md`. Mode is derived per membership: monastic person → Monastic Mode in any temple where they hold
   an active membership. A monk visiting another temple sees only that temple's data that his membership there
   permits.
 - Active temple context is chosen after login (temple switcher). The server never trusts a client-sent
@@ -78,7 +83,7 @@ Rules:
 | `ON_INVITATION` | ออกกิจนิมนต์ | **Calendar-driven** — confirmed invitation assignment, on-site window | Invitation confirmed by authorised human | Off-site |
 | `TRAVELING` | เดินทาง | **Calendar-driven** — travel legs before/after an off-site commitment (from trip or computed buffer) | Derived from invitation + trip | Off-site |
 | `TEACHING` | สอน | **Calendar-driven** — teaching schedule entry (also `class` and `duty` entries) | Schedule owner | From schedule venue |
-| `UNAVAILABLE` | ไม่พร้อม | **Manual** (self or admin; e.g. sick, retreat) with mandatory end time | Monk or authorised admin | Unknown unless stated |
+| `UNAVAILABLE` | ไม่พร้อม | **Manual** (self or admin; e.g. sick, retreat); admin-set requires an explicit end time | Monk or authorised admin | Unknown unless stated |
 | `PERSONAL` | กิจส่วนตัว | **Manual** with end time | Monk | Unknown unless stated |
 | `REST` | พักผ่อน | **Manual** with end time | Monk | In temple |
 | `IN_TEMPLE` | อยู่ในวัด | **Derived** from a fresh check-in (QR/NFC/manual) with no higher-priority state | System | In temple |
@@ -102,7 +107,9 @@ Rules:
 
 `effective_status(monk, t) = highest-priority state whose interval contains t`. Rules:
 - **Never default to AVAILABLE.** A monk is "ว่าง" only by explicit opt-in that has not expired.
-- Every manual state carries `valid_until` (default: end of the local day, Asia/Bangkok). Expired → ignored.
+- **Decision S-3:** a manual status is stored only with `valid_until`; the set command pre-fills end of the local day
+  (Asia/Bangkok) if the user gives none, except admin-set UNAVAILABLE which requires an explicit end. Expired →
+  ignored.
 - Check-in signals go stale after a configurable TTL (default 12 h) → contribute nothing.
 - **Supersession (decision S-1):** a new manual status set by the same actor class supersedes overlapping older ones
   (monk sets REST, later AVAILABLE → AVAILABLE). Admin-set UNAVAILABLE is never superseded by self-set rows.
@@ -198,7 +205,7 @@ RECEIVED ─triage─▶ REVIEWING ─propose team─▶ TEAM_PROPOSED ─human 
   human moves TEAM_PROPOSED → CONFIRMED.** AI never confirms.
 - On CONFIRMED the system creates schedule entries (ON_INVITATION window + TRAVELING legs) for each monk and
   optionally a `trip` for the driver. Invitation CANCELLED → linked trip cancelled; invitation back to
-  REVIEWING/TEAM_PROPOSED → trip ON_HOLD (Agent 18). A monk is never assigned as a driver.
+  REVIEWING/TEAM_PROPOSED → trip ON_HOLD (Agent 18). A monk is never assigned as a driver (product rule; the reported Thai Sangha basis is unverified — R-18).
 
 ### 6.2 Schedule entry
 
@@ -231,9 +238,9 @@ ends_at, venue, source_type, source_id)` — the single calendar table that avai
 | Who | monastics only | lay members only |
 | Earned from | completed monastic quests, streaks, achievements | verified volunteer/quest/event participation |
 | Spend | **never** (no redemption, no money, no goods) | participation rewards catalog |
-| Ranking | **No public ranking**; personal progress only. Not usable for promotion. | Optional per-temple leaderboard, off by default |
+| Ranking | **No ranking and no comparison**, internal or public; personal progress only. Not usable for promotion. | Optional per-temple leaderboard, off by default |
 | Storage | `monastic_activity_ledger` (append-only) | `boon_point_transactions` (append-only, signed amounts) |
-| Enforcement | DB constraint: ledger rows only for persons with `monastic_kind <> none` | DB constraint: only `monastic_kind = none`; redemption cannot exceed balance (serializable txn) |
+| Enforcement | DB constraint: ledger rows only for memberships with `monastic_kind <> none` | DB constraint: only memberships with `monastic_kind = none`; redemption cannot exceed balance (serializable txn) |
 
 No table, view or API may sum the two ledgers together. Balances are per `(temple_id, person_id)` (decision O-3);
 points are not transferable between persons or temples. Monastic ledger rows are written only by the system.

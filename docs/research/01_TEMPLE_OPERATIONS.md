@@ -1,6 +1,6 @@
 # 01 — Temple Operations (RQ-01, RQ-02, RQ-04, RQ-08)
 
-Author: Agent 01 (Product Research) · Date: 2026-10-07 · Status: **RESEARCHED (desk, partial)** · Field validation: BLOCKED (R-03)
+Author: Agent 01 (Product Research) · Date: 2026-10-07 · Status: **PLANNED — desk summary, sources unopened (desk, partial)** (relabelled by Opus at Wave 1 gate per R-18; was RESEARCHED) · Field validation: BLOCKED (R-03)
 
 ## 0. Evidence quality — read this first
 

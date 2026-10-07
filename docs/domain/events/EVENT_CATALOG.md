@@ -1,6 +1,6 @@
 # EVENT CATALOG — BOON SYSTEM (template library)
 
-Owner: Agent 19. Status: **RESEARCHED (desk, secondary sources) / DESIGNED**. Feature F-16.
+Owner: Agent 19. Status: **PLANNED — desk summary, sources unopened** (template structure is DESIGNED, content is not RESEARCHED): every source was seen only as a web-search summary and no page was opened (risk R-18; audit F-06). Desk summary, sources unopened. Feature F-16.
 
 ## 0. How to read this catalogue
 
@@ -30,7 +30,7 @@ Owner: Agent 19. Status: **RESEARCHED (desk, secondary sources) / DESIGNED**. Fe
 
 ### Template record shape
 
-`template_code, name_th/en, kind, anchor_rule, typical_duration, departments[], timeline[T-minus offsets],
+`temple_id` (null = platform template, set on a temple's copy), `template_code, name_th/en, kind, anchor_rule, typical_duration, departments[], timeline[T-minus offsets],
 checklist[ {title, department, offset_days, weight, is_gate, evidence} ], staffing[ {dept, category, skill,
 formula, min_rule} ], notes, evidence_label`.
 
@@ -54,6 +54,8 @@ Common lead-time vocabulary: `T-60` means 60 days before `starts_at`. Offsets ar
 | sound/stage | PA, microphones, lighting, power |
 | facility | venue condition, extension cords, tents, chairs, toilets |
 
+Every template also sets `registration_mode` and `meal_windows` (Event spec §2.5) so the kitchen headcount gets a meal-required guest count or an explicit Unknown.
+
 Common checklist skeleton (HYPOTHESIS): T-60 set date/venue & abbot approval · T-45 roster & budget outline ·
 T-30 announcement · T-21 recruit volunteers · T-14 confirm monks & suppliers · T-7 equipment check, maintenance
 sweep, traffic plan · T-3 rehearsal/walk-through · T-1 set-up, final headcount · T0 run · T+1 clean up, count
@@ -69,12 +71,12 @@ aid kit & fire extinguisher location checked; sound check done.
 | Aspect | Content | Evidence |
 |---|---|---|
 | Anchor rule | Held once per monastery per year within the one-month period after the end of the rains retreat (after the full moon of the 11th lunar month). The temple fixes a date inside this window. | [S1] |
-| Rite prerequisites | At least five bhikkhus must have completed the rains retreat in that monastery; the cloth is offered to the Sangha as a whole, not to a named monk. | [S1] |
+| Rite prerequisites | At least five bhikkhus must have completed the rains retreat in that monastery; the cloth is offered to the Sangha as a whole, not to a named monk. **Evidence grade: LOW** (one Malaysian temple blog [S1] plus a temple site description; not a Vinaya or Thai authority; audit F-39). Kept only as a non-blocking informational warning; the pilot temple's monk advisor must confirm before it is shown as a rule. | [S1] |
 | Product consequence | Template adds a **non-blocking validation**: "จำนวนพระที่จำพรรษาครบ" shown as an informational field and warning if < 5. The count is entered by the temple (vassa residence records are not tracked by the system in Wave 1) → value `Unknown` until entered. Never auto-asserted. | [S1] + design |
 | Duration | Commonly one day, sometimes with a preceding procession/evening events | HYPOTHESIS |
 | Departments | all in §1 plus **reception of procession (ขบวนแห่)**, **donation/finance** | HYPOTHESIS |
 | Checklist extras | robe cloth & requisites prepared · chairman (ประธานกฐิน) contacted and schedule agreed · procession route and traffic plan · Sangha roster for acceptance · food for Sangha and guests · donation receipt procedure | HYPOTHESIS |
-| Staffing (HYPOTHESIS) | monk: temple's resident vassa-complete monks (≥5, see above) + guests as customary; volunteers ≈ ⌈A/25⌉; kitchen skill ≥ ⌈A/60⌉; traffic ≥ 4 if A ≥ 200; first-aid ≥ 1 | HYPOTHESIS |
+| Staffing (HYPOTHESIS) | monk: temple's resident vassa-complete monks (≥5, see above) + guests as customary; volunteers ≈ ⌈A/25⌉; kitchen `skill_tags` [cook] ≥ ⌈A/60⌉; traffic ≥ 4 if A ≥ 200; first-aid ≥ 1 | HYPOTHESIS |
 | Gates | G-STAFF monk target; `is_gate`: "ยืนยันจำนวนพระจำพรรษาครบ" (informational: passes when someone enters a number, any number — the number itself is not judged) | design |
 
 ### 2.2 ผ้าป่า — Pa-pa offering (`PAPA`) — kind `merit_offering`
@@ -176,7 +178,7 @@ clean-up. Gate: fire-safety check, sound check.
   copy loses sourced status (becomes "แก้ไขโดยวัด").
 - Annual dates: system offers a "suggest date" helper only after a human enters the year's official calendar
   dates (Open question O-1). No lunar calendar implementation in Wave 1.
-- Pilot validation required: each template is `RESEARCHED` at best until a pilot-temple walk-through (Agent 01
+- Pilot validation required: no template may be called `RESEARCHED` until its sources are opened and read by a human and a pilot-temple walk-through has happened (Agent 01
   interview kit). Status in REPORT.md.
 
 ## 5. Open questions

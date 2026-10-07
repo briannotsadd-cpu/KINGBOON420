@@ -13,6 +13,8 @@ checklists, staffing targets, timings and **lessons learned** are kept; **people
 Temple Memory is **per temple** (`temple_id`); there is no cross-temple memory in Wave 1 (a shared platform
 template library exists separately, `EVENT_CATALOG.md` §4).
 
+Every table in this spec (`memory_event_snapshot`, `temple_memory_notes`) carries `temple_id` with composite FKs; the search index is partitioned by `temple_id`.
+
 ## 2. What is archived
 
 Archival happens at `COMPLETED → ARCHIVED` (Event spec §4). The system builds an immutable
@@ -24,6 +26,7 @@ Archival happens at `COMPLETED → ARCHIVED` (Event spec §4). The system builds
 | Structure | departments, quest tree (titles, descriptions, weights, priority, `is_gate`, checklist items), `depends_on` links, **relative timing** (offset from `starts_at`, e.g. T-14 d) | no |
 | Staffing | staffing targets (category, skill, shift, required, min_required, weight) **plus actual outcome**: `f` at LIVE snapshot, final volunteer count present, no-show count | counts only |
 | Readiness history | `readiness_snapshot_at_start` and a small series (percent, state, failed gates) at T-14, T-7, T-3, T-1 d | no |
+| Meal guests | per meal window: confirmed `meal_required` count and registration mode used (Event spec §2.5), actual served count if the kitchen recorded it | counts only |
 | Consumables and quantities | structured actuals entered at close (e.g. rice kg, water bottles, chairs, candles) with unit; cost optional (finance post-pilot) | no |
 | Outcome flags | incidents (none/minor/major + category, no names), weather, overcrowding, parking problems | no |
 | Lessons | retro notes (§4) | no (validated) |

@@ -1,6 +1,6 @@
 # 04 — Competitor and Analogue Analysis (RQ-06)
 
-Author: Agent 01 · Date: 2026-10-07 · Status: **RESEARCHED (desk, shallow — secondary summaries)**
+Author: Agent 01 · Date: 2026-10-07 · Status: **PLANNED — desk summary, sources unopened (desk, shallow — secondary summaries)** (relabelled by Opus at Wave 1 gate per R-18; was RESEARCHED)
 
 Evidence limitation: vendor sites could not be opened (fetch blocked). Capabilities below are limited to what search summaries said.
 A cell marked **?** means *not verified in this run* — not "absent". Pricing is quoted only where a summary stated it and is

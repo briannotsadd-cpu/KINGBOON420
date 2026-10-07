@@ -1,6 +1,6 @@
 # EVENT / BOSS QUEST SPEC — BOON SYSTEM
 
-Owner: Agent 19 (Ceremony / Event Operations). Wave 1a. Status: **DESIGNED (paper only; nothing implemented)**.
+Owner: Agent 19 (Ceremony / Event Operations). Wave 1a. Status: **DESIGNED (paper only; nothing implemented)**. Revision W1-fix (2026-10-07): permission codes aligned to `docs/master/role_permissions.yaml` v0.2; interface assumptions reconciled with the final core/facility/workforce specs (§9).
 Feature IDs: F-16 (Event / Boss Quest + readiness), part of F-15 (Command Center Events panel).
 Master references: `TEMPLE_DOMAIN_MODEL.md` §5.3, `ROLE_PERMISSION_MATRIX.md`, `DATABASE_PLAN.md` (events, event_tasks).
 Boundary: Agent 02 owns the quest lifecycle (§5.2) and off-site invitations (กิจนิมนต์). This file owns *events*
@@ -45,6 +45,8 @@ this file (weights, thresholds, 48 h, 80 %) are HYPOTHESIS defaults, stored as p
 | lead_person_id | person | Event owner (one accountable person). |
 | status | §4 | Stored lifecycle state. |
 | root_quest_id | id | |
+| registration_mode | `none`, `headcount_only`, `registration` | `none` = the temple collects no sign-ups for this event (guest/meal counts are then **Unknown**, never estimated). Default `none`. Registration UI itself is Wave 6 (Agent 12). |
+| meal_windows[] | list of `{ref_meal_service \| starts_at/ends_at, planned_meal_guests (optional integer, labelled estimate)}` | Windows during which the event needs food; see §2.5. |
 | escalation_hours | int, default 48 | Per-event override of §5.6; 0 disables. |
 | readiness_snapshot_at_start | json nullable | Frozen at LIVE (§5.8). |
 
@@ -75,9 +77,14 @@ Departments come from `departments` (temple-level, Agent 17/02). An event enable
 catalogue): ceremony (พิธีการ), reception/registration (ต้อนรับ-ลงทะเบียน), kitchen & food (โรงครัว), cleaning
 (รักษาความสะอาด), traffic & parking (จราจร-ที่จอดรถ), security & first aid (รักษาความปลอดภัย-พยาบาล), publicity
 (ประชาสัมพันธ์), finance & donation (การเงิน-รับบริจาค), sound/stage/lighting (เสียง-เวที), facility (สถานที่).
-A department lead needs `event.manage` at scope **D** (ceremony_lead has D) or is granted a per-event
-`event_department_lead` assignment (see Proposed changes in REPORT.md: matrix has `event.manage` D only for
-`ceremony_lead`, so kitchen/traffic leads currently cannot manage their own sub-tree).
+A department lead manages their own sub-tree with `event.manage` at scope **D**, which the YAML grants to
+`ceremony_lead`, `department_lead` and `facility_manager` (a kitchen lead is a `department_lead` whose department is
+kitchen; there is no `kitchen_lead` role). A per-event lead role (`event_department_lead`) does not exist and is **not** used: the
+per-event `lead_person` of each department (`event_departments.lead_person_id`) is a pointer for accountability
+and notifications only and grants nothing; authority always comes from role + department scope. Open: if a
+temple wants a volunteer to lead a department for one event only, that needs a new grant decided by Opus.
+Every table in this spec (`event`, `event_departments`, `event_staffing_targets`, `event_assignments`,
+`event_meal_windows`, memory tables) carries `temple_id` with composite foreign keys (tenant rule; audit F-23).
 
 ### 2.4 Staffing targets (`event_staffing_targets`)
 
@@ -85,7 +92,7 @@ A department lead needs `event.manage` at scope **D** (ceremony_lead has D) or i
 |---|---|
 | event_id, department_id, team_label | |
 | category | `monk`, `volunteer`, `staff` (monk = bhikkhu/samanera counted separately in `monk_subkind` if required) |
-| skill_code | nullable; from Agent 17 skill vocabulary (e.g. `cook`, `driver`, `sound`, `first_aid`); free text not allowed |
+| skill_tags[] | nullable; **free tags**, the same tag type Agent 02 uses for `required_skills[]` on invitations (`SCHEDULE_INVITATION_SPEC.md`). No controlled vocabulary exists in Wave 1 (audit F-25); suggested tags from templates (e.g. `cook`, `sound`, `first_aid`). A target matches a person who holds **all** its tags. Single owner of one shared vocabulary: **open** (Opus). |
 | shift_starts_at, shift_ends_at | nullable (whole event if null); one row per shift |
 | required `r` | integer ≥ 0; rows with 0 are ignored |
 | min_required `m` | integer 0..r; default: monk → `r`; volunteer/staff → `ceil(0.8·r)` (HYPOTHESIS) |
@@ -108,12 +115,49 @@ Counting rules for confirmed head-count `f` of a target:
 Gap: `gap_k = max(0, r − f)`. **Volunteer gap (north-star "อาสายังขาดกี่คน?")** = Σ `gap_k` over targets with
 `category = volunteer`. Monk gap and staff gap are reported the same way, never merged into the volunteer figure.
 
+### 2.5 Meal-required guest count (kitchen headcount input; Agent 17 OQ-07)
+
+Agent 17's kitchen headcount (`KITCHEN.md` §3, component C3) needs, per meal service, the number of event
+guests who must be fed. The event model exposes it as **aggregate numbers only**:
+
+| Field | Meaning |
+|---|---|
+| `meal_required` (boolean, on each event registration and each volunteer/staff event assignment) | Person needs a meal during the event. Default **unset**; unset is *not* counted and makes the window's count Unknown only when registration is the source and unset rows exist (see rule 3). |
+| `event_meal_windows(event_id, temple_id, ref_meal_service or starts_at/ends_at, planned_meal_guests?)` | One row per window to be fed. `planned_meal_guests` is an optional human-entered estimate. |
+| Derived `meal_guests_confirmed(window)` | Count of distinct persons with a CONFIRMED registration or CONFIRMED volunteer/staff assignment, `meal_required = true`, whose time window overlaps the meal window. **Monks and samanera are excluded** (the kitchen counts them from the availability resolver, component C1/C2; including them would double count). |
+
+Function contract (SECURITY DEFINER, aggregate only, no person ids or names; requires `headcount.view` D or
+`event.manage` D/T):
+
+```
+event_meal_headcount(temple_id, window_start, window_end) ->
+  [ { event_id, event_title, window, count: int | UNKNOWN, basis: registration|none,
+      planned_estimate: int | null, unset_meal_flags: int } ]
+```
+Rules: (1) `registration_mode = none` -> `count = UNKNOWN`, `basis = none`; `planned_estimate` is returned
+**separately** and never merged into `count` (Unknown is shown as Unknown; the kitchen lead may add the estimate as a
+signed manual adjustment `headcount.adjust`, which is audited). (2) `registration_mode` in {headcount_only,
+registration} -> `count = meal_guests_confirmed`, `basis = registration`. (3) If any in-scope registration or
+assignment has `meal_required` unset, the count is still the confirmed-true number but `unset_meal_flags > 0` is
+returned so the kitchen shows "มีผู้ลงทะเบียนที่ยังไม่ระบุอาหาร N คน". (4) Sum over overlapping events is done by the
+kitchen, per window. (5) Pending/declined/cancelled/`NEEDS_RECONFIRM` persons are never counted. (6) Tenant scoped.
+Cases EV-29..EV-31. Wave 1 delivers the contract; sign-up capture is Wave 6.
+
 ## 3. Roles and permissions used
 
-Uses existing codes only: `event.view`, `event.manage`, `quest.create/assign/verify/manage` (scope D for
-`ceremony_lead`), `command_center.view` (D⁵), `schedule.view`. New codes proposed in REPORT.md:
-`event.approve` (restricted: moves PLANNING → APPROVED; abbot, deputy, assistant, secretary by delegation),
-`event.volunteer_approve` (department lead approves volunteer sign-ups), `ceremony.confirm_monks`.
+Exactly the codes in `docs/master/role_permissions.yaml` v0.2 (no others):
+
+| Action | Code (scope per YAML) |
+|---|---|
+| See events (public items only for community) | `event.view` (`@all` T; `community_member` P; `undertaker` A) |
+| Create/edit events, tree, targets | `event.manage` (abbot, deputy, assistant, secretary T; `ceremony_lead`, `department_lead`, `facility_manager` D) |
+| Approve PLANNING -> APPROVED, cancel an APPROVED event | `event.approve` (restricted; abbot, deputy, assistant T; secretary T only when delegated) |
+| Approve volunteer sign-ups for a department | `event.volunteer_approve` (`ceremony_lead`, `department_lead`, `facility_manager` D) |
+| Confirm monk roster | `ceremony.confirm_monks` (restricted; same holders as `invitation.confirm`) |
+| Quest tree actions | `quest.create`, `quest.assign`, `quest.verify`, `quest.manage` (D for `ceremony_lead`, `department_lead`, `facility_manager`; T for abbot-level and, except `quest.manage`, secretary) |
+| Command Center Events panel | `command_center.view` (T abbot-level/secretary; D for `ceremony_lead`, `department_lead`, `facility_manager`) |
+| Calendar rows | `schedule.view`; ceremony rows written under `schedule.manage` D (ceremony kind) |
+| Kitchen headcount input | `headcount.view` (D `department_lead`, `kitchen_staff`; T abbot-level/secretary) |
 Public/`community_member` sees only `visibility = public` events (matrix footnote 1) and never readiness detail
 (§7).
 
@@ -156,7 +200,7 @@ readiness(
   leaves:  [ { id, status, weight w, priority, due_at, is_gate } ],   // non-container quests only, cancelled INCLUDED (filtered inside)
   targets: [ { id, category, required r, min_required m, weight u, hard_gate, confirmed f } ],
   facts:   { venue_overlap: bool|UNKNOWN,            // another APPROVED/LIVE event on a shared venue in the window
-             open_maint_at_or_above_threshold: bool|UNKNOWN,   // Agent 18 feed
+             venue_problem: bool|UNKNOWN,   // Agent 18 building `problem` flag for any venue building (MAINTENANCE_SPEC §6: open request with severity <= S2 by default; un-triaged unknown severity counts as S2)
              unresolved_monk_conflicts: int|UNKNOWN }          // Agent 02 conflict flag among event monks
 ) -> { percent: int|null, state, T, S, failed_gates[], unknown_gates[], caps[], gaps{category->int}, volunteer_gap: int }
 ```
@@ -193,10 +237,10 @@ config (HYPOTHESIS), must sum to 1.
 | G-OWNER | `lead_person_active` | no lead or lead membership inactive | — |
 | G-VENUE | `venue_ids` non-empty and `venue_overlap = false` | empty, or overlap = true | `venue_overlap = UNKNOWN` |
 | G-STAFF | for every target with `hard_gate`: `f ≥ m` | any such target `f < m` (list target ids) | — |
-| G-MAINT | `open_maint_at_or_above_threshold = false` | true | UNKNOWN |
+| G-MAINT | no venue building has `problem = true` | any venue building has `problem = true` | feed unavailable |
 | G-CRIT | no leaf with priority = critical, `due_at < t`, status ∉ {COMPLETED, CANCELLED} | at least one | — |
 | G-CHECK | every `is_gate` leaf (non-cancelled) with `due_at < t` is COMPLETED | an `is_gate` leaf is overdue and not COMPLETED | — |
-| G-CONFLICT | `unresolved_monk_conflicts = 0` | > 0 | UNKNOWN |
+| G-CONFLICT | `unresolved_monk_conflicts = 0` (aggregate count from the availability conflict detector; the event manager sees only the count and which assignment, never the monk's reason; detail needs `availability.set_others`) | > 0 | UNKNOWN |
 
 Additionally an **outstanding gate quest** (an `is_gate` leaf, not COMPLETED, not yet overdue) is not a failure,
 but triggers the cap `OUTSTANDING_GATE` (§5.6 step 4).
@@ -252,9 +296,16 @@ The chip is never green when state ≠ READY; colour is not the only cue (access
 
 ## 7. Visibility of readiness
 
-- `event.view` T holders (abbot… community per matrix) see the event; **readiness detail** (gates, internal gaps)
-  needs `event.view` plus membership with a role other than `community_member` (HYPOTHESIS; matrix grants
-  `event.view` to community only for public items).
+- Audience rule (coordinator decision, audit F-41, YAML groups `@monastic` and `@staff`):
+  1. **Management and staff roles** (every `@monastic` role and every `@staff` role with `event.view`, e.g. abbot-level,
+     secretary, `ceremony_lead`, `department_lead`, `facility_manager`, `kitchen_staff`, `driver`, ...): full readiness detail:
+     percent, state, failed/unknown gates, monk/staff/volunteer gaps, pending counts. Authority to *change* anything
+     still needs `event.manage` at scope.
+  2. **`volunteer`, `lay_resident`, `community_member`**: at most the percent and state chip, and only for events
+     in which they **participate** (a CONFIRMED assignment or sign-up). No gates, no gap breakdown, no maintenance
+     information, no monk counts. For events they do not participate in: public items only (below), no readiness.
+- There is no per-event `event_department_lead` role. Department leadership is `department_lead` at scope D, linked to the
+  event through `event_departments` (a department lead sees and manages only the departments enabled for that event).
 - Public volunteer needs: for `public` events show only "ต้องการอาสา N คน (ฝ่าย X)" where N = volunteer gap of
   targets flagged `public_signup`. No monk counts, no gate names, no maintenance info.
 
@@ -279,8 +330,8 @@ Defaults assumed unless stated: owner active, venue present, no overlap, no open
 | EV-12 | Monk with availability conflict not counted | monk target r=5, 5 assigned, 1 flagged conflict by Agent 02 | f=4 < m=5 → G-STAFF FAIL; G-CONFLICT FAIL; NOT_READY; monk gap=1 |
 | EV-13 | Same person on two overlapping targets | volunteer P in "ต้อนรับ" 08–12 and "จราจร" 09–11 | counted once (earlier-created target); other target gets DOUBLE_BOOKED flag; f for it excludes P |
 | EV-14 | Over-staffing | target r=10, f=14 | fill=1 (capped); gap=0; raw f=14 displayed |
-| EV-15 | Maintenance feed unavailable | percent 92, `open_maint = UNKNOWN` | unknown_gates [G-MAINT]; cap GATE_UNKNOWN; state ALMOST_READY, never READY |
-| EV-16 | Open maintenance at venue | `open_maint = true` (severity ≥ threshold) | G-MAINT FAIL → NOT_READY (matches master "venue maintenance issues = 0") |
+| EV-15 | Maintenance feed unavailable | percent 92, `venue_problem = UNKNOWN` | unknown_gates [G-MAINT]; cap GATE_UNKNOWN; state ALMOST_READY, never READY |
+| EV-16 | Open S2-or-worse maintenance at venue | `venue_problem = true` (open request severity S1 or S2 at default threshold S2; FM-13) | G-MAINT FAIL → NOT_READY (matches master "venue maintenance issues = 0") |
 | EV-17 | Venue double-booked | another APPROVED event on same building overlapping | G-VENUE FAIL → NOT_READY unless event flagged `allow_shared_venue` (then overlap fact = false) |
 | EV-18 | Approved event passes start without going LIVE | state APPROVED, t ≥ starts_at | NOT_READY, reason OVERDUE_START; UI prompts "เริ่มงาน หรือ เลื่อนวัน" |
 | EV-19 | Reschedule | APPROVED event moved by 7 days | all assignments → NEEDS_RECONFIRM, excluded from f; readiness drops; audit row; notifications sent; leaf `due_at` of template-sourced quests shift by 7 d, manual ones do not |
@@ -293,17 +344,29 @@ Defaults assumed unless stated: owner active, venue present, no overlap, no open
 | EV-26 | Target with r=0 | volunteer target r=0 | ignored by S, no gap, no gate |
 | EV-27 | Event cancelled | cancel with reason | all open leaves CANCELLED, assignments CANCELLED, notifications; readiness absent; Command Center excludes |
 | EV-28 | Lead leaves temple | `lead_person` membership becomes inactive | G-OWNER FAIL → NOT_READY, "ไม่มีผู้รับผิดชอบงาน" |
+| EV-29 | Meal count with registration | event `registration`, 20 CONFIRMED registrants `meal_required`, 3 `meal_required` unset, 5 monks rostered | `count = 20`, `unset_meal_flags = 3`; monks excluded; `basis = registration` |
+| EV-30 | Meal count without registration | `registration_mode = none`, `planned_estimate = 40` | `count = UNKNOWN`, `basis = none`, `planned_estimate = 40` returned separately; never summed into count |
+| EV-31 | Meal function tenant/PII check | caller from temple B; and a caller with `headcount.view` D | temple B: denied, zero rows; D holder: payload has no person ids (assert by schema) |
 
-## 9. Agent 02 / 17 / 18 interface assumptions (to reconcile at Wave 1 review)
+## 9. Interface reconciliation with Agent 02 / 17 / 18 (re-checked 2026-10-07 against the final specs)
 
-These are assumptions because those docs were being written concurrently and were not read by this agent.
-- **A02-1** Quest lifecycle, `parent_quest_id`, `depends_on`, `COMPLETED` semantics as in master §5.2.
-- **A02-2** `schedule_entries` of `kind=ceremony` can be written by this domain with `source_type =
-  'ceremony_assignment'` and `source_id`, and the availability resolver exposes a *conflict flag* per person per
-  window (master §4.2).
-- **A17-1** A skill vocabulary (`skill_code`) and volunteer/staff availability exist.
-- **A18-1** A function returns open maintenance requests by building code with severity; threshold configurable.
-- **A12-1 (Wave 6)** Volunteer sign-up produces assignments to staffing targets; no sign-up exists in Wave 1.
+Status key: CONFIRMED = found in the final spec; ADJUSTED = my text changed to match; OPEN = still undecided.
+
+| Id | Assumption | Result |
+|---|---|---|
+| A02-1 | Quest lifecycle, `parent_quest_id`, `depends_on`, COMPLETED semantics | CONFIRMED (`QUEST_LIFECYCLE_SPEC.md`; `event_root`, `volunteer` quest type with `organizer_approval`/`qr_checkin`/`attendance` verification) |
+| A02-2a | Write `schedule_entries kind=ceremony` | CONFIRMED with ADJUSTMENT: `source_type` must be from core's enum `invitation \| event \| class_timetable \| trip \| manual` (+ `shift` from Agent 17); I now use `source_type = 'event'`, `source_id` = ceremony/event id (see Ceremony spec §6.1). Uniqueness `(source_type, source_id, person_id, kind, leg)` honoured. Authority: `ceremony.confirm_monks`; ceremony_lead writes under `schedule.manage` D (ceremony kind) per YAML. |
+| A02-2b | Conflict flag per person | ADJUSTED: core exposes `conflicts[]` only to `availability.set_others` (T) holders and the monk (AVAILABILITY_SPEC §6, §9). Event readiness therefore consumes an **aggregate count via a SECURITY DEFINER function** (`unresolved_monk_conflicts`); managers see count and assignment ref, not reasons. Status: function itself OPEN (Agent 02 to expose). |
+| A02-3 | Schedule kinds | ADJUSTED to the master set `{invitation, ceremony, teaching, class, duty, personal, travel, meal, leave, meeting}`. This domain writes only `ceremony` (and reads `meal` windows from Agent 17). Note: `SCHEDULE_INVITATION_SPEC.md` line 23 still lists 7 kinds; Agent 02 to align (OPEN, not my file). |
+| A02-4 | Domain events | OPEN: `DOMAIN_EVENTS.md` §8 expects `event.created`, `event.cancelled`, `event.readiness_changed`, `ceremony.staffed`, `ceremony.cancelled`, `attendance.recorded` from this domain. Section 11 below now defines them (A02-4 closed on my side) (dotted convention). |
+| A17-1 | Skill vocabulary | NOT CONFIRMED: none exists; Agent 02 uses free `required_skills[]` tags. ADJUSTED to `skill_tags[]` (free tags). Single vocabulary owner OPEN. |
+| A17-2 | Kitchen headcount needs event meal counts (Agent 17 OQ-07, `KITCHEN.md` C3) | CONFIRMED and DELIVERED as contract in §2.5. Open: Agent 17 to use `headcount.view` D as the permission; meal windows reference `meal_service` / schedule kind `meal`. |
+| A17-3 | Volunteer/staff availability for assignment | PARTIAL: staff presence (`STAFF_PRESENCE_SPEC.md`) covers *staff*, not volunteers; volunteer availability is Wave 6. Staff counted in targets only if membership ACTIVE; shift overlap check optional. OPEN |
+| A18-1 | Maintenance feed with severity/threshold | CONFIRMED and ADJUSTED: use building `problem` flag (`MAINTENANCE_SPEC.md` §6: threshold default **S2**, configurable; un-triaged unknown severity counts as S2; FM-13 states the event hard gate). |
+| A18-2 | Asset reservation API | NOT CONFIRMED (`ASSET_INVENTORY_SPEC.md` has no reservation operation): ceremony equipment stays a checklist; reservation OPEN. |
+| A12-1 | Volunteer sign-up (Wave 6) | OPEN by design |
+| A-att | `attendance` verification & `attendance.recorded` (QUEST_LIFECYCLE_SPEC lists "source: Agent 19/17") | OPEN: this domain records only an optional `actual_attendance` count and `meal_required`; **a per-person attendance record is not specified** (audit F-26). Needs an owner before any quest template uses `attendance`. |
+
 
 ## 10. Out of scope / open questions
 
@@ -313,3 +376,17 @@ These are assumptions because those docs were being written concurrently and wer
 3. Whether temples want a visible score at all; pilot interviews must confirm the percent is useful versus just
    gates + gaps (R-03).
 4. Weights/thresholds tuning requires real event data from the pilot; defaults are HYPOTHESIS.
+
+## 11. Domain events produced (dotted convention of `DOMAIN_EVENTS.md`; audit F-24)
+
+| Event | Producer | Payload (no sensitive data) | Consumers |
+|---|---|---|---|
+| `event.created` / `event.cancelled` (DOMAIN_EVENTS §8 names) and additionally `event.approved` / `event.started` / `event.completed` | event commands | event_id, kind, starts_at, actor | Command Center, notifications, audit |
+| `event.readiness_changed` | readiness recompute, when state or percent bucket changes | event_id, from_state, to_state, percent, failed_gates[] | Command Center (manager audience only), notifications to lead |
+| `event.rescheduled` | reschedule command | event_id, old/new window, assignments_flagged | notifications, Agent 02 schedule rows |
+| `ceremony.roster_proposed` / `ceremony.staffed` / `ceremony.cancelled` | ceremony commands (`ceremony.staffed` fires when all confirmed >= monks_required) | ceremony_id, counts | Agent 02 (`schedule_entries`), Command Center |
+| `event.meal_headcount_changed` | registration/assignment change affecting a meal window | event_id, window | Agent 17 kitchen headcount |
+| `attendance.recorded` | **defined here only minimally**: emitted when the closing step records the aggregate `actual_attendance` of an event/ceremony (payload: event_id, count). Per-person attendance (needed by the `attendance` verification method) is **not defined** and has no owner (audit F-26); the event is reserved for it | quest verification `attendance` (future), Temple Memory |
+| `memory.snapshot_created` | archive | event_id | Temple Memory index |
+| `funeral.*` | **not published to the shared bus**; only an anonymised counter `funeral.rite_scheduled{count}` | counts only | Command Center counter |
+Each event carries `temple_id`; delivery is tenant-scoped.

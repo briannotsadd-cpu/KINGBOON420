@@ -56,5 +56,5 @@ ADR needed before departure computation uses real travel times.
 
 ## Self-assessed readiness
 
-SPATIAL_REGISTRY_SPEC DESIGNED · WAT_ARUN_REGISTRY_DRAFT RESEARCHED (partial, unconfirmed) · MAINTENANCE_SPEC
+SPATIAL_REGISTRY_SPEC DESIGNED · WAT_ARUN_REGISTRY_DRAFT DESIGNED (sources unopened, unconfirmed) · MAINTENANCE_SPEC
 DESIGNED · ASSET_INVENTORY_SPEC DESIGNED · VEHICLE_TRIP_SPEC DESIGNED (depends on routing provider and F-27).

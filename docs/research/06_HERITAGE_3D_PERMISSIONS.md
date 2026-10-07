@@ -1,6 +1,6 @@
 # 06 — Heritage 3D Permissions: Wat Arun (RQ-10)
 
-Author: Agent 01 · Date: 2026-10-07 · Status: **RESEARCHED (desk, partial)** · Not legal advice
+Author: Agent 01 · Date: 2026-10-07 · Status: **PLANNED — desk summary, sources unopened (desk, partial)** (relabelled by Opus at Wave 1 gate per R-18; was RESEARCHED) · Not legal advice
 
 Evidence limitation: see doc 01 §0. The authoritative parties named below are identified partly from general knowledge (HYPOTHESIS) and must be confirmed by direct enquiry.
 

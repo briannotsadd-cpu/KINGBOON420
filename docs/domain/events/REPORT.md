@@ -17,7 +17,7 @@ needs for Agent 10). All three north-star questions are mapped to fields (Event 
 | File | Readiness |
 |---|---|
 | `EVENT_BOSS_QUEST_SPEC.md` | DESIGNED |
-| `EVENT_CATALOG.md` | RESEARCHED (secondary sources) / DESIGNED; most items HYPOTHESIS |
+| `EVENT_CATALOG.md` | PLANNED — desk summary, sources unopened (R-18, audit F-06); most items HYPOTHESIS |
 | `CEREMONY_OPERATIONS_SPEC.md` | DESIGNED |
 | `FUNERAL_OPERATIONS_SPEC.md` | DESIGNED; blocked on legal review before pilot |
 | `TEMPLE_MEMORY_SPEC.md` | DESIGNED |
@@ -44,7 +44,7 @@ Self-review checklist:
 - [x] Funeral/family data assignment-scoped, retention specified, masked views by role.
 - [x] Every tenant row has temple_id; cross-temple cases included (EV-23, FN-11, TM-06, CE-11).
 - [x] ≥ 15 EV cases (28).
-- [ ] Not yet reconciled with Agent 02/17/18 docs (assumptions A02-1/2, A17-1, A18-1/2 listed).
+- [x] Reconciled with final Agent 02/17/18 docs in the fix round; status per assumption in `EVENT_BOSS_QUEST_SPEC.md` §9.
 
 ## 4. Top findings
 
@@ -67,10 +67,10 @@ rosters, whether percent is useful to temples vs gates+gaps only, funeral regist
 
 1. `ROLE_PERMISSION_MATRIX.md` §3 (catalog) — add rows:
    - `event.approve` — "Approve event date/venue/scope (PLANNING → APPROVED)" — Restricted: yes (T for abbot, deputy, assistant; secretary only if delegated).
-   - `event.volunteer_approve` — "Approve volunteer sign-ups for a department" — scope D (ceremony_lead, kitchen_lead, facility_mgr per event assignment).
+   - `event.volunteer_approve` — "Approve volunteer sign-ups for a department" — scope D (ceremony_lead, department_lead (kitchen), facility_manager per event assignment).
    - `ceremony.confirm_monks` — "Confirm monk roster for in-temple ceremonies and funeral sessions" — T for abbot, deputy, assistant, monk_secretary (secretary default allowed for routine rites like note 2 of `invitation.confirm`).
    - `funeral.assigned.view` — A scope for `undertaker`, `ceremony_team`; `funeral.register.view` — T for abbot only (office_staff create/edit).
-2. `ROLE_PERMISSION_MATRIX.md` §4, row `event.manage`: add `D` for `kitchen_lead`, `facility_manager` and per-event department-lead assignment (or replace by `event_department_lead` grant), so department heads can edit their own sub-tree.
+2. `ROLE_PERMISSION_MATRIX.md` §4, row `event.manage`: add `D` for `department_lead` (kitchen), `facility_manager` and per-event department-lead assignment (or replace by `event_department_lead` grant), so department heads can edit their own sub-tree.
 3. `TEMPLE_DOMAIN_MODEL.md` §5.3 — replace the readiness bullet with: "`readiness` is a pure function defined in `docs/domain/events/EVENT_BOSS_QUEST_SPEC.md` §5: percent = floor(100·(0.6·T + 0.4·S)); gates G-OWNER, G-VENUE, G-STAFF, G-MAINT, G-CRIT, G-CHECK, G-CONFLICT; states UNKNOWN / NOT_READY / IN_PROGRESS / ALMOST_READY / READY."
 4. `TEMPLE_DOMAIN_MODEL.md` §1 — add terms: `staffing target` (เป้าหมายกำลังคน), `gate` (เงื่อนไขบังคับ), `funeral rite` (พิธีฌาปนกิจ, restricted).
 5. `DATABASE_PLAN.md` — add `event_staffing_targets`, `event_departments`, `ceremony_assignments`, `funeral_rite/session/assignment/register_entry`, `memory_event_snapshot`; funeral tables restricted-access, purge jobs.
@@ -84,3 +84,19 @@ rosters, whether percent is useful to temples vs gates+gaps only, funeral regist
   (b) pilot temple walk-through to validate templates, monk-roster authority and defaults (D-1);
   (c) Agent 02 / 17 / 18 contracts (schedule_entries conflict flag, skill vocabulary, maintenance severity feed)
   must be reconciled with assumptions listed in Event spec §9.
+
+## 8. Wave 1 fix round (2026-10-07)
+
+Source: `docs/reviews/wave-1/GOVERNANCE_AUDIT.md` + `docs/master/role_permissions.yaml` v0.2. Proposals 1-3, 8 were
+applied by Opus; the codes below are the YAML's.
+- Permission codes aligned (Event spec §3 table; Funeral spec §4 rewritten by YAML code; Ceremony spec §6.1).
+- `kitchen_lead` and `event_department_lead` removed; kitchen lead = `department_lead` (kitchen) with `event.manage` D (F-17).
+- `schedule_entries`: kinds = master set of 10; this domain writes `ceremony` only with `source_type = 'event'` (F-12, F-13).
+- G-MAINT now reads the Agent 18 `problem` flag (default threshold S2).
+- Meal-required guest count exposed (Event spec §2.5, EV-29..31).
+- F-06 catalogue relabelled DESIGNED; F-23 `temple_id` statements added; F-24 domain events (Event spec §11);
+  F-25 free `skill_tags[]`; F-39 evidence grade LOW on Kathina; F-41 readiness audience proposed (Event spec §7).
+- Still open for Opus/others: abbot-level funeral rite-list code (F-18); per-event department lead grant; one skill vocabulary owner (F-25);
+  attendance record owner (F-26); core to expose the monk-conflict count function and add a funeral `source_type`; asset reservation (A18-2); `SCHEDULE_INVITATION_SPEC.md:23` still lists 7 kinds.
+- Proposals 4-7 (glossary terms, DATABASE_PLAN tables, FEATURE_MATRIX notes, SECURITY_MODEL funeral class) remain with Opus (audit F-07, F-08, F-28, F-30).
+- Add-on (YAML v0.3): funeral visibility aligned (Funeral spec §4); F-41 audience rule per coordinator (Event spec §7); catalogue label PLANNED — desk summary, sources unopened; domain events in dot.case incl. `attendance.recorded` (Event spec §11).

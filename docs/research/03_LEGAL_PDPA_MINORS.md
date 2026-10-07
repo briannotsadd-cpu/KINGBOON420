@@ -1,6 +1,6 @@
 # 03 — Legal: PDPA, Sensitive Data, Minors, Cross-border, Breach (RQ-05)
 
-Author: Agent 01 · Date: 2026-10-07 · Status: **RESEARCHED (desk, secondary sources)**
+Author: Agent 01 · Date: 2026-10-07 · Status: **PLANNED — desk summary, sources unopened (desk, secondary sources)** (relabelled by Opus at Wave 1 gate per R-18; was RESEARCHED)
 
 > **NOT LEGAL ADVICE.** This is a product-research summary built from law-firm and aggregator summaries, not from the
 > Royal Gazette text of the Personal Data Protection Act B.E. 2562 (2019). A Thai lawyer must review before pilot (decision D-5).

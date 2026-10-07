@@ -65,11 +65,11 @@ Each item = leaf quest `ceremony_task`, weight default 2, department = ceremony;
 
 - Venue = Agent 18 `building` (and optional zone). The ceremony **reserves** the building window; overlap with
   another ceremony/event at the same building is a G-VENUE fail unless flagged `allow_shared_venue`.
-- G-MAINT reads open maintenance requests at that building ≥ severity threshold (Agent 18 contract A18-1).
+- G-MAINT reads the Agent 18 building `problem` flag (open request of severity S2 or worse by default; un-triaged unknown severity counts as S2; `MAINTENANCE_SPEC.md` §6, FM-13). CONFIRMED.
 - Equipment = Agent 18 assets/inventory references: `ceremony_equipment(ceremony_id, asset_or_item_ref, qty,
   status ∈ {NEEDED, RESERVED, READY, MISSING})`. A MISSING item raises a quest for facility_manager. Equipment
   items flagged `critical` map to `is_gate` leaf quests.
-- Assumption **A18-2**: an asset reservation API exists; until then equipment is a checklist only (no stock check).
+- **A18-2 NOT CONFIRMED**: `ASSET_INVENTORY_SPEC.md` has no reservation operation, so equipment is a checklist only (no stock check, status RESERVED unused) until Agent 18 adds one. Every table here (`ceremony`, `ceremony_assignments`, `ceremony_equipment`) carries `temple_id` with composite FKs.
 
 ## 5. Monk count, guests
 
@@ -84,13 +84,13 @@ Each item = leaf quest `ceremony_task`, weight default 2, department = ceremony;
 
 ### 6.1 Flow (human in the loop — rule: AI/system proposes, authorised human confirms)
 
-1. `ceremony_lead` (or office) creates the ceremony and sets `monks_required`.
+1. `ceremony_lead` (`event.manage` D) or a secretary/abbot-level holder of `event.manage` T creates the ceremony and sets `monks_required`.
 2. Roster **proposal**: manual selection, or Smart Assignment suggestions (Agent 02/07 logic, F-14) producing a
    ranked list with reasons (availability, existing schedule, rite-fit if the temple recorded it). The proposal
    is stored as `ceremony_assignments(status = PROPOSED)`. AI may only write `ai_drafts`.
-3. An authorised human (**secretary or abbot-level**; proposed new permission `ceremony.confirm_monks`, default
-   granted to abbot, deputy, assistant, monk_secretary) moves each assignment `PROPOSED → CONFIRMED`.
-   `ceremony_lead` can propose but not confirm (lay role; monks' time belongs to the monastic hierarchy — design
+3. An authorised human holding **`ceremony.confirm_monks`** (restricted; YAML: abbot, deputy_abbot, abbot_assistant
+   T; monk_secretary T only when delegated) moves each assignment `PROPOSED → CONFIRMED`.
+   `ceremony_lead` can propose (`event.manage` D) but not confirm (lay role; monks' time belongs to the monastic hierarchy — design
    assumption, HYPOTHESIS, validate with pilot).
 4. On CONFIRMED the system writes one `schedule_entries` row per monk through **Agent 02's contract**:
 
@@ -101,11 +101,12 @@ Each item = leaf quest `ceremony_task`, weight default 2, department = ceremony;
 | kind | `ceremony` |
 | starts_at / ends_at | ceremony window **minus/plus** configured monk buffer (default 15 min before, 0 after; HYPOTHESIS) |
 | venue | building code (+ zone) |
-| source_type | `ceremony_assignment` |
-| source_id | `ceremony_assignments.id` |
+| source_type | `event` (core's enum; a standalone ceremony is an event of kind `ceremony`) |
+| source_id | the ceremony/event id (one row per monk per ceremony; uniqueness key `(source_type, source_id, person_id, kind, leg)` from `SCHEDULE_INVITATION_SPEC.md` SE-2) |
+| status | `CONFIRMED` (only CONFIRMED is read by the resolver; unconfirmed proposals live in `ceremony_assignments`, not in the calendar) |
 
    Resolver result during the window: monk `effective_status = CEREMONY`, `location_state = IN_TEMPLE`
-   (master §4.1). Idempotency key: `(source_type, source_id)`; re-confirm does not duplicate.
+   (master §4.1). Idempotency: the SE-2 key above; re-confirm does not duplicate. Per SE-4 the rows are changed only through this domain's commands (`SOURCE_OWNED`). The write is made by a SECURITY DEFINER function after the `ceremony.confirm_monks` check; `ceremony_lead` holds `schedule.manage` D (ceremony kind) for corrections.
 5. Monk notification: "ได้รับมอบหมาย: <rite> <time> <venue>". The monk may press **"แจ้งติดขัด"** (report a
    conflict) which flags the assignment; it does *not* auto-cancel (never silently cancel a commitment, master
    §4.2). Whether monks should have accept/decline buttons is a cultural question → HYPOTHESIS: use
@@ -115,10 +116,10 @@ Each item = leaf quest `ceremony_task`, weight default 2, department = ceremony;
 
 | Situation | Behaviour |
 |---|---|
-| Ceremony rescheduled | Linked `schedule_entries` are updated in the same transaction; assignments → `NEEDS_RECONFIRM`; monks notified; secretary re-confirms (Event spec EV-19) |
-| Monk becomes UNAVAILABLE (manual) overlapping | Conflict flag from resolver; G-CONFLICT FAIL; secretary sees both states (master §4.2); replacement proposed |
-| Monk removed | assignment `CANCELLED`; schedule entry deleted/ended by `source_id`; audit reason |
-| Ceremony cancelled | assignments `CANCELLED`; schedule entries removed; notifications |
+| Ceremony rescheduled | Linked `schedule_entries` are updated in the same transaction (entries are never deleted; superseded rows become CANCELLED with `cancel_reason`); assignments → `NEEDS_RECONFIRM`; monks notified; secretary re-confirms (Event spec EV-19) |
+| Monk becomes UNAVAILABLE (manual) overlapping | Conflict from the resolver (visible to `availability.set_others` holders and the monk; the ceremony page shows only the aggregate G-CONFLICT count); G-CONFLICT FAIL; secretary sees both states (master §4.2); replacement proposed |
+| Monk removed | assignment `CANCELLED`; schedule entry CANCELLED (`cancel_reason`, never deleted); audit reason |
+| Ceremony cancelled | assignments `CANCELLED`; schedule entries CANCELLED; notifications |
 | Overlap with an invitation (off-site) | resolver conflict; the system does not choose |
 
 ### 6.3 Who sees what (ceremony)
@@ -126,7 +127,7 @@ Each item = leaf quest `ceremony_task`, weight default 2, department = ceremony;
 | Role | Sees |
 |---|---|
 | abbot / deputy / assistant / secretary | all ceremonies, rosters, readiness |
-| ceremony_lead | ceremonies of department D: timeline, checklist, roster **names**, readiness; can propose, cannot confirm |
+| ceremony_lead | ceremonies in department scope D (`event.manage` D): timeline, checklist, roster **names**, readiness; can propose, cannot confirm (no `ceremony.confirm_monks`) |
 | ceremony_team | assigned ceremony tasks (A) and the ceremony timeline; roster names only if needed for the task (default: yes, names of monks, no contact info) |
 | bhikkhu / samanera | own ceremony assignments (S) and temple-wide public ceremonies |
 | housekeeper / facility / kitchen | only the tasks assigned to them and the time/venue |
@@ -141,13 +142,13 @@ Each item = leaf quest `ceremony_task`, weight default 2, department = ceremony;
 | CE-03 | Re-confirm same assignment | no duplicate schedule row (idempotent) |
 | CE-04 | Lead attempts to confirm | rejected (lacks `ceremony.confirm_monks`) |
 | CE-05 | Samanera rostered on a bhikkhu-only ceremony | rejected |
-| CE-06 | Monk sets UNAVAILABLE overlapping a confirmed ceremony | conflict flag, G-CONFLICT FAIL, monk not counted in f, no auto-cancel |
+| CE-06 | Monk sets UNAVAILABLE overlapping a confirmed ceremony | conflict raised, G-CONFLICT FAIL, monk not counted in f, no auto-cancel; ceremony_lead sees the aggregate gate only, secretary sees detail |
 | CE-07 | Reschedule by 2 days | schedule entries moved, assignments NEEDS_RECONFIRM until re-confirmed |
 | CE-08 | Venue under open high-severity maintenance | G-MAINT FAIL → NOT_READY |
 | CE-09 | Two ceremonies same hall overlapping | G-VENUE FAIL unless allow_shared_venue |
 | CE-10 | Ceremony inside an event | event readiness uses the event-attached targets/leaves only; no double counting |
 | CE-11 | Monk from another temple (visiting) | assignable only with ACTIVE membership in this temple (tenant rule) |
-| CE-12 | Cancel ceremony | entries removed, monks notified, audit row |
+| CE-12 | Cancel ceremony | entries CANCELLED (not deleted), monks notified, audit row |
 | CE-13 | Funeral-type rite attempted as ceremony | rejected; must use funeral flow |
 | CE-14 | Housekeeper views ceremony | sees only own cleaning task, time, venue |
 
@@ -155,4 +156,5 @@ Each item = leaf quest `ceremony_task`, weight default 2, department = ceremony;
 
 1. Rite-fit data on monks (who can lead which chanting) is sensitive HR-like info — not modelled in Wave 1.
 2. Whether abbot seniority/lineup order on the dais is recorded (cultural, not modelled).
-3. Interface assumptions A02-2 (write `schedule_entries`), A18-1/A18-2 — reconcile at Wave 1 review.
+3. Interface status is tracked in `EVENT_BOSS_QUEST_SPEC.md` §9 (A02-2a/b confirmed-with-adjustment; A18-2 open). Schedule kinds used: `ceremony` only.
+4. Domain events: `ceremony.roster_proposed/staffed/cancelled` (Event spec §11).

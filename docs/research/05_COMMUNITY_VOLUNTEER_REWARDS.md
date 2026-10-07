@@ -1,6 +1,6 @@
 # 05 — Community, Volunteers and Rewards (RQ-09; also RQ-07 gamification input)
 
-Author: Agent 01 · Date: 2026-10-07 · Status: **RESEARCHED (desk, partial)**
+Author: Agent 01 · Date: 2026-10-07 · Status: **PLANNED — desk summary, sources unopened (desk, partial)** (relabelled by Opus at Wave 1 gate per R-18; was RESEARCHED)
 
 Evidence limitation: see doc 01 §0 (search summaries only). Statements without [Sn] are HYPOTHESIS.
 

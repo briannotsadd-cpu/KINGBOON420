@@ -1,6 +1,6 @@
 # 02 — Vinaya and Religious Constraints (RQ-03, RQ-07)
 
-Author: Agent 01 · Date: 2026-10-07 · Status: **RESEARCHED (desk, partial)**
+Author: Agent 01 · Date: 2026-10-07 · Status: **PLANNED — desk summary, sources unopened (desk, partial)** (relabelled by Opus at Wave 1 gate per R-18; was RESEARCHED)
 
 > **Authority notice.** Final interpretation of the Dhamma-Vinaya (พระธรรมวินัย) belongs to monastic authorities (the
 > Sangha, the Council of Elders and the pilot temple's abbot and monk advisors), not to this document or to the product team.

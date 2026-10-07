@@ -1,6 +1,6 @@
 # 07 — Personas (all HYPOTHESIS)
 
-Author: Agent 01 · Date: 2026-10-07 · Status: **RESEARCHED as hypotheses — not validated**
+Author: Agent 01 · Date: 2026-10-07 · Status: **PLANNED — hypotheses, not validated** (relabelled by Opus per R-18)
 
 **Every persona below is a HYPOTHESIS.** They are composites built from the master plan, role matrix and general knowledge, not
 from interviews or data. No names, ages, quotes or statistics here come from real people. Quotes are *illustrative needs

@@ -1,6 +1,6 @@
 # WAT ARUN REGISTRY DRAFT
 
-Owner: Agent 18 · Status: **RESEARCHED (draft, partial) — NOT a real registry** · Access date for all sources: **2026-10-07**
+Owner: Agent 18 · Status: **DESIGNED (draft structure; sources unopened per R-18) — NOT a real registry** · Access date for all sources: **2026-10-07**
 
 > **A real registry needs the temple's confirmation.** Nothing here has been confirmed by Wat Arun Ratchawararam.
 > Every `confirmed_by_temple_at` value must start as null. No dimensions or coordinates are recorded here: where
