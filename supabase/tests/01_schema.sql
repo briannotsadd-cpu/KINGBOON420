@@ -8,7 +8,7 @@ begin
            where s.nspname = 'public' and c.relkind in ('r','p') loop
     n := n + 1;
     if not (t.relrowsecurity and t.relforcerowsecurity) then bad := bad || format(' [%s: RLS not enabled+forced]', t.relname); end if;
-    if not t.has_tid and t.relname not in ('persons','temples','roles','permissions','role_permissions') then
+    if not t.has_tid and t.relname not in ('persons','temples','roles','permissions','role_permissions','platform_admins') then
       bad := bad || format(' [%s: no temple_id and not an allowlisted global table]', t.relname); end if;
   end loop;
   perform test.assert(bad = '', 'schema rules violated:' || bad);

@@ -10,4 +10,5 @@ insert into public.parking_lots(temple_id, id, code, name_th, capacity, accessib
  ('bbbbbbbb-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-0000000000e1','P1','ลานจอดวัดบี',20,1,'{car}','ฟรี',null,true);
 insert into public.parking_status_reports(temple_id, lot_id, status, free_spaces, reported_by, reported_at) values
  ('bbbbbbbb-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-0000000000e1','AVAILABLE',12,'cccccccc-0000-0000-0000-0000000000f1', now());
+update public.temples set status = 'approved' where slug in ('demo-a','demo-b');
 commit;
