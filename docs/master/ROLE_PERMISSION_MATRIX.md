@@ -33,6 +33,7 @@ roles ──< role_permissions(permission_code, scope)
 | `monk_secretary` | พระเลขานุการ | Invitations, schedules, assignment proposals, reports |
 | `bhikkhu` | พระภิกษุ | My Day, quests, own availability, own schedule |
 | `samanera` | สามเณร | Learning quests, classes, attendance; **no management permissions** |
+| `visiting_monastic` | พระอาคันตุกะ | Visiting monk/novice: own schedule and quests; no directory or colleague availability |
 
 ### 2.2 Community & Staff Mode
 
@@ -114,63 +115,63 @@ only · **C** counts/coarse states only (ว่าง / ไม่ว่าง / 
 the abbot delegates it in temple settings · 🔒 restricted · — none.
 
 <!-- GENERATED from role_permissions.yaml — do not edit the table by hand -->
-| Permission | abbot | deputy | asst | secr | bhik | sam | waiya | fac_mgr | tech | dept_lead | house | kitchen | garden | driver | cer_lead | cer_team | undert | office | acct | t_admin | guard | traffic | staff | t_boy | resident | vol | comm |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| `quest.view` | T | T | T | T | S+P | S | D | D | A | D | A | A | A | A | D | A | A | D | A | A | A | A | A | A | A+P | A+P | P |
-| `quest.create` | T | T | T | T | S | — | — | D | — | D | — | — | — | — | D | — | — | D | — | — | — | — | — | — | — | — | — |
-| `quest.request` | — | — | — | — | T | T | — | — | T | — | T | T | T | T | — | — | — | T | — | — | T | — | T | — | — | — | — |
-| `quest.assign` | T | T | T | T | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | — | — | — | — | — | — | — | — |
-| `quest.complete` | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S |
-| `quest.verify` | T | T | T | T | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | — | — | — | — | — | — | — | — |
-| `quest.manage` | T | T | T | — | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | — | — | — | — | — | — | — | — |
-| `event.view` | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | A | T | T | T | T | T | T | T | T | T | P |
-| `event.manage` | T | T | T | T | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | — | — | — | — | — | — | — | — |
-| `event.approve` 🔒 | T | T | T | T(delegated) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| `event.volunteer_approve` | — | — | — | — | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | — | — | — | — | — | — | — | — |
-| `invitation.view` | T | T | T | T | A | — | — | — | — | — | — | — | — | A | — | — | — | T | — | — | — | — | — | — | — | — | — |
-| `invitation.manage` | T | T | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — |
-| `invitation.confirm` 🔒 | T | T | T | T(delegated) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| `ceremony.confirm_monks` 🔒 | T | T | T | T(delegated) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| `funeral.assigned.view` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | D | A | A | — | — | — | — | — | — | — | — | — | — |
-| `funeral.register.view` 🔒 | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T(create/edit) | — | — | — | — | — | — | — | — | — |
-| `schedule.view` | T | T | T | T | S+P | S+P | S | P | S | S | S | S | S | S | P | S | S | T | S | S | S | S | S | S | S | S | P |
-| `schedule.manage` | T | T | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — |
-| `availability.view` | T | T | T | T | C | — | — | — | — | — | — | — | — | A | C | — | — | C | — | — | — | — | — | — | — | — | — |
-| `availability.set_self` | S | S | S | S | S | S | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| `availability.set_others` | T | T | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| `presence.view` | T | T | T | — | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | T | — | — | — | — | — | — | — |
-| `presence.set_self` | — | — | — | — | — | — | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | — |
-| `presence.set_others` | — | — | — | — | — | — | — | D | — | D | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — |
-| `shift.manage` | — | — | — | — | — | — | — | D | — | D | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — |
-| `headcount.view` | T | T | T | T | — | — | — | — | — | D | — | D | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| `headcount.adjust` | — | — | — | — | — | — | — | — | — | D | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| `command_center.view` | T | T | T | T | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | D(staff panel) | — | — | — | — | — | — | — |
-| `member.view` | T | T | T | T | T(monastics) | — | T | D | Tm | D | Tm | Tm | Tm | Tm | D | Tm | — | T | — | T | Tm | Tm | Tm | Tm | — | — | — |
-| `member.manage` 🔒 | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — |
-| `asset.view` | T | T | T | — | — | — | T | T | T | D | A | A | A | A | D | A | A | — | T | — | A | A | — | A | — | — | — |
-| `asset.manage` | T | — | — | — | — | — | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| `maintenance.report` | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | — |
-| `maintenance.manage` | T | T | T | — | — | — | — | T | A | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| `inventory.view` | T | T | T | — | — | — | T | T | D | D | D | D | D | — | D | — | — | — | T | — | — | — | — | — | — | — | — |
-| `inventory.record` | — | — | — | — | — | — | — | — | D | — | D | D | D | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| `inventory.manage` | — | — | — | — | — | — | — | T | — | D | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| `vehicle.view` | T | T | T | T | — | — | — | T | — | — | — | — | — | A | — | — | — | T | — | — | — | — | — | — | — | — | — |
-| `vehicle.manage` | T | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| `finance.view` 🔒 | T | T | — | — | — | — | T | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — |
-| `finance.approve` 🔒 | T | — | — | — | — | — | T(explicit grant) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| `points.award_community` | T | T | T | T | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | — | — | — | — | — | — | — | — |
-| `reward.manage` | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — |
-| `moderation.manage` | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — |
-| `contact_inbox.manage` | T | T | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — |
-| `community.participate` | — | — | — | — | — | — | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S |
-| `security.log` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | S | S | — | — | — | — | — |
-| `security.incident.view` 🔒 | T | — | — | — | — | — | — | T | — | D(security) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| `document.view` | T | T | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | T | T | — | — | — | — | — | — | — | — |
-| `document.manage` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — |
-| `booking.manage` | — | — | — | T | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — |
-| `report.view` | T | T | T | T | — | — | T | D | — | D | — | — | — | — | D | — | — | T | T | — | — | — | — | — | — | — | — |
-| `audit.view` 🔒 | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
-| `temple.settings` 🔒 | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T(non-restricted only) | — | — | — | — | — | — | — |
+| Permission | abbot | deputy | asst | secr | bhik | sam | visit | waiya | fac_mgr | tech | dept_lead | house | kitchen | garden | driver | cer_lead | cer_team | undert | office | acct | t_admin | guard | traffic | staff | t_boy | resident | vol | comm |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| `quest.view` | T | T | T | T | S+P | S | S+P | D | D | A | D | A | A | A | A | D | A | A | D | A | A | A | A | A | A | A+P | A+P | P |
+| `quest.create` | T | T | T | T | S | — | — | — | D | — | D | — | — | — | — | D | — | — | D | — | — | — | — | — | — | — | — | — |
+| `quest.request` | — | — | — | — | T | T | — | — | — | T | — | T | T | T | T | — | — | — | T | — | — | T | — | T | — | — | — | — |
+| `quest.assign` | T | T | T | T | — | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | — | — | — | — | — | — | — | — |
+| `quest.complete` | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S |
+| `quest.verify` | T | T | T | T | — | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | — | — | — | — | — | — | — | — |
+| `quest.manage` | T | T | T | — | — | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | — | — | — | — | — | — | — | — |
+| `event.view` | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | A | T | T | T | T | T | T | T | T | T | P |
+| `event.manage` | T | T | T | T | — | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | — | — | — | — | — | — | — | — |
+| `event.approve` 🔒 | T | T | T | T(delegated) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `event.volunteer_approve` | — | — | — | — | — | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | — | — | — | — | — | — | — | — |
+| `invitation.view` | T | T | T | T | A | — | — | — | — | — | — | — | — | — | A | — | — | — | T | — | — | — | — | — | — | — | — | — |
+| `invitation.manage` | T | T | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — |
+| `invitation.confirm` 🔒 | T | T | T | T(delegated) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `ceremony.confirm_monks` 🔒 | T | T | T | T(delegated) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `funeral.assigned.view` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | D | A | A | — | — | — | — | — | — | — | — | — | — |
+| `funeral.register.view` 🔒 | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T(create/edit) | — | — | — | — | — | — | — | — | — |
+| `schedule.view` | T | T | T | T | S+P | S+P | S+P | S | P | S | S | S | S | S | S | P | S | S | T | S | S | S | S | S | S | S | S | P |
+| `schedule.manage` | T | T | T | T | — | — | — | — | — | — | — | — | — | — | — | D(ceremony kind) | — | — | T | — | — | — | — | — | — | — | — | — |
+| `availability.view` | T | T | T | T | C | — | — | — | — | — | — | — | — | — | A | C | — | — | C | — | — | — | — | — | — | — | — | — |
+| `availability.set_self` | S | S | S | S | S | S | S | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `availability.set_others` | T | T | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `presence.view` | T | T | T | — | — | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | T | — | — | — | — | — | — | — |
+| `presence.set_self` | — | — | — | — | — | — | — | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | — |
+| `presence.set_others` | — | — | — | — | — | — | — | — | D | — | D | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — |
+| `shift.manage` | — | — | — | — | — | — | — | — | D | — | D | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — |
+| `headcount.view` | T | T | T | T | — | — | — | — | — | — | D | — | D | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `headcount.adjust` | — | — | — | — | — | — | — | — | — | — | D | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `command_center.view` | T | T | T | T | — | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | D(staff panel) | — | — | — | — | — | — | — |
+| `member.view` | T | T | T | T | T(monastics) | — | — | T | D | Tm | D | Tm | Tm | Tm | Tm | D | Tm | — | T | — | T | Tm | Tm | Tm | Tm | — | — | — |
+| `member.manage` 🔒 | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — |
+| `asset.view` | T | T | T | — | — | — | — | T | T | T | D | A | A | A | A | D | A | A | — | T | — | A | A | — | A | — | — | — |
+| `asset.manage` | T | — | — | — | — | — | — | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `maintenance.report` | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | T | — |
+| `maintenance.manage` | T | T | T | — | — | — | — | — | T | A | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `inventory.view` | T | T | T | — | — | — | — | T | T | D | D | D | D | D | — | D | — | — | — | T | — | — | — | — | — | — | — | — |
+| `inventory.record` | — | — | — | — | — | — | — | — | — | D | — | D | D | D | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `inventory.manage` | — | — | — | — | — | — | — | — | T | — | D | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `vehicle.view` | T | T | T | T | — | — | — | — | T | — | — | — | — | — | A | — | — | — | T | — | — | — | — | — | — | — | — | — |
+| `vehicle.manage` | T | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `finance.view` 🔒 | T | T | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — |
+| `finance.approve` 🔒 | T | — | — | — | — | — | — | T(explicit grant) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `points.award_community` | T | T | T | T | — | — | — | — | D | — | D | — | — | — | — | D | — | — | — | — | — | — | — | — | — | — | — | — |
+| `reward.manage` | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — |
+| `moderation.manage` | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — |
+| `contact_inbox.manage` | T | T | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — |
+| `community.participate` | — | — | — | — | — | — | — | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S | S |
+| `security.log` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | S | S | — | — | — | — | — |
+| `security.incident.view` 🔒 | T | — | — | — | — | — | — | — | T | — | D(security) | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `document.view` | T | T | T | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T | T | — | — | — | — | — | — | — | — |
+| `document.manage` | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — |
+| `booking.manage` | — | — | — | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — |
+| `report.view` | T | T | T | T | — | — | — | T | D | — | D | — | — | — | — | D | — | — | T | T | — | — | — | — | — | — | — | — |
+| `audit.view` 🔒 | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `temple.settings` 🔒 | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T(non-restricted only) | — | — | — | — | — | — | — |
 
 Rules that the table cannot express:
 1. **Minor flag overrides roles:** a membership flagged `minor` never gets person-to-person chat, calls or a

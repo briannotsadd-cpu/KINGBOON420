@@ -8,19 +8,25 @@
 # Any role not listed under a permission has no grant.
 
 modes:
-  monastic: [abbot, deputy_abbot, abbot_assistant, monk_secretary, bhikkhu, samanera]
+  monastic: [abbot, deputy_abbot, abbot_assistant, monk_secretary, bhikkhu, samanera, visiting_monastic]
   community_staff: [waiyawatchakon, facility_manager, technician, department_lead, housekeeper, kitchen_staff,
                     gardener, driver, ceremony_lead, ceremony_team, undertaker, office_staff, accountant,
                     temple_admin, security_guard, traffic_staff, staff_general, temple_boy, lay_resident,
                     volunteer, community_member]
 
+# Baseline for any authenticated person (no role needed): accept invitation to a temple, request to join, leave a
+# temple, switch active temple, request monastic attestation, manage own profile/consents.
+# Self check-in: monastics via availability.set_self, lay staff via presence.set_self. Self-claim of a claimable
+# quest: quest.view + quest.complete. Self-redemption: community.participate. revoke_completion: quest.manage.
+# Review of held community points: points.award_community. System actors (resolver, scheduler, ledger writer) act
+# through SECURITY DEFINER functions and are audited as `system:<name>`.
 restricted: [invitation.confirm, ceremony.confirm_monks, event.approve, member.manage, finance.view,
              finance.approve, audit.view, temple.settings, security.incident.view, funeral.register.view]
 
 # Groups. A grant keyed "@group" applies to every role in the group; an explicit role key overrides the group
 # value for that role; the value "-" removes the grant.
 groups:
-  "@monastic": [abbot, deputy_abbot, abbot_assistant, monk_secretary, bhikkhu, samanera]
+  "@monastic": [abbot, deputy_abbot, abbot_assistant, monk_secretary, bhikkhu, samanera, visiting_monastic]
   "@staff": [waiyawatchakon, facility_manager, technician, department_lead, housekeeper, kitchen_staff, gardener,
              driver, ceremony_lead, ceremony_team, undertaker, office_staff, accountant, temple_admin,
              security_guard, traffic_staff, staff_general, temple_boy]
@@ -31,7 +37,7 @@ minor_overrides:   # membership flagged minor (PDPA s.20; Agent 01 doc 03) — a
   deny: [community.participate.p2p_chat, community.participate.calls, community.public_profile]
 
 grants:
-  quest.view:            {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, bhikkhu: S+P, samanera: S,
+  quest.view:            {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, bhikkhu: S+P, samanera: S, visiting_monastic: S+P,
                           waiyawatchakon: D, facility_manager: D, technician: A, department_lead: D, housekeeper: A,
                           kitchen_staff: A, gardener: A, driver: A, ceremony_lead: D, ceremony_team: A, undertaker: A,
                           office_staff: D, accountant: A, temple_admin: A, security_guard: A, traffic_staff: A,
@@ -60,9 +66,10 @@ grants:
   funeral.assigned.view: {undertaker: A, ceremony_team: A, ceremony_lead: D}
   funeral.register.view: {abbot: T, office_staff: T(create/edit)}
   schedule.view:         {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, bhikkhu: S+P, samanera: S+P,
-                          facility_manager: P, ceremony_lead: P, office_staff: T, temple_admin: S, community_member: P,
+                          visiting_monastic: S+P, facility_manager: P, ceremony_lead: P, office_staff: T, temple_admin: S, community_member: P,
                           "@staff": S, lay_resident: S, volunteer: S}
-  schedule.manage:       {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, office_staff: T}
+  schedule.manage:       {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, office_staff: T,
+                          ceremony_lead: D(ceremony kind)}
   availability.view:     {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, bhikkhu: C,
                           ceremony_lead: C, office_staff: C, driver: A}
   availability.set_self: {"@monastic": S}

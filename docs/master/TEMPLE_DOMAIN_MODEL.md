@@ -57,8 +57,10 @@ Rules:
 - `person` is global (one auth account). `membership(person_id, temple_id)` is the unit of access.
 - A person may hold memberships in many temples with **different roles in each** (spec §29: Brian = maintenance at
   A, volunteer at B, community member at C).
-- **Monastic status is a property of the person** (`person.monastic_kind ∈ {none, bhikkhu, samanera}`), verified
-  by a temple admin. Mode is derived per membership: monastic person → Monastic Mode in any temple where they hold
+- **Monastic status is attested by a temple** (decision S-7, HYPOTHESIS until Agent 01 validates attestation
+  evidence): two-person rule when the attester is a `temple_admin` without abbot/deputy role; `person.monastic_kind ∈
+  {none, bhikkhu, samanera}` is **derived** from attestations of temples where the person holds an ACTIVE
+  membership, so one temple's false attestation cannot silently persist. Detail: `docs/domain/core/TENANCY_IDENTITY_SPEC.md`. Mode is derived per membership: monastic person → Monastic Mode in any temple where they hold
   an active membership. A monk visiting another temple sees only that temple's data that his membership there
   permits.
 - Active temple context is chosen after login (temple switcher). The server never trusts a client-sent
@@ -75,7 +77,7 @@ Rules:
 | `CEREMONY` | ทำพิธี | **Calendar-driven** — assigned to a ceremony whose time window covers *now* | Assignment confirmed by authorised human | From ceremony venue (in temple / off-site) |
 | `ON_INVITATION` | ออกกิจนิมนต์ | **Calendar-driven** — confirmed invitation assignment, on-site window | Invitation confirmed by authorised human | Off-site |
 | `TRAVELING` | เดินทาง | **Calendar-driven** — travel legs before/after an off-site commitment (from trip or computed buffer) | Derived from invitation + trip | Off-site |
-| `TEACHING` | สอน | **Calendar-driven** — teaching schedule entry | Schedule owner | From schedule venue |
+| `TEACHING` | สอน | **Calendar-driven** — teaching schedule entry (also `class` and `duty` entries) | Schedule owner | From schedule venue |
 | `UNAVAILABLE` | ไม่พร้อม | **Manual** (self or admin; e.g. sick, retreat) with mandatory end time | Monk or authorised admin | Unknown unless stated |
 | `PERSONAL` | กิจส่วนตัว | **Manual** with end time | Monk | Unknown unless stated |
 | `REST` | พักผ่อน | **Manual** with end time | Monk | In temple |
@@ -102,6 +104,10 @@ Rules:
 - **Never default to AVAILABLE.** A monk is "ว่าง" only by explicit opt-in that has not expired.
 - Every manual state carries `valid_until` (default: end of the local day, Asia/Bangkok). Expired → ignored.
 - Check-in signals go stale after a configurable TTL (default 12 h) → contribute nothing.
+- **Supersession (decision S-1):** a new manual status set by the same actor class supersedes overlapping older ones
+  (monk sets REST, later AVAILABLE → AVAILABLE). Admin-set UNAVAILABLE is never superseded by self-set rows.
+  Priority then applies across sources. Normative resolver + 48 cases: `docs/domain/core/AVAILABILITY_SPEC.md`.
+- `DOUBLE_BOOKED` (two overlapping calendar commitments) is also a conflict type.
 - Overlap of a manual block (1, 6, 7) with a calendar commitment (2–5) is a **conflict**; the system shows the
   resolved state *and* a conflict flag to the secretary. It never silently cancels a commitment.
 - Output also includes `location_state ∈ {IN_TEMPLE, OFF_SITE, UNKNOWN}` so the Command Center can count
@@ -109,18 +115,18 @@ Rules:
 
 ### 4.3 Command Center counters
 
-| Counter | Definition |
-|---|---|
-| พระทั้งหมด | active monastic memberships with `monastic_kind = bhikkhu` |
-| สามเณรทั้งหมด | same with `samanera` |
-| อยู่ในวัด | `location_state = IN_TEMPLE` |
-| ว่าง | `effective_status = AVAILABLE` |
-| ออกกิจนิมนต์ | `ON_INVITATION` |
-| กำลังสอน / ทำพิธี / เดินทาง | `TEACHING` / `CEREMONY` / `TRAVELING` |
-| ไม่พร้อม | `UNAVAILABLE` + `PERSONAL` + `REST` (shown broken down on tap) |
-| **ไม่ทราบ** | `UNKNOWN` — always shown, never hidden |
+Two independent partitions, each summing to the total (Agent 02 found the v0.1 single table could not satisfy its
+own invariant). Normative definition: `docs/domain/core/AVAILABILITY_SPEC.md` §10.
 
-Invariant: the sum of per-state counts equals the total. A dashboard test enforces it.
+| Partition | Buckets (Thai label) |
+|---|---|
+| Population | พระทั้งหมด (`bhikkhu`) + สามเณรทั้งหมด (`samanera`) = total; visiting monastics reported as "of which visiting" |
+| By status | ว่าง AVAILABLE · ออกกิจนิมนต์ ON_INVITATION · สอน TEACHING · ทำพิธี CEREMONY · เดินทาง TRAVELING · ไม่พร้อม (UNAVAILABLE + PERSONAL + REST, breakdown on tap) · อยู่ในวัด–ยังไม่ระบุสถานะ IN_TEMPLE · **ไม่ทราบ UNKNOWN** |
+| By location | อยู่ในวัด IN_TEMPLE · นอกวัด OFF_SITE · ไม่ทราบ UNKNOWN |
+
+Invariants CC-1..CC-6 (each a dashboard test): each partition sums to total; each person in exactly one bucket per
+partition; a resolution error counts the person as UNKNOWN and increments a visible `data_quality.errors` — never
+dropped. Snapshot age is shown.
 
 ## 5. Quest engine
 
@@ -149,6 +155,10 @@ points for paid work?) is decided.
 | SUBMITTED | verify reject (reason) | IN_PROGRESS | verifier |
 | SUBMITTED | (verification policy = none) | COMPLETED | system |
 | any non-terminal | cancel (reason) | CANCELLED | `quest.manage` |
+- **Decision S-4:** the table applies to the **quest assignment**; quest status mirrors it when `capacity = 1` and
+  aggregates otherwise. `VERIFIED` is a transient audit event, not a resting status. Additional commands: `unassign`,
+  `reassign`, `withdraw`, `expire` (system), `revoke_completion` (writes the compensating ledger row). Normative
+  spec + 40 cases: `docs/domain/core/QUEST_LIFECYCLE_SPEC.md`.
 - `OVERDUE` is **derived** (`due_at < now` and not COMPLETED/CANCELLED), not a stored status.
 - `UNASSIGNED` = OPEN with zero active assignments (derived).
 - Points are credited **only on COMPLETED**, by a server-side function, exactly once (idempotency key =
@@ -177,6 +187,10 @@ RECEIVED ─triage─▶ REVIEWING ─propose team─▶ TEAM_PROPOSED ─human 
      │                  │                         │                              │
      └──decline──▶ DECLINED ◀──────────────────────┘                    cancel ─▶ CANCELLED
 ```
+- Additional transitions: TEAM_PROPOSED → REVIEWING (`revise_team`), IN_PROGRESS → CANCELLED, CONFIRMED self-loops
+  `replace_monk`, `reschedule`. Assigned monks may acknowledge or request release on their own assignment. Spec + 27
+  cases: `docs/domain/core/SCHEDULE_INVITATION_SPEC.md`.
+- **Smart Monk Assignment is rule-based, not AI**; it never reads either score ledger.
 - Captures: host contact, rite type, venue + geo, start, expected duration, monks required, transport (host
   provides / temple vehicle), notes.
 - **Smart Monk Assignment** proposes candidates using availability, existing schedule, travel time estimate,
@@ -188,8 +202,8 @@ RECEIVED ─triage─▶ REVIEWING ─propose team─▶ TEAM_PROPOSED ─human 
 
 ### 6.2 Schedule entry
 
-`schedule_entries(temple_id, person_id, kind ∈ {invitation, ceremony, teaching, class, duty, personal, meal, leave,
-meeting}, starts_at,
+`schedule_entries(temple_id, person_id, kind ∈ {invitation, ceremony, teaching, class, duty, personal, travel,
+meal, leave, meeting}, starts_at,
 ends_at, venue, source_type, source_id)` — the single calendar table that availability resolution reads.
 
 ## 7. Facility
@@ -221,7 +235,9 @@ ends_at, venue, source_type, source_id)` — the single calendar table that avai
 | Storage | `monastic_activity_ledger` (append-only) | `boon_point_transactions` (append-only, signed amounts) |
 | Enforcement | DB constraint: ledger rows only for persons with `monastic_kind <> none` | DB constraint: only `monastic_kind = none`; redemption cannot exceed balance (serializable txn) |
 
-No table, view or API may sum the two ledgers together.
+No table, view or API may sum the two ledgers together. Balances are per `(temple_id, person_id)` (decision O-3);
+points are not transferable between persons or temples. Monastic ledger rows are written only by the system.
+Normative spec + 24 cases: `docs/domain/core/SCORING_SPEC.md`. Monastic streaks have no loss mechanics (Agent 01).
 
 ## 9. Community and communication
 
