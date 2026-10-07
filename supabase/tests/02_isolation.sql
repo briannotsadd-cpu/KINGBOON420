@@ -43,6 +43,8 @@ begin
           when 'checkins' then format('insert into checkins(temple_id, person_id, source) values (%L, %L, ''manual'')', B, me)
           when 'boon_point_transactions' then format('insert into boon_point_transactions(temple_id, person_id, amount, reason, idempotency_key, created_by) values (%L, %L, 5, ''x'', ''k'', %L)', B, me, me::text)
           when 'monastic_activity_ledger' then format('insert into monastic_activity_ledger(temple_id, person_id, amount, reason, idempotency_key) values (%L, %L, 5, ''x'', ''k'')', B, me)
+          when 'parking_lots' then format('insert into parking_lots(temple_id, code, name_th) values (%L, ''PX'', ''x'')', B)
+          when 'parking_status_reports' then format('insert into parking_status_reports(temple_id, lot_id, status, reported_by) values (%L, ''bbbbbbbb-0000-0000-0000-0000000000e1'', ''FULL'', %L)', B, me)
           else null end;
       exception when insufficient_privilege then ok := true;
                 when others then raise exception 'role % table %: write into B failed with % (%), expected 42501', r.code, ins, sqlstate, sqlerrm;

@@ -119,6 +119,8 @@ grants:
                           ceremony_lead: D, accountant: T}
   inventory.record:      {housekeeper: D, kitchen_staff: D, gardener: D, technician: D}
   inventory.manage:      {facility_manager: T, department_lead: D}
+  parking.report:        {abbot: T, deputy_abbot: T, facility_manager: T, security_guard: T, traffic_staff: T}
+  parking.manage:        {abbot: T, facility_manager: T, temple_admin: T}
   vehicle.view:          {abbot: T, deputy_abbot: T, abbot_assistant: T, monk_secretary: T, facility_manager: T,
                           office_staff: T, driver: A}
   vehicle.manage:        {abbot: T, facility_manager: T}

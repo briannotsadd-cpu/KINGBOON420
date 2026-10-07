@@ -66,6 +66,8 @@ insert into public.permissions(code, restricted) values ('maintenance.manage', f
 insert into public.permissions(code, restricted) values ('inventory.view', false);
 insert into public.permissions(code, restricted) values ('inventory.record', false);
 insert into public.permissions(code, restricted) values ('inventory.manage', false);
+insert into public.permissions(code, restricted) values ('parking.report', false);
+insert into public.permissions(code, restricted) values ('parking.manage', false);
 insert into public.permissions(code, restricted) values ('vehicle.view', false);
 insert into public.permissions(code, restricted) values ('vehicle.manage', false);
 insert into public.permissions(code, restricted) values ('finance.view', true);
@@ -468,6 +470,14 @@ insert into public.role_permissions(role_code, permission_code, scope, scope_ran
 ('technician', 'inventory.record', 'D', 2, null),
 ('department_lead', 'inventory.manage', 'D', 2, null),
 ('facility_manager', 'inventory.manage', 'T', 3, null),
+('abbot', 'parking.report', 'T', 3, null),
+('deputy_abbot', 'parking.report', 'T', 3, null),
+('facility_manager', 'parking.report', 'T', 3, null),
+('security_guard', 'parking.report', 'T', 3, null),
+('traffic_staff', 'parking.report', 'T', 3, null),
+('abbot', 'parking.manage', 'T', 3, null),
+('facility_manager', 'parking.manage', 'T', 3, null),
+('temple_admin', 'parking.manage', 'T', 3, null),
 ('abbot', 'vehicle.view', 'T', 3, null),
 ('abbot_assistant', 'vehicle.view', 'T', 3, null),
 ('deputy_abbot', 'vehicle.view', 'T', 3, null),

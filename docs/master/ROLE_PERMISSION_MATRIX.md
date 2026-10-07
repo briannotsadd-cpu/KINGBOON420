@@ -89,6 +89,8 @@ roles ──< role_permissions(permission_code, scope)
 | `asset.view` / `asset.manage` | Assets & buildings | |
 | `maintenance.report` / `maintenance.manage` | Report / triage & close | |
 | `inventory.view` / `inventory.manage` | Stock | |
+| `parking.report` | Report a parking lot status (available / filling / full / closed) | |
+| `parking.manage` | Create and edit parking lots of the temple | |
 | `vehicle.view` / `vehicle.manage` | Vehicles & trips | |
 | `finance.view` / `finance.approve` | Finance | yes |
 | `points.award_community` | Approve community point awards | |
@@ -160,6 +162,8 @@ coarse states only (ว่าง / ไม่ว่าง / ไม่ทราบ
 | `inventory.view` | T | T | T | — | — | — | — | T | T | D | D | D | D | D | — | D | — | — | — | T | — | — | — | — | — | — | — | — |
 | `inventory.record` | — | — | — | — | — | — | — | — | — | D | — | D | D | D | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 | `inventory.manage` | — | — | — | — | — | — | — | — | T | — | D | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+| `parking.report` | T | T | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — | — | — | — | T | T | — | — | — | — | — |
+| `parking.manage` | T | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — |
 | `vehicle.view` | T | T | T | T | — | — | — | — | T | — | — | — | — | — | A | — | — | — | T | — | — | — | — | — | — | — | — | — |
 | `vehicle.manage` | T | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 | `finance.view` 🔒 | T | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — | — | — | — | T | — | — | — | — | — | — | — | — |
@@ -182,7 +186,7 @@ coarse states only (ว่าง / ไม่ว่าง / ไม่ทราบ
 | `audit.view` 🔒 | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
 | `temple.settings` 🔒 | T | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | — | T(non_restricted) | — | — | — | — | — | — | — |
 
-<!-- 59 permissions × 28 roles -->
+<!-- 61 permissions × 28 roles -->
 
 Rules that the table cannot express:
 1. **Minor flag overrides roles:** a membership flagged `minor` never gets person-to-person chat, calls or a
