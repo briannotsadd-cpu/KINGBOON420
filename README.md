@@ -5,6 +5,17 @@ Temple Operating System + Monastic Life System + Temple Workforce + Community Ne
 **Status:** Wave 1 closed; Wave 2 in progress (database schema + RLS tests, procedural 3D Wat Arun; Figma design paused
 by plan limit). No application features yet. Every feature is `PLANNED` until evidence says otherwise.
 
+## Run the app locally (parking feature)
+
+```bash
+pnpm install
+bash supabase/dev/local-db.sh start            # PG16 with migrations + fictional demo data on :54322
+export DATABASE_URL=postgres://postgres@localhost:54322/boon
+pnpm --filter @boon/web build && pnpm --filter @boon/web start   # http://localhost:3000
+bash supabase/tests/run.sh                      # database tests
+pnpm --filter @boon/web test                    # unit tests
+```
+
 ## Start here
 
 | Document | Purpose |

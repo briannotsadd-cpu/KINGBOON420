@@ -58,4 +58,4 @@ post-pilot.
 | F-44 | BOON UI design system (TH/EN, dark, large text, high contrast, reduced motion, Simple Mode) | both | P0 | — | 2 | 04, 06 | design direction approval | PLANNED | — |
 | F-45 | Analytics (PostHog) & error monitoring (Sentry) | — | P1 | — | 7 | 16 | ADR | PLANNED | — |
 | F-46 | CI/CD, preview deploys | — | P0 | — | 2–3 | 16 | ADR-0001 | PLANNED | — |
-| F-47 | Parking: pick a temple → see if parking is available (visitor, no login) | both | P1 | 2 | 2 | Opus | F-02, F-20 | **TESTED (database only)** — no app screen yet | `supabase/tests/05_parking.sql` pass + mutation check; spec `docs/domain/facility/PARKING_SPEC.md` |
+| F-47 | Parking: pick a temple → see if parking is available (visitor, no login) | both | P1 | 2 | 2 | Opus | F-02, F-20 | **TESTED** (DB + app, local) — not VERIFIED: no real device, no deployed environment | DB `supabase/tests/05_parking.sql` + mutation; app unit `apps/web/lib/parking.test.ts` (6); E2E `apps/web/e2e/parking.e2e.mjs` (6 checks) + screenshots `docs/app/` |

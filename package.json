@@ -1,0 +1,12 @@
+{
+  "name": "boon-system",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "dev": "pnpm --filter @boon/web dev",
+    "build": "pnpm --filter @boon/web build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "db:test": "bash supabase/tests/run.sh"
+  }
+}

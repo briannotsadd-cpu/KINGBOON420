@@ -33,7 +33,8 @@ specs are specification data/tooling, allowed in documentation waves.
 | `packages/temple-scene/**` | Agent 05 | 5 |
 | `supabase/migrations/**`, `supabase/tests/**`, `supabase/seed/**`, `docs/db/**` | Agent 08 | 2–3 |
 | `.github/**`, `turbo.json`, root `package.json`, `pnpm-workspace.yaml` | Agent 16 | 2 |
-| `apps/web/**` (split by route group when parallel) | Agent 06 | 3+ |
+| `apps/web/**` (split by route group when parallel) | Opus now (parking slice); Agent 06 from Wave 3 | 3+ |
+| root `package.json`, `pnpm-workspace.yaml`, `supabase/dev/**` | Opus (minimal scaffold for parking slice) | 2 |
 | `apps/web/src/server/**`, `supabase/functions/**` | Agent 07 | 3+ |
 | `packages/domain/**` (pure domain logic: availability resolver, quest FSM, readiness) | Agent 02 → 11 | 3+ |
 | `tests/e2e/**` | Agent 14 | 3+ |
