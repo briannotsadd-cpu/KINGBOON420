@@ -30,6 +30,6 @@ describe("presentParking", () => {
   it("unknown capacity is labelled, not invented", () => {
     const v = presentParking([{ ...base, capacity: null }]);
     if (v.kind !== "lots") throw new Error();
-    expect(v.lots[0].details).toContain("จำนวนช่องจอด: ไม่ทราบ");
+    expect(v.lots[0].details).toContainEqual({ kind: "count", text: "จำนวนช่องจอด: ไม่ทราบ" });
   });
 });

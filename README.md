@@ -5,16 +5,20 @@ Temple Operating System + Monastic Life System + Temple Workforce + Community Ne
 **Status:** Wave 1 closed; Wave 2 in progress (database schema + RLS tests, procedural 3D Wat Arun; Figma design paused
 by plan limit). No application features yet. Every feature is `PLANNED` until evidence says otherwise.
 
-## Run the app locally (parking feature)
+## Run the app locally
 
 ```bash
 pnpm install
-bash supabase/dev/local-db.sh start            # PG16 with migrations + fictional demo data on :54322
-export DATABASE_URL=postgres://postgres@localhost:54322/boon
-pnpm --filter @boon/web build && pnpm --filter @boon/web start   # http://localhost:3000
-bash supabase/tests/run.sh                      # database tests
-pnpm --filter @boon/web test                    # unit tests
+bash supabase/dev/local-db.sh start            # empty PG16 database on :54322 (no sample data)
+cp apps/web/.env.example apps/web/.env.local   # then set AUTH_PEPPER and PLATFORM_ADMIN_EMAILS (your email)
+pnpm --filter @boon/web dev                     # http://localhost:3000
 ```
+
+Without `RESEND_API_KEY`/`MAIL_FROM`, no email is sent: in development the 6-digit login code is printed in the
+server terminal and the page says plainly that no email was sent.
+
+Tests: `bash supabase/tests/run.sh` (database) · `pnpm --filter @boon/web test` (unit) ·
+`bash apps/web/e2e/run.sh` (end-to-end in Chromium at phone size; resets the local database before and after).
 
 ## Start here
 

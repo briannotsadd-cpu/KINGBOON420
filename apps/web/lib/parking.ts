@@ -24,7 +24,7 @@ export interface LotView {
   label: string;
   freeText: string | null;
   updatedText: string | null;
-  details: string[];
+  details: { kind: "vehicles" | "count" | "access" | "fee" | "hours"; text: string }[];
 }
 
 export type ParkingView =
@@ -60,12 +60,12 @@ export function presentParking(rows: ParkingRow[]): ParkingView {
     lots: lots.map((r) => {
       const status: ParkingStatus = r.status ?? "UNKNOWN";
       const s = STATUS[status];
-      const details: string[] = [];
-      if (r.vehicle_types?.length) details.push(r.vehicle_types.map((v) => VEHICLE[v] ?? v).join(" · "));
-      details.push(r.capacity != null ? `ทั้งหมด ${r.capacity} คัน` : "จำนวนช่องจอด: ไม่ทราบ");
-      if (r.accessible_spaces) details.push(`ช่องจอดผู้พิการ ${r.accessible_spaces} ช่อง`);
-      if (r.fee_note_th) details.push(`ค่าจอด: ${r.fee_note_th}`);
-      if (r.hours_note_th) details.push(`เวลา: ${r.hours_note_th}`);
+      const details: LotView["details"] = [];
+      if (r.vehicle_types?.length) details.push({ kind: "vehicles", text: r.vehicle_types.map((v) => VEHICLE[v] ?? v).join(" · ") });
+      details.push({ kind: "count", text: r.capacity != null ? `ทั้งหมด ${r.capacity} คัน` : "จำนวนช่องจอด: ไม่ทราบ" });
+      if (r.accessible_spaces) details.push({ kind: "access", text: `ช่องจอดผู้พิการ ${r.accessible_spaces} ช่อง` });
+      if (r.fee_note_th) details.push({ kind: "fee", text: `ค่าจอด: ${r.fee_note_th}` });
+      if (r.hours_note_th) details.push({ kind: "hours", text: `เวลา: ${r.hours_note_th}` });
       return {
         code: r.lot_code!,
         name: r.lot_name_th ?? r.lot_code!,
