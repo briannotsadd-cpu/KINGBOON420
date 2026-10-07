@@ -224,5 +224,18 @@ begin
   reset role;
   perform test.assert(app.community_can(NEWP, 'community.participate'), 'follower with profile can participate');
   perform test.assert(not app.community_can(NEWP, 'community.calls') = false, 'community_member holds community.calls');
+  perform test.as_person(NEWP);
+  perform app.leave_temple_community('aaaaaaaa-0000-0000-0000-000000000001');
+  perform app.join_temple_community('aaaaaaaa-0000-0000-0000-000000000001');
+  reset role;
+  perform test.assert(app.community_can(NEWP, 'community.participate'), 're-follow after leaving re-activates the membership');
+  perform set_config('request.jwt.claims', '', false); execute 'set role anon';
+  select count(*) into n from public.public_temple_ref('demo-a'); perform test.assert(n = 1, 'public ref for verified temple');
+  select count(*) into n from public.public_temple_ref('demo-b'); perform test.assert(n = 0, 'no public ref for unverified temple');
+  reset role;
+  perform test.as_person(L4);
+  perform app.submit_temple_contact('demo-a', 'activity', 'สอบถามกิจกรรม (ทดสอบ)', null, null, 'iphash-l4');
+  select count(*) into n from app.my_contact_threads() where temple_name is not null; perform test.assert(n = 1, 'sender sees own thread with temple name');
+  reset role;
   raise notice 'PASS 08_community: eligibility, connection-gated chat, block/mute, posts, moderation, calls, rate limits, temple contact';
 end $$;

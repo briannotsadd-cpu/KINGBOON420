@@ -49,6 +49,12 @@ begin
           when 'temple_field_values' then format('insert into temple_field_values(temple_id, field_key, value, source_id, status) select %L, ''temple.name_th'', ''"x"'', id, ''DISCOVERED'' from data_sources limit 1', B)
           when 'temple_field_value_history' then format('insert into temple_field_value_history(temple_id, value_id, field_key, action, actor) values (%L, gen_random_uuid(), ''x'', ''x'', ''x'')', B)
           when 'temple_contact_threads' then format('insert into temple_contact_threads(temple_id, ref_code, topic, message) values (%L, ''X1'', ''other'', ''hello there'')', B)
+          when 'rite_types' then format('insert into rite_types(temple_id, name_th) values (%L, ''xx'')', B)
+          when 'invitations' then format('insert into invitations(temple_id, host_name, rite_type_id, venue_text, starts_at, duration_min, monks_required, created_by) values (%L, ''xx'', gen_random_uuid(), ''xx'', now(), 60, 1, %L)', B, me)
+          when 'invitation_team' then format('insert into invitation_team(temple_id, invitation_id, person_id) values (%L, gen_random_uuid(), %L)', B, me)
+          when 'events' then format('insert into events(temple_id, kind, title, starts_at, ends_at, created_by) values (%L, ''other'', ''xx'', now(), now() + interval ''1 hour'', %L)', B, me)
+          when 'event_staffing_targets' then format('insert into event_staffing_targets(temple_id, event_id, category, label, required, min_required) values (%L, gen_random_uuid(), ''volunteer'', ''xx'', 1, 1)', B)
+          when 'event_participants' then format('insert into event_participants(temple_id, event_id, target_id, person_id) values (%L, gen_random_uuid(), gen_random_uuid(), %L)', B, me)
           else null end;
       exception when insufficient_privilege then ok := true;
                 when others then raise exception 'role % table %: write into B failed with % (%), expected 42501', r.code, ins, sqlstate, sqlerrm;
