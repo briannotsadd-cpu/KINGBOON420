@@ -16,8 +16,7 @@ sh "$PGBIN/initdb -D $WORK/data -A trust -U postgres >/dev/null"
 sh "$PGBIN/pg_ctl -D $WORK/data -o \"-p $PORT -k $WORK -c listen_addresses=''\" -l $WORK/log -w start >/dev/null"
 PSQL="$PGBIN/psql -X -q -v ON_ERROR_STOP=1 -h $WORK -p $PORT -U postgres"
 sh "$PGBIN/createdb -h $WORK -p $PORT -U postgres boon_test"
-run() { echo "== $1"; sh "$PSQL -d boon_test -f $2" 2>&1 | grep -v '^$' || { echo "FAILED: $1"; exit 1; }; }
-# pipefail makes grep|psql failures visible; grep -v on empty output returns 1, so guard with || true above is avoided:
+run() { echo "== $1"; local out rc=0; out="$(sh "$PSQL -d boon_test -f $2" 2>&1)" || rc=$?; [ -n "$out" ] && echo "$out"; [ $rc = 0 ] || { echo "FAILED: $1"; exit 1; }; }
 for f in "$ROOT"/supabase/migrations/*.sql; do run "migration $(basename "$f")" "$f"; done
 for f in "$ROOT"/supabase/seed/*.sql; do run "seed $(basename "$f")" "$f"; done
 for f in "$ROOT"/supabase/tests/[0-9]*.sql; do run "test $(basename "$f")" "$f"; done

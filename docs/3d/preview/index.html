@@ -28,8 +28,8 @@ const ctl = new OrbitControls(cam, r.domElement); ctl.enableDamping = true; ctl.
 const V = { wide: [[70, 45, 95], [0, 18, 0]], close: [[28, 30, 34], [0, 28, 0]], top: [[0.01, 150, 0.01], [0, 0, 0]] }[view] || [[70, 45, 95], [0, 18, 0]];
 cam.position.set(...V[0]); ctl.target.set(...V[1]); ctl.update();
 new GLTFLoader().load('../../../assets/3d/wat-arun/wat-arun-stylized.glb', g => {
-  g.scene.traverse(o => { if (o.isMesh) { const isL0 = o.name.endsWith('_LOD0'), isL1 = o.name.endsWith('_LOD1'); o.visible = lod ? isL1 : isL0; o.castShadow = true; o.receiveShadow = true; } });
-  scene.add(g.scene); window.__ready = true;
+  g.scene.traverse(o => { if (o.isMesh) { let n = '', a = o; while (a && !n.includes('_LOD')) { n = a.name || ''; a = a.parent; } const isL0 = n.includes('_LOD0'), isL1 = n.includes('_LOD1'); o.visible = lod ? isL1 : isL0; o.castShadow = true; o.receiveShadow = true; } });
+  scene.add(g.scene); window.__scene = g.scene; window.__ready = true;
 }, undefined, e => { document.title = 'ERR ' + e; window.__ready = 'err'; });
 addEventListener('resize', () => { cam.aspect = innerWidth / innerHeight; cam.updateProjectionMatrix(); r.setSize(innerWidth, innerHeight); });
 r.setAnimationLoop(() => { ctl.update(); r.render(scene, cam); });

@@ -47,6 +47,10 @@ create table public.quest_evidence (       -- metadata only; file bytes live in 
   foreign key (temple_id, assignment_id) references public.quest_assignments(temple_id, id)
 );
 
+create function app.is_quest_assignee(p_temple uuid, p_quest uuid) returns boolean language sql stable security definer set search_path = public, pg_temp as $$
+  select app.is_member(p_temple) and exists (select 1 from public.quest_assignments a
+    where a.temple_id = p_temple and a.quest_id = p_quest and a.assignee_person_id = app.current_person_id())
+$$;
 create function app.quest_assignment_guard() returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
 declare ok boolean; pol text;
 begin
@@ -118,8 +122,7 @@ do $$ declare t text; begin
 -- quests
 create policy quests_sel on public.quests for select to authenticated using (
   app.in_scope(temple_id, 'quest.view', created_by, department_id)
-  or exists (select 1 from public.quest_assignments a where a.temple_id = quests.temple_id and a.quest_id = quests.id
-             and a.assignee_person_id = app.current_person_id() and app.is_member(temple_id)));
+  or app.is_quest_assignee(temple_id, id));
 create policy quests_ins on public.quests for insert to authenticated with check (
   created_by = app.current_person_id() and app.in_scope(temple_id, 'quest.create', created_by, department_id));
 create policy quests_upd on public.quests for update to authenticated

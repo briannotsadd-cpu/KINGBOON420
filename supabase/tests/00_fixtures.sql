@@ -1,5 +1,6 @@
 -- Fixtures: one person per role with an ACTIVE membership in demo-a; a full row set in demo-b. Runs as superuser.
 create schema test;
+grant usage on schema test to authenticated;
 create function test.assert(c boolean, msg text) returns void language plpgsql as $$
 begin if c is not true then raise exception 'ASSERT FAILED: %', msg; end if; end $$;
 create function test.as_person(p uuid) returns void language plpgsql as $$

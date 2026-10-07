@@ -21,7 +21,6 @@ begin
   ok := false; begin insert into public.boon_point_transactions(temple_id, person_id, amount, reason, idempotency_key) values (A, lay, 1, 'dup', 'k1');
   exception when unique_violation then ok := true; end; perform test.assert(ok, 'duplicate idempotency key accepted');
   -- no UPDATE/DELETE/TRUNCATE, even for the owner/superuser
-  foreach ok in array array[true] loop null; end loop;
   ok := false; begin update public.boon_point_transactions set amount = 99; exception when insufficient_privilege then ok := true; end; perform test.assert(ok, 'community UPDATE allowed');
   ok := false; begin delete from public.boon_point_transactions; exception when insufficient_privilege then ok := true; end; perform test.assert(ok, 'community DELETE allowed');
   ok := false; begin update public.monastic_activity_ledger set amount = 99; exception when insufficient_privilege then ok := true; end; perform test.assert(ok, 'monastic UPDATE allowed');
