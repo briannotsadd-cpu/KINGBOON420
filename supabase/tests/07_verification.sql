@@ -57,6 +57,14 @@ begin
   select count(*) into n from public.temple_public_fields('demo-a') where field_key = 'temple.office_phone';
   perform test.assert(n = 0, 'expired value not public');
   perform test.assert(not app.is_verified_temple(A), 'expired data => temple not verified (must re-check)');
+  perform set_config('request.jwt.claims', '', false); execute 'set role anon';
+  select count(*) into n from public.listed_temples() where slug = 'demo-a';
+  perform test.assert(n = 0, 'temple with expired data is not listed publicly (name alone is not enough)');
+  select count(*) into n from public.temple_public_fields('demo-a');
+  perform test.assert(n = 0, 'no public fields while the temple is not verified');
+  select count(*) into n from public.temple_parking('demo-a');
+  perform test.assert(n = 0, 'no public parking while the temple is not verified');
+  reset role;
   perform test.as_person(ta); perform app.reconfirm_field_value(v2); reset role;
   perform test.assert(app.is_verified_temple(A), 'reconfirmed => verified again');
   select count(*) into n from public.temple_public_fields('demo-a') where field_key = 'temple.office_phone';
