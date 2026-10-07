@@ -29,7 +29,8 @@ specs are specification data/tooling, allowed in documentation waves.
 | `docs/design/**`, `packages/ui/tokens/**` | Agent 04 | 2 |
 | `packages/ui/**` except `tokens/` (scaffold), `packages/domain/**` (scaffold) | Agent 16 → 06/11 | 2 / 3 |
 | `docs/security/**` | Agent 13 | 2 |
-| `docs/3d/**`, `assets/3d/**`, `packages/temple-scene/**` | Agent 05 | 2 / 5 |
+| `docs/3d/**` (except `ASSET_BRIEF.md`, Opus), `assets/3d/**` | Agent 05 — **active (Wave 2, procedural Wat Arun design)** | 2 |
+| `packages/temple-scene/**` | Agent 05 | 5 |
 | `supabase/migrations/**`, `supabase/tests/**`, `supabase/seed/**`, `docs/db/**` | Agent 08 | 2–3 |
 | `.github/**`, `turbo.json`, root `package.json`, `pnpm-workspace.yaml` | Agent 16 | 2 |
 | `apps/web/**` (split by route group when parallel) | Agent 06 | 3+ |

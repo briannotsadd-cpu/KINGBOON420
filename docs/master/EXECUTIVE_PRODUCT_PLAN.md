@@ -62,7 +62,7 @@ community has; whether scores are correct; who may view each item; and whether t
 | D-3 | Use Supabase | ADR-0002 Accepted; real pilot personal data still needs a PDPA transfer basis (R-17) |
 | B3 | No monk advisor | Working decisions ("แต้มกิจวัตร", money lay-only, no monastic ranking) become owner-accepted defaults; R-04 accepted |
 | D-6 | Use Figma | Agent 04 designs in Figma |
-| D-2/D-4 | Owner builds the 3D model | Brief: `docs/3d/ASSET_BRIEF.md`; F-19 unblocks when the model + licence entry arrive |
+| D-2/D-4 | Owner builds the 3D model → **revised: Agent 05 designs a procedural stylized model** (project-owned, no downloads) | Brief: `docs/3d/ASSET_BRIEF.md`; F-19 stays BLOCKED until the model passes the brief's budgets with evidence |
 | — | Minimise token use | Wave 2 runs 2 agents (08, 04); 13 and 16 move to Wave 3; no separate audit agent per wave — Opus reviews |
 
 ## 7. Decisions needed from the owner
