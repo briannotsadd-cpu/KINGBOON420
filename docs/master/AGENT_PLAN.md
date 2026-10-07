@@ -17,10 +17,10 @@ Status: **v0.1 (Wave 0)**. Master: Opus (Lead Orchestrator). Sub-agents: Sonnet 
 
 | Wave | Goal | Agents | Gate (exit criteria) |
 |---|---|---|---|
-| 0 | Audit + master plans | Opus | All master docs exist; prompt pack reviewed — **done in this session** |
+| 0 | Audit + master plans | Opus | All master docs exist; prompt pack reviewed — **done** |
 | 1a | Research + domain | 01, 02, 17, 18, 19 (parallel; disjoint paths) | Each output exists, cites sources or labels HYPOTHESIS, lists open questions |
 | 1b | UX architecture + governance review | 03, 20 (parallel) | IA, flows for 10 north-star questions, state patterns; consistency audit with findings triaged by Opus |
-| 1 gate | Opus review | Opus | Gap analysis rev 2, risk register rev 2, master docs updated, Wave 2 prompts written |
+| 1 gate | Opus review — **CLOSED 2026-10-07** (audit 0 P0; P1s resolved; decisions in GAP_ANALYSIS §4) | Opus | Gap analysis rev 2, risk register rev 2, master docs updated, Wave 2 prompts written |
 | 2 | Design system & directions, 3D feasibility, DB architecture, security architecture, ADRs, repo scaffold + CI | 04, 05, 08, 13, 16 | 3 directions reviewed & one chosen by Opus (+ owner ack); ADR-0001..0003 accepted; schema v1 SQL with RLS tests passing on local PG16; CI green |
 | 3 | Auth, tenant, RLS, people, permission, quest foundation | 07, 08, 06, 11, 14 | Tenant isolation matrix green; quest lifecycle tests green; E2E sign-in → temple pick → quest complete |
 | 4 | Monastic Mode: availability, schedule, invitation, My Day, activity score | 02, 07, 06, 11, 19 | Availability resolver tests; invitation E2E with human confirm; Thai UI screenshots |

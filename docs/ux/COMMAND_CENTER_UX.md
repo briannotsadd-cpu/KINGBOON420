@@ -192,7 +192,7 @@ and the filter ("ว่าง · 3 รูป") and flags if the list count diffe
 |---|---|---|---|---|
 | ว่าง / ออกกิจนิมนต์ / สอน / ทำพิธี / เดินทาง / ไม่พร้อม / อยู่ในวัด-ยังไม่มีสถานะ | W03 filtered | name, `effective_status`, `location_state`, `valid_until`, `next_change_at`, conflict badge | person status detail (tier by role) | `availability.view` |
 | ไม่ทราบ (monastic) | W03 group "ไม่ทราบ" | name, reason (ไม่มีสัญญาณ / หมดเวลา / เช็กอินเก่า) | [ขอให้ลงสถานะ] (quiet reminder; no status is set) | `availability.view` T |
-| ความขัดแย้ง | conflict list | person, type, severity, overlap window, both sources | open each source entry; resolve by editing (human) | `availability.set_others` |
+| ความขัดแย้ง | conflict list | person, type, severity, overlap window, both sources | open each source entry; resolve by editing (human) | `availability.view` (T) |
 | เจ้าหน้าที่ states | staff list | name, state, department, shift, flags (lead only) | presence detail | `presence.view` |
 | ภารกิจ tiles | quest list | title, type, department, assignee (scope), due, status chip, OVERDUE owner | W05 / W06 | `quest.view` |
 | Event row | event list | title, `starts_at`, `state`, top failed gate, gaps | W07 | `event.view` |
@@ -224,7 +224,7 @@ always available (ACCESSIBILITY §4); donut charts are not used for partitions t
 
 | Conflict | Where | Visible to | Presentation |
 |---|---|---|---|
-| `MANUAL_BLOCK_OVER_COMMITMENT` (HIGH/MEDIUM) | Panel 1 strip "ความขัดแย้งตาราง", W03 row badge, My Day (own only) | `availability.set_others` holders; the monk himself | Count + severity word; drill-down shows both sources and "ระบบไม่ได้ยกเลิกรายการใดให้"; action owner = พระเลขานุการ |
+| `MANUAL_BLOCK_OVER_COMMITMENT` (HIGH/MEDIUM) | Panel 1 strip "ความขัดแย้งตาราง", W03 row badge, My Day (own only) | `availability.view` (T) holders; the monk himself | Count + severity word; drill-down shows both sources and "ระบบไม่ได้ยกเลิกรายการใดให้"; action owner = พระเลขานุการ |
 | `DOUBLE_BOOKED` | same | same | same |
 | Event gate `G-CONFLICT` | Panel 4 row, W07 failed-gates list | `event.view` with readiness detail | "พระ N รูปมีความขัดแย้งตาราง" -> opens the conflict list filtered to the event |
 | Hard constraints in proposals | W04 | `invitation.manage` | Exclusion list with codes translated (never private reasons) |
@@ -265,5 +265,5 @@ abbot can hide it permanently. Until Wave 7 the card does not render.
 |---|---|
 | CC-Q1 | Should the abbot-level strip include an explicit "ต้องตัดสินใจวันนี้" count (items due within 24 h) in addition to the total? Default: yes, as a sub-label. |
 | CC-Q2 | Is the future-instant question ("ถามช่วงเวลา") a P0 control or a later add-on? It depends on OQ-06 (resolver future evaluation). |
-| CC-Q3 | Operational tier for `ceremony_lead` and `office_staff` (AVAILABILITY OQ-A4): the matrix says "C" (coarse); this UX shows three tiles only. Confirm. |
+| CC-Q3 | *Closed*: AVAILABILITY §9 gives `ceremony_lead` and `office_staff` the coarse tier (FREE/BUSY/UNKNOWN), matching the three tiles. |
 | CC-Q4 | Should deputy_abbot see the Community panel's moderation tile (`moderation.manage` T: yes per matrix)? Default: yes. |

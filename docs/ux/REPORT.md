@@ -6,7 +6,7 @@ SQL, package or config written. Core domain (Agent 02) was re-read at the end; s
 ## 1. Summary
 
 Seven UX architecture files define the app shell and navigation (mode tabs, temple switcher, management area, deep links,
-no-membership discovery), a permission-keyed home module registry (75 modules; composition for all 27 roles; every
+no-membership discovery), a permission-keyed home module registry (75 modules; composition for all 28 roles; every
 permission code verified against `role_permissions.yaml` by script), 14 north-star flows, 4 Command Center question flows, 3 access flows and 12 journeys (onboarding with PDPA and
 guardian consent, all 10 master north-star questions and the 4 proposed by Agent 17, invitation -> Smart Assignment -> human
 confirm, quest claim -> evidence -> verify, volunteer sign-up -> check-in -> points, report problem -> work order, Temple
@@ -68,24 +68,25 @@ demo data.
 
 ## 4. Conflicts between documents (STOP CONDITION: follow `docs/master/**`, list here)
 
-| ID | Conflict | Documents | Followed | Recommended resolution |
-|---|---|---|---|---|
-| C-1 | `GLOSSARY.md` §3 still labels `monastic_activity_score` "แต้มบุญ (UI)" and describes `streak` "with grace, monastic only"; `SCORING_SPEC.md` §3 and §7.1 (now) say แต้มกิจวัตร and cumulative practice days with **no** loss mechanics or grace | GLOSSARY vs SCORING, master | master + SCORING (แต้มกิจวัตร, practice days) | Agent 02 updates the glossary (owner) |
-| C-2 | `STAFF_PRESENCE_SPEC.md` keeps five states with `UNKNOWN/OFF_SHIFT`; master v0.2 adds a sixth state `OFF_SHIFT` | Agent 17 vs master | master (six states; sum invariant with six) | Agent 17 / Opus align the spec |
-| C-3 | Master `TEMPLE_DOMAIN_MODEL.md` §4.3 counter list and sum invariant cannot hold; core `AVAILABILITY_SPEC.md` §10 defines two partitions | master vs core | core §10 (Agent 02 proposes the master change) | Opus applies Agent 02 proposal 4 |
-| C-4 | Core `SCHEDULE_INVITATION_SPEC.md` kinds `invitation, ceremony, teaching, class, duty, personal, travel` omit `meal, leave, meeting` that master §6.2 v0.2 lists; Agent 02 REPORT proposes replacing master's list with its own | core vs master | master (UI supports meal/leave/meeting) | Agent 02 reconcile; Opus must not apply the replacement text as written |
-| C-5 | Master F-31 lists "streak" for monastics; research docs 04/05 advise against streak loss-aversion for monastics | master/research | SCORING §7.1 (cumulative practice days, no loss mechanics, private) which satisfies both | none needed |
-| C-6 | Core `SCHEDULE_INVITATION_SPEC.md` §5.4-5.6 outputs `ranked[]` with numeric `score`, `rank` and per-factor breakdown for monks; product rule says no ranking of monastics | core vs product rule | UX shows the suggestion in words with reasons; numbers and rank only inside a collapsed audit section; main screen has no score, no "อันดับ", no comparison | Opus ratify; Agent 02 rename `ranked` -> `suggested_order` and mark `score` audit-only |
-| C-7 | Quest priority `LOW/NORMAL/HIGH/URGENT` (core QUEST §2.1) vs `critical` (Agent 19, master §5.1 wording) | core vs events | UI four labels ต่ำ/ปกติ/สูง/เร่งด่วน; "critical" gates shown as เร่งด่วน | Agent 02 / 19 align |
-| C-8 | Master UX skeleton lists 5-6 flat tabs; phone cannot hold 6 | UX IA §2 | 5-slot bar with "เพิ่มเติม" (NAVIGATION §4) | Opus ratify (proposed change 1) |
-| C-9 | Agent 17 `MODULE_REGISTRY_INPUT.md` assumed `asset.view` D for gardener and `document.view` D, `presence.view` Tm; YAML grants A, T and D/T only | workforce vs YAML | YAML | Agent 17 note; acceptable |
-| C-10 | `TENANCY_IDENTITY_SPEC.md` G-4 proposes a `visiting_monastic` role that is not in the YAML; visiting monks have a membership kind but no defined role set | core vs YAML | UI shows the "พระอาคันตุกะ" label and uses whichever role the host assigns | Opus decide G-4 |
+Status after the final reconcile against the fix round (core specs 09:17, YAML v0.3, STAFF_PRESENCE six states, EVENT §7).
 
-### 4.4 Re-read of Agent 02's core before finishing
-Read at start: AVAILABILITY, SCHEDULE_INVITATION, TENANCY_IDENTITY, GLOSSARY. Read mid-run: QUEST_LIFECYCLE (appeared
-08:56), SCORING (updated 09:13 while I worked; I re-read §3, §7, §8 and adjusted `mo.progress`, STATE_PATTERNS §13 and
-W02 to "ปฏิบัติแล้ว N วันในเดือนนี้", no loss mechanics, private numbers), DOMAIN_EVENTS and core REPORT (08:58-08:59). Final
-reconciliation pass is recorded in section 4.5.
+| ID | Conflict | Status | UX decision / recommended resolution |
+|---|---|---|---|
+| C-1 | GLOSSARY said "แต้มบุญ (UI)" and monastic streak with grace | **RESOLVED** (glossary and SCORING now แต้มกิจวัตร; practice days, no loss mechanics) | UX follows: "ปฏิบัติแล้ว N วันในเดือนนี้", run shown only when >= 2, nothing on a missed day |
+| C-2 | Five vs six staff presence states | **RESOLVED** (STAFF_PRESENCE and master: six incl. OFF_SHIFT) | Staff tiles: WORKING, FREE, ON_LEAVE, OFF_SITE_DUTY, OFF_SHIFT, UNKNOWN |
+| C-3 | Master §4.3 counters vs core two partitions | **RESOLVED** in master/core | Two partitions used |
+| C-4 | Schedule kinds missing meal/leave/meeting | **RESOLVED** (ten kinds in core) | UI supports all; resolver maps meeting->TEACHING tier, leave->PERSONAL tier, ignores meal |
+| C-5 | Master streak vs research | **RESOLVED** (F-03) | none |
+| C-6 | SMA `ranked[]` with numeric `score`/`rank` vs "no ranking of monastics" | **OPEN** (core still outputs rank/score; fix round added the separate `needs_confirmation` list, which the UX shows as its own group) | UX shows suggested list in words; rank, score, breakdown only in a collapsed audit section; Opus ratify, Agent 02 rename to `suggested_order` |
+| C-7 | Priority vocabulary LOW/NORMAL/HIGH/URGENT vs `critical` | OPEN (minor) | UI labels ต่ำ/ปกติ/สูง/เร่งด่วน |
+| C-8 | Skeleton flat 5-6 tabs vs phone 4 + เพิ่มเติม | **OPEN** (master UX IA untouched) | Proposed change 1 stands |
+| C-9 | Agent 17 interim permissions vs YAML | **RESOLVED** by v0.3 (presence.view C for staff, security.log.view, headcount, document codes exist) | UX uses YAML |
+| C-10 | `visiting_monastic` role missing | **RESOLVED** (role exists in YAML v0.3: own schedule and quests only) | Composition added |
+| C-11 (new) | Monastic status now **per membership** (F-04): mode can differ per temple; "present attestation from another temple" is optional | Resolved in core; UX updated | NAVIGATION §1, §3, §7; FLOWS F-01 step 7 |
+| C-12 (new) | Travel Unknown rule: no constants, SMA still runs, `RETURN_BUFFER_UNKNOWN` ack, no travel entries | Resolved in core; UX updated | W04, J-01, STATE_PATTERNS |
+| C-13 (new) | EVENT §7 readiness audience: all `@monastic`/`@staff` see full detail; volunteer, lay_resident, community_member see only state chip + percent for events they participate in | Resolved in events spec | W07/W12 notes aligned; the earlier "public only" wording for staff such as kitchen_staff, driver was too narrow |
+
+Permission gaps from the UX pass: G-UX-1 (map access has no code) **OPEN**; G-UX-2 (own score view) **RESOLVED** as a self action (SCORING §11, YAML baseline); G-UX-3, G-UX-5, G-UX-7, G-UX-9 **RESOLVED**; G-UX-4, G-UX-6, G-UX-8, G-UX-10, G-UX-11 remain as listed in `HOME_MODULE_REGISTRY.md` §7.
 
 ## 5. Open questions
 
@@ -97,7 +98,7 @@ reconciliation pass is recorded in section 4.5.
 | NAV-Q4 | Quiet-hours default (21:00-05:00) vs kitchen starting early | field |
 | CC-Q1 | "ต้องตัดสินใจวันนี้" sub-count for the approvals strip | Opus |
 | CC-Q2 | Is the future-instant question ("ถามช่วงเวลา") P0? Depends on resolver future evaluation (OQ-06 from Agent 17) | Opus, Agent 02 |
-| CC-Q3 | Operational tier for ceremony_lead / office_staff (AVAILABILITY OQ-A4); UX shows 3 coarse tiles | Opus |
+| CC-Q3 | closed: coarse tier per AVAILABILITY §9 | closed |
 | ACC-Q1..Q5 | Thai typeface; spoken-time option; Thai TTS; Simple Mode enforceable by admin?; samanera and score numbers | Agent 04, monk advisor |
 | UX-Q1 | Do monks want to see any number (แต้มกิจวัตร)? Default off pending B3 | monk advisor |
 | UX-Q2 | Lay point label: แต้มร่วมกิจกรรม vs แต้มบุญชุมชน | field test (Agent 01 doc 05) |
@@ -130,14 +131,14 @@ reconciliation pass is recorded in section 4.5.
 - **B2** monk advisor needed for: showing any number for แต้มกิจวัตร, "ภารกิจ"/"งานใหญ่" wording, tone of monastic screens.
 - **B3** lawyer review of the consent copy and minor/guardian flow before pilot (D-5); the W14 text is a draft.
 - **B4** resolver future-instant evaluation (OQ-06) and routing provider ADR affect N-02, N-05, N-06 (shown as Unknown until available).
-- Decisions needed from Opus before Wave 2 hand-off to Agent 04: C-6, C-8, G-UX-1, G-UX-2.
+- Decisions needed from Opus before Wave 2 hand-off to Agent 04: C-6, C-8, G-UX-1 (G-UX-2 is now resolved).
 
 ## 8. Self-assessed readiness
 
 | Artifact | Readiness | Why not higher |
 |---|---|---|
 | NAVIGATION.md | DESIGNED | not user-tested; tab model deviates from skeleton (C-8) |
-| HOME_MODULE_REGISTRY.md | DESIGNED | facility/event modules derived without a module file from Agents 18/19; G-UX gaps open |
+| HOME_MODULE_REGISTRY.md | DESIGNED | facility/event modules derived without a module file from Agents 18/19; G-UX-1 open; codes re-verified against YAML v0.3 (59 codes) |
 | FLOWS.md | DESIGNED | no validation with real temple staff; AI flow is Wave 7 |
 | STATE_PATTERNS.md | DESIGNED | Thai copy unreviewed |
 | COMMAND_CENTER_UX.md | DESIGNED | future-instant control depends on OQ-06 |

@@ -182,16 +182,21 @@ Flow J-01. Route `/manage/invitations/{id}/proposal`. **Perm:** `invitation.mana
 │ ช่วงเวลาที่ต้องว่าง                  │
 │ ออก 08:25 → พิธี 09:00–11:00 →       │
 │ ถึงวัด 11:35 → เผื่อกลับ → 12:05     │
-│ เวลาเดินทางต่อเที่ยว 35 นาที (คำนวณ)  │
-│ [กรอกเวลาเอง] ← ถ้ายังไม่ทราบ          │
+│ เวลาเดินทางต่อเที่ยว 35 นาที          │
+│ ที่มา: (●)กรอกเอง ( )บันทึกของสถานที่นี้│
+│       ( )ระบบเส้นทาง  [บันทึกไว้สำหรับสถานที่นี้]│
+│ ถ้าไม่ทราบ: "ไม่ทราบเวลาเดินทาง —     │
+│  ยังเสนอทีมได้ แต่เวลาเผื่อกลับ = ไม่ทราบ│
+│  (ต้องรับทราบก่อนยืนยัน)"             │
 ├────────────────────────────────────┤
-│ รายชื่อที่ระบบแนะนำ (ลำดับการเสนอ)    │
+│ ว่างตามที่แจ้งไว้ตลอดช่วง (ระบบแนะนำ)  │
 │ ☑ พระ…   [เหตุผล ›]                  │
 │   ว่างตลอดช่วง · ไปไม่บ่อยในเดือนนี้    │
-│   · เคยไปบ้านนี้                      │
 │ ☑ พระ…   [เหตุผล ›]                  │
-│   ⚠ ยังไม่ได้ลงสถานะ — ต้องรับทราบ     │
-│ ☐ พระ…   (สำรอง)                     │
+│ ───────────────────────────────────│
+│ ต้องโทรถามก่อน (ยังไม่ได้ลงสถานะ)      │  ← needs_confirmation, separate list,
+│ ☑ พระ…  ⚠ ยังไม่ได้ลงสถานะ            │    always below the first list
+│ ☐ พระ…  (สำรอง)                      │
 │ ไม่รวมในรายชื่อ (3)  [ดูเหตุผล ›]    │
 │  พระ… ติดกิจอื่นในช่วงนี้              │
 │  พระ… ไม่ว่างในช่วงนี้                 │
@@ -204,9 +209,9 @@ Flow J-01. Route `/manage/invitations/{id}/proposal`. **Perm:** `invitation.mana
 │ ผู้เสนอ: พระเลขานุการ…                │
 └────────────────────────────────────┘
 ```
-**Data (AssignmentProposal, SCHEDULE §5.6):** `window{block_start, rite_end, travel_back_end, block_end}`, `ranked[]` {person, reasons[], warnings[{code, requires_ack}]} shown as an ordered suggestion **in words**; `rank`, numeric `score` and the F/S/C/W/L/K `breakdown` live only inside the collapsed "รายละเอียดการคำนวณ" (audit view for the proposer and confirmer), `team_suggestion`, `alternates`, `excluded[]{violations: code only}`, `team_blockers[]`, `invitation_version`, `source` SMART/MANUAL.
-**Notes:** the page is labelled "ข้อเสนอจากกติกาของระบบ (ไม่ใช่ AI ตัดสิน)"; the order is a **rotation and availability aid, not a merit judgment** (visible caption); no numeric score, medal, "อันดับ 1" label or comparison between monks appears on the main screen (core spec `ranked[]` vs the no-ranking rule: REPORT conflict C-6); activity score and boon points are never used or shown; excluded monks show the constraint only (a sick monk reads "ไม่ว่างในช่วงนี้"); no auto-assign button exists; if travel time is Unknown the proposal cannot be submitted and the field is highlighted.
-**States:** SP-06 for Unknown travel/vassa; SP-03 `STALE_PROPOSAL`; SP-08 if the invitation came from an AI draft (banner at top "สร้างจากร่างโดย AI — ตรวจสอบแล้วโดย <ชื่อ>").
+**Data (AssignmentProposal, SCHEDULE §5.6):** `window{block_start, rite_end, travel_back_end, block_end}`, `ranked[]` {person, reasons[], warnings[{code, requires_ack}]} shown as an ordered suggestion **in words**; `rank`, numeric `score` and the F/S/C/W/L/K `breakdown` live only inside the collapsed "รายละเอียดการคำนวณ" (audit view for the proposer and confirmer), `team_suggestion`, `alternates`, `excluded[]{violations: code only}`, `needs_confirmation[]`, `travel{source, return_buffer_check PASS/FAIL/UNKNOWN}`, `team_blockers[]`, `invitation_version`, `source` SMART/MANUAL.
+**Notes:** the page is labelled "ข้อเสนอจากกติกาของระบบ (ไม่ใช่ AI ตัดสิน)"; the order is a **rotation and availability aid, not a merit judgment** (visible caption); no numeric score, medal, "อันดับ 1" label or comparison between monks appears on the main screen (core spec `ranked[]` vs the no-ranking rule: REPORT conflict C-6); activity score and boon points are never used or shown; excluded monks show the constraint only (a sick monk reads "ไม่ว่างในช่วงนี้"); no auto-assign button exists; if travel time is Unknown the proposal **can** still be submitted (SMA runs; return buffer shows UNKNOWN, warning `RETURN_BUFFER_UNKNOWN` needs acknowledgement at confirm; no travel entries are created); no speed or distance constant is ever applied. Monks without an opted-in status sit in the separate `needs_confirmation` list, never merged into the first list; the team fills from the first list and only then from the second, each such monk marked "ต้องโทรยืนยัน" and needing acknowledgement.
+**States:** SP-06 for Unknown travel/vassa (`travel{source: manual|saved_venue|provider|unknown}`); SP-03 `STALE_PROPOSAL`; SP-08 if the invitation came from an AI draft (banner at top "สร้างจากร่างโดย AI — ตรวจสอบแล้วโดย <ชื่อ>").
 
 ---
 
@@ -315,7 +320,7 @@ Flows N-07, J-08, J-09. Route `/events/{id}/readiness`. **Perm:** `event.view` (
 ```
 **Data (EVENT §5-6):** `state` chip (พร้อม / ใกล้พร้อม / กำลังเตรียม / ไม่พร้อม / ไม่ทราบ), `percent`, `failed_gates[]` (G-OWNER, G-VENUE, G-STAFF, G-MAINT, G-CRIT, G-CHECK, G-CONFLICT with PASS/FAIL/UNKNOWN), `caps`, `reason`, monk `f/r` with pending `p`, volunteer gap, staff gap, `T` share, `starts_at` and hours remaining, `lead_person`, department percentages, `readiness_snapshot_at_start` after LIVE.
 **Notes:** the state word leads and the percent is secondary; the chip is never green unless READY; monk, volunteer and staff gaps are separate; a freshly duplicated event reads "ไม่พร้อม — เพิ่งคัดลอก ยังไม่มีผู้รับผิดชอบ"; ceremony PREPARED needs a human tap [พร้อมแล้ว] shown only when state = READY.
-**States:** SP-06 `UNKNOWN`/`NO_PLAN`; SP-07 age near start; SP-05 P-1 (community members get the public view only).
+**States:** SP-06 `UNKNOWN`/`NO_PLAN`; SP-07 age near start; SP-05 P-1 (community members get public volunteers/community members see at most the state chip and percent for events they participate in, EVENT §7).
 
 ---
 

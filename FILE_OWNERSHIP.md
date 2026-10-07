@@ -3,7 +3,10 @@
 One writer per path. An agent may **read** anything, but may **write** only its paths. To change a file owned
 by someone else, write a proposal in your own output; Opus applies it. Agents do not commit or push — Opus does.
 
-Current wave: **Wave 1** (updated 2026-10-07).
+Current wave: **Wave 1 closed → Wave 2 pending launch** (updated 2026-10-07).
+
+Exception (audit F-36): `docs/master/role_permissions.yaml`, `docs/master/tools/role_matrix.py` and JSON examples in
+specs are specification data/tooling, allowed in documentation waves.
 
 ## Active locks
 
@@ -16,8 +19,8 @@ Current wave: **Wave 1** (updated 2026-10-07).
 | `docs/domain/workforce/**` | Agent 17 — Temple Workforce | 1a | released (complete) |
 | `docs/domain/facility/**` | Agent 18 — Facility / Asset | 1a | released (complete) |
 | `docs/domain/events/**` | Agent 19 — Ceremony / Event Operations | 1a | released (complete) |
-| `docs/ux/**` | Agent 03 — UX Architecture | 1b | active |
-| `docs/reviews/wave-1/**` | Agent 20 — Governance Auditor | 1b | active |
+| `docs/ux/**` | Agent 03 — UX Architecture | 1b | released (complete) |
+| `docs/reviews/wave-1/**` | Agent 20 — Governance Auditor | 1b | released (complete) |
 
 ## Reserved for later waves (no writes yet)
 

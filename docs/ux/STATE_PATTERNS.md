@@ -89,7 +89,8 @@ Never show raw codes as the main text; never "เกิดข้อผิดพ�
 | `AUTO_VERIFICATION_FAILED{qr_checkin}` | submit | "ยังยืนยันการมาถึงไม่ได้ ตรวจว่าสแกน QR ที่ถูกจุดและอยู่ในช่วงเวลา" | retry or [ให้เจ้าหน้าที่ตรวจแทน] if fallback |
 | `QR_FOREIGN_TEMPLE` | scan | "QR นี้ไม่ใช่ของวัดนี้" | - |
 | `INCOMPLETE_FIELDS[...]` | invitation start_review | "ขอข้อมูลเพิ่ม: <ชื่อเจ้าภาพ / สถานที่ ...>" | jump to fields |
-| `TRAVEL_ESTIMATE_REQUIRED` | proposal | "ยังไม่ทราบเวลาเดินทาง กรุณากรอกเอง" | focus travel field |
+| `RETURN_BUFFER_UNKNOWN` (ack) | proposal, confirm | "ยังไม่ทราบเวลาเดินทาง จึงยังตรวจเวลาเผื่อกลับไม่ได้ (ต้องรับทราบก่อนยืนยัน)" | enter manual time or tick acknowledgement |
+| `HC_VIOLATION[...]` | propose team | "เสนอไม่ได้: <ท่าน…> ติดกิจอื่นในช่วงนี้" | pick another monk |
 | `CONFIRM_BLOCKED[violations]` | confirm | "ยืนยันไม่ได้: <ท่าน…> ติดกิจอื่นในช่วงนี้" (constraint code translated; never the private reason) | open the conflicting commitment |
 | `STALE_PROPOSAL` | confirm | "ข้อเสนอนี้เปลี่ยนไปแล้ว กรุณาตรวจอีกครั้ง" | [ดูข้อเสนอล่าสุด] |
 | `TEAM_INCOMPLETE` | confirm | "จำนวนพระยังไม่ครบตามที่ขอ" | back to proposal |
@@ -182,7 +183,7 @@ Unknown is shown wherever the truth cannot be derived. It is **never** shown as 
 | `GATE_UNKNOWN` cap | event | "บางเงื่อนไขยังไม่ทราบผล ความพร้อมแสดงสูงสุดที่ ใกล้พร้อม" |
 | `NO_STAFFING_TARGETS` | event | "ยังไม่ได้ตั้งเป้าหมายกำลังคน" |
 | `monks_required` not set | ceremony | "ยังไม่ได้ระบุจำนวนพระ ระบบไม่เดาให้" |
-| `TRAVEL_ESTIMATE_REQUIRED` | proposal, trip | "ยังไม่ทราบเวลาเดินทาง" |
+| `RETURN_BUFFER_UNKNOWN` / travel source `unknown` | proposal, trip | "ยังไม่ทราบเวลาเดินทาง" |
 | departure null | driver | "ยังไม่กำหนดเวลาออก" |
 | vehicle no affirmative status | fleet | "ยังไม่มีสถานะรถหรือคนขับ จึงไม่ถือว่าว่าง" |
 | event guests no registration | kitchen | "แขกกิจกรรม: ไม่ทราบ (กิจกรรมนี้ไม่มีการลงทะเบียน)" |
@@ -190,7 +191,7 @@ Unknown is shown wherever the truth cannot be derived. It is **never** shown as 
 | layer source down | map | "ยังโหลดข้อมูลชั้นนี้ไม่ได้" |
 | no check-in data | building people count | "ไม่ทราบ — ยังไม่มีข้อมูลเช็กอินในอาคารนี้" |
 | `UNKNOWN_VASSA` | invitation lead | "ยังไม่ทราบพรรษา ผู้ยืนยันเลือกหัวหน้าคณะเอง" |
-| `NO_AVAILABILITY_SIGNAL` | proposal warning | "ท่านยังไม่ได้ลงสถานะ อาจว่างหรือไม่ว่างก็ได้" |
+| `NO_AVAILABILITY_SIGNAL` (needs_confirmation list) | proposal warning | "ท่านยังไม่ได้ลงสถานะ อาจว่างหรือไม่ว่างก็ได้" |
 | resolver error | board | "ประมวลผลสถานะไม่สำเร็จ นับเป็นไม่ทราบ" + `data_quality.errors` |
 
 ## 7. Stale data (SP-07)

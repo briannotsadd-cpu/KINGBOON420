@@ -78,6 +78,13 @@ All commands were run inside the session container on 2026-10-07.
 
 Details: `GAP_ANALYSIS.md`.
 
+## 5a. Addendum — state at Wave 1 gate (2026-10-07)
+
+Documentation only was added: `docs/master/` (15 docs + grants YAML + validator), `docs/adr/` (3 ADRs),
+`docs/research/` (9), `docs/domain/` (22 incl. glossary), `docs/ux/` (8), `docs/reviews/wave-1/` (1).
+`python3 docs/master/tools/role_matrix.py --check` → `ok: 59 permissions × 28 roles, invariants hold, table current`.
+Still **no application code, schema, design asset or 3D asset**. All features remain PLANNED (F-19 BLOCKED).
+
 ## 6. Consequences for planning
 
 1. There is **no legacy to reconcile**. The "do not duplicate existing tables" rule is trivially met now and
