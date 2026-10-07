@@ -57,7 +57,7 @@ export const templeParking = (slug: string) =>
 
 export interface FieldRow { id: string; field_key: string; label_th: string; category: string; risk: string; sort: number;
   value: unknown; status: string; effective_status: string; status_reason: string | null; verified_at: Date | null;
-  verification_expires_at: Date | null; first_approved_by: string | null; source_type: string; source_tier: number;
+  verification_expires_at: Date | null; first_approved_by: string | null; first_approved_at: Date | null; source_type: string; source_tier: number;
   source_name: string; source_url: string | null; source_document: string | null; source_date: Date | null;
   evidence: string | null; is_ai_assisted: boolean; retrieved_at: Date; created_at: Date }
 export interface CatalogRow { field_key: string; label_th: string; category: string; risk: string; required_for_publish: boolean;
@@ -69,7 +69,7 @@ export const templeFieldRows = (authUserId: string, templeId: string) => asUser(
   rows: (await c.query<FieldRow>(
     `select v.id, v.field_key, c.label_th, c.category, c.risk, c.sort, v.value, v.status,
             app.effective_status(v.status, v.verification_expires_at) as effective_status, v.status_reason, v.verified_at,
-            v.verification_expires_at, v.first_approved_by, d.source_type, d.tier as source_tier, d.source_name, d.source_url,
+            v.verification_expires_at, v.first_approved_by, v.first_approved_at, d.source_type, d.tier as source_tier, d.source_name, d.source_url,
             d.source_document, d.source_date, d.evidence, d.is_ai_assisted, d.retrieved_at, v.created_at
        from public.temple_field_values v join public.data_sources d on d.temple_id = v.temple_id and d.id = v.source_id
        join public.data_field_catalog c on c.field_key = v.field_key
