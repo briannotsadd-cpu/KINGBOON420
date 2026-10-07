@@ -3,7 +3,8 @@
 Temple Operating System + Monastic Life System + Temple Workforce + Community Network.
 
 **Status:** Wave 1 closed; Wave 2 in progress (database schema + RLS tests, procedural 3D Wat Arun; Figma design paused
-by plan limit). No application features yet. Every feature is `PLANNED` until evidence says otherwise.
+by plan limit). Local app: login, temple claim, data verification, parking (see FEATURE_MATRIX). **No real temple data** —
+see [`docs/data/TEMPLE_DATA_AUDIT.md`](docs/data/TEMPLE_DATA_AUDIT.md). Not deployed.
 
 ## Run the app locally
 

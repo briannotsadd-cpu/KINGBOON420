@@ -99,3 +99,17 @@ textarea.input { min-height: 120px; }
   .brand-mark { width: 30px; height: 30px; }
   .nav a { padding: 0 8px; gap: 4px; }
 }
+details.more { margin-top: 12px; }
+details.more > summary { cursor: pointer; min-height: 48px; display: inline-flex; align-items: center; font-weight: 700; color: var(--muted); }
+details.more[open] > summary { margin-bottom: 8px; }
+.group-h { display: flex; align-items: center; gap: 8px; margin: 28px 0 12px; }
+.field-block { display: grid; gap: 12px; }
+.check-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+.check-list li { display: flex; gap: 10px; align-items: flex-start; }
+.table-wrap { overflow-x: auto; }
+table.data { width: 100%; border-collapse: collapse; font-size: .95rem; }
+table.data th, table.data td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.data th { color: var(--muted); font-weight: 700; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.kpi { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; }
+.kpi b { display: block; font-size: 1.6rem; }

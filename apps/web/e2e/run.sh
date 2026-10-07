@@ -12,4 +12,4 @@ if curl -s -o /dev/null http://localhost:3000/; then echo "port 3000 is already 
 setsid node node_modules/next/dist/bin/next start -p 3000 >"$LOG" 2>&1 & PID=$!
 trap 'kill -- -$PID 2>/dev/null || true; bash "$ROOT/supabase/dev/local-db.sh" reset >/dev/null || true' EXIT
 for i in $(seq 1 40); do curl -sf -o /dev/null http://localhost:3000/ && break; sleep 0.5; done
-node e2e/registration.e2e.mjs "$CHROME" "$SHOTS" "$LOG" || { echo "--- server log (errors) ---"; grep -v "dev-mail" "$LOG" | grep -iA4 "error" | head -40; exit 1; }
+node e2e/registration.e2e.mjs "$CHROME" "$SHOTS" "$LOG" || { echo "--- server log (errors) ---"; grep -v "dev-mail" "$LOG" | tail -40; exit 1; }
