@@ -1,8 +1,8 @@
-# KITCHEN — Kitchen lead (หัวหน้าครัว) and kitchen staff (คนครัว)
+# KITCHEN — Kitchen department lead (หัวหน้าครัว) and kitchen staff (คนครัว)
 
-Owner: Agent 17 · Wave 1a · Readiness: **DESIGNED** (content HYPOTHESIS until field-validated; see §11)
+Owner: Agent 17 · Wave 1a, revised in Wave 1 fix round · Readiness: **DESIGNED** (content HYPOTHESIS until field-validated; see §11)
 Master refs: matrix §2.2, §4, §5 · `TEMPLE_DOMAIN_MODEL.md` §4 (availability), §11 Q5 · features F-25, F-23 (inventory, Agent 18)
-Legend for quest templates: `CLEANING.md` §0. All numbers in examples are illustrative, not data.
+Role note: there is no `kitchen_lead` role. The kitchen lead is a `department_lead` (หัวหน้าฝ่าย) whose department is `kitchen` (matrix §2.2); the abbreviation "lead" below always means that. Legend for quest templates: `CLEANING.md` §0. All numbers in examples are illustrative, not data.
 
 HYPOTHESIS notice: the duties, meal times and the rule that monastics take their meals only at certain hours are
 general-knowledge assumptions that Agent 01 must source (Vinaya constraint and daily routine, RQ-01/RQ-03). This file
@@ -12,7 +12,7 @@ makes **meal services configurable** (`meal_service` concept: name, time, audien
 
 | Role | Goals |
 |---|---|
-| `kitchen_lead` | Know how many to cook for before prep starts; plan menu; keep stock and shopping list current; assign kitchen quests; hand work over cleanly |
+| `department_lead` (kitchen) | Know how many to cook for before prep starts; plan menu; keep stock and shopping list current; assign kitchen quests; hand work over cleanly |
 | `kitchen_staff` | Know what to prepare and for how many, do the prep, keep the kitchen clean, flag stock shortages |
 
 ## 2. Daily and weekly workflow (HYPOTHESIS)
@@ -42,7 +42,7 @@ cost (finance is out of pilot, Q-05), per-person tracking of who eats.
 | C2 | Novices (สามเณร) in temple | Same, for `samanera` | `nov_confirmed_here`, `nov_known_away`, `nov_unknown` |
 | C3 | Registered event guests | Agent 19 events: confirmed registrations (and event volunteers) with `meal_required = true` for events whose time window covers the service | integer ≥ 0, or **Unknown** if an overlapping event has no registration mechanism |
 | C4 | Staff meals | Optional temple setting `staff_meals_provided` (default **off**, HYPOTHESIS that this varies). If on: staff whose shift covers the service, counted from `STAFF_PRESENCE_SPEC.md` | `staff_confirmed`, `staff_unknown` |
-| C5 | Manual adjustment | Kitchen lead (`headcount.adjust`, proposed — M-05); signed integer with a mandatory reason (e.g. "+5 ผู้มาถวายเพลล่วงหน้า") | any integer; list of entries |
+| C5 | Manual adjustment | Kitchen `department_lead` (`headcount.adjust` D); signed integer with a mandatory reason (e.g. "+5 ผู้มาถวายเพลล่วงหน้า") | any integer; list of entries |
 
 Classification of a monk at service time `t` (uses the resolver output, no new rules):
 - **known_away**: `location_state = OFF_SITE` at `t` from a calendar-driven or valid manual state (ON_INVITATION, TRAVELING, CEREMONY off-site, a manual state with stated off-site location).
@@ -79,7 +79,7 @@ not known to be away. Adjustments are included in both and listed separately so 
 ### 3.5 Cut-off and change notices
 `prep_cutoff` is a temple setting per service (concept; HYPOTHESIS default 120 min before service). At the cut-off
 the system stores a **snapshot** (bounds, components, planned). A material change after cut-off (|Δ upper| ≥ configurable,
-default 3) sends a push to the kitchen lead and shows "เปลี่ยนหลังตัดยอด" on the kitchen home. No automatic
+default 3) sends a push to the kitchen `department_lead` and shows "เปลี่ยนหลังตัดยอด" on the kitchen home. No automatic
 re-planning.
 
 ### 3.6 Privacy of headcount
@@ -102,7 +102,7 @@ Given a temple with 15 active bhikkhu and 5 samanera unless stated; service S at
 | WF-36 | Lead adds adjustment +5 with reason "ผู้ถวายเพล" | Save | adjustment entry stored (actor, time, reason); lower and upper both +5; shown as separate line. |
 | WF-37 | `staff_meals_provided = on`; 6 staff on shift covering S: 4 checked in, 2 no signal | Open headcount | staff_confirmed = 4, staff_unknown = 2; lower +4; upper +6. |
 | WF-38 | Cut-off passed with upper = 17; at 09:00 two monks confirm an invitation covering S | Recompute | snapshot keeps 17; live upper = 15; |Δ| = 2 < 3 so no push; kitchen home shows "เปลี่ยนหลังตัดยอด: −2" (display always; push only at threshold). |
-| WF-39 | `kitchen_staff` (no `availability.view`) opens headcount | Read | succeeds through the aggregate function with counts only; no monk names or reasons are returned (verified by checking the payload has no person ids). Requires `headcount.view` D (proposed, M-05). |
+| WF-39 | `kitchen_staff` (has `headcount.view` D, no `availability.view`) opens headcount | Read | succeeds through the aggregate function with counts only; no monk names or reasons are returned (verified by checking the payload has no person ids). Requires `headcount.view` D (YAML grants it to `kitchen_staff`). |
 | WF-40 | A user from temple B calls the headcount function with temple A's id | Read | denied; no counts returned (tenant isolation P0). |
 
 ## 4. Quest templates
@@ -111,22 +111,22 @@ All: `quest_type = kitchen`, `department = kitchen`, `points = 0`.
 
 | ID | Title (TH / EN) | Recurrence · window | Claimable | Assigner |
 |---|---|---|---|---|
-| QT-KIT-01 | เตรียมอาหารมื้อเช้า / Prepare morning meal (name from `meal_service`) | Daily · starts at `prep_start`, due at `serve_time − 15 min` | No | `kitchen_lead` (`quest.assign` D) |
-| QT-KIT-02 | เตรียมอาหารมื้อเพล / Prepare midday meal | Daily | No | `kitchen_lead` |
-| QT-KIT-03 | ปิดครัวและทำความสะอาด / Close-down and clean | Daily after last service | Yes | `kitchen_lead` |
-| QT-KIT-04 | ตรวจสต็อกครัว / Kitchen stock check | Daily | No | `kitchen_lead` |
+| QT-KIT-01 | เตรียมอาหารมื้อเช้า / Prepare morning meal (name from `meal_service`) | Daily · starts at `prep_start`, due at `serve_time − 15 min` | No | kitchen `department_lead` (`quest.assign` D) |
+| QT-KIT-02 | เตรียมอาหารมื้อเพล / Prepare midday meal | Daily | No | kitchen `department_lead` |
+| QT-KIT-03 | ปิดครัวและทำความสะอาด / Close-down and clean | Daily after last service | Yes | kitchen `department_lead` |
+| QT-KIT-04 | ตรวจสต็อกครัว / Kitchen stock check | Daily | No | kitchen `department_lead` |
 | QT-KIT-05 | วางแผนเมนูประจำสัปดาห์ / Weekly menu plan | Weekly, lead only | No | self (`quest.create` D) |
 | QT-KIT-06 | จัดทำรายการซื้อ / Compile shopping list | Weekly or on low-stock alert, lead only | No | self |
 | QT-KIT-07 | เตรียมอาหารงาน / Event meal prep | Event-triggered child of `event_root` (Agent 19 owns parent) | No | Event board + kitchen lead |
-| QT-KIT-08 | ตรวจความสะอาด/ความปลอดภัยอาหาร / Food-safety check (fridge, expiry, pests) | Daily or weekly (HYPOTHESIS; temple may decline) | Yes | `kitchen_lead` |
-| QT-KIT-09 | รับของถวายอาหาร / Receive food offerings (record items received) | Event/ad hoc | Yes | `kitchen_lead` |
+| QT-KIT-08 | ตรวจความสะอาด/ความปลอดภัยอาหาร / Food-safety check (fridge, expiry, pests) | Daily or weekly (HYPOTHESIS; temple may decline) | Yes | kitchen `department_lead` |
+| QT-KIT-09 | รับของถวายอาหาร / Receive food offerings (record items received) | Event/ad hoc | Yes | kitchen `department_lead` |
 
 ### 4.1 Checklists, evidence, verification
 
 | ID | Checklist (TH, EN) | Evidence | Verification | Verifier |
 |---|---|---|---|---|
-| QT-KIT-01/02 | ดูยอดจำนวนคน (read headcount, shown inside checklist) · ตรวจวัตถุดิบ (ingredients) · เตรียม/ปรุง (prep/cook) · จัดภาชนะ (arrange) · เสร็จตรงเวลา (ready by serve time) · บันทึกจำนวนที่เสิร์ฟ (served count, optional) | `photo_optional` (one photo of the prepared meal) | `none` | — (kitchen lead sees status) |
-| QT-KIT-03 | เก็บล้างภาชนะ · เช็ดพื้นที่ · เก็บเศษอาหาร · ปิดแก๊ส/ไฟ (gas/electric off) · ล็อกห้อง (lock) | `photo_after` | `staff_verification` | `kitchen_lead` (≠ assignee) |
+| QT-KIT-01/02 | ดูยอดจำนวนคน (read headcount, shown inside checklist) · ตรวจวัตถุดิบ (ingredients) · เตรียม/ปรุง (prep/cook) · จัดภาชนะ (arrange) · เสร็จตรงเวลา (ready by serve time) · บันทึกจำนวนที่เสิร์ฟ (served count, optional) | `photo_optional` (one photo of the prepared meal) | `none` | — (department lead sees status) |
+| QT-KIT-03 | เก็บล้างภาชนะ · เช็ดพื้นที่ · เก็บเศษอาหาร · ปิดแก๊ส/ไฟ (gas/electric off) · ล็อกห้อง (lock) | `photo_after` | `staff_verification` | kitchen `department_lead` (≠ assignee) |
 | QT-KIT-04 | ระดับสต็อกต่อรายการ พอ/ใกล้หมด/หมด; วันหมดอายุที่ใกล้ถึง | `checklist_only` | `none` | — (low/out → inventory alert, Agent 18) |
 | QT-KIT-05 | เลือกเมนูต่อมื้อ · ตรวจสต็อกที่มี · หมายเหตุอาหารพิเศษ (aggregate, optional) | `none` | `none` | — |
 | QT-KIT-06 | รายการ + จำนวน ที่ต้องซื้อ; รวมจากสต็อกต่ำ | `none` | `organizer_approval` | Person with approval authority per temple setting (abbot or delegate); **no money handled in app** (finance out of pilot, Q-05) |
@@ -142,7 +142,7 @@ team-visible only.
 | Datum | Source |
 |---|---|
 | Headcount components | Availability resolver (Agent 02), event registrations (Agent 19), presence (this spec) |
-| Meal services (name, time, audience, `prep_cutoff`) | **new concept** `meal_service` — not in master schedule kinds (M-06); proposed to Agent 02 as schedule kind `meal` or a small table |
+| Meal services (name, time, audience, `prep_cutoff`) | `meal_service` concept; master `TEMPLE_DOMAIN_MODEL.md` §6.2 now lists schedule kind `meal` (semantics for the staff side defined here; the monastic resolver does not read it — Agent 02 to confirm) |
 | Menu | Weekly menu quest output (plain text list in quest payload for pilot) |
 | Stock and low-stock thresholds | Agent 18 inventory |
 | Shopping list | Output of QT-KIT-06 (list in quest payload; becomes an inventory request if Agent 18 defines one) |
@@ -152,12 +152,12 @@ team-visible only.
 
 | # | Module id | Title TH / EN | Visible when |
 |---|---|---|---|
-| 1 | `wf.meals_today_headcount` | มื้ออาหารวันนี้และจำนวนคน / Meals today + headcount | `headcount.view` D (proposed) or `kitchen_lead` |
+| 1 | `wf.meals_today_headcount` | มื้ออาหารวันนี้และจำนวนคน / Meals today + headcount | `headcount.view` (YAML: `department_lead` D, `kitchen_staff` D, abbot/deputy/assistant/secretary T) |
 | 2 | `wf.kitchen_prep_quests` | งานเตรียมอาหาร / Prep quests | has kitchen assignments |
 | 3 | `wf.stock_alerts` | สต็อกใกล้หมด / Stock alerts | `inventory.view` D |
 | 4 | `wf.shopping_list` | รายการซื้อ / Shopping list | `inventory.view` D (lead edits via QT-KIT-06) |
 
-`kitchen_lead` additionally sees `wf.team_roster` (who is working/free today) because lead has `quest.assign` D.
+`wf.team_roster` is shown to the kitchen `department_lead` with full detail (`presence.view` D) and to `kitchen_staff` in coarse form only (`presence.view` C: state label, no reason, no flags).
 
 ## 7. North-star question
 **คนครัว: "ต้องเตรียมอาหารกี่คน?"** Answered by §3: the next meal service for today with
@@ -177,21 +177,21 @@ Unknown labelled. No other number is shown as "the" headcount.
 | E7 | Elderly cook with no smartphone | Lead proxy-checks-in and proxy-ticks (audited, flagged "proxy"). |
 | E8 | Allergy request from a guest | Only aggregate count shown to kitchen, plus an on-event note authored by event owner (Agent 19). |
 
-## 9. Permission check against the matrix
+## 9. Permission check against the matrix (v0.2 / `role_permissions.yaml`)
 
-| Need | Matrix | Result |
+| Need | YAML grant | Result |
 |---|---|---|
-| Own kitchen quests | `quest.view` A (staff), D (lead) | OK |
-| Lead creates/assigns/verifies | `quest.create/assign/verify` D (lead) | OK |
-| Headcount counts | `availability.view` — (staff), T⁴ counts only (lead) | **M-05**: staff has none; no explicit aggregate permission |
-| Manual adjustment | none | **M-05** |
-| Meal schedule | `schedule.view` S | **M-06** meals not a schedule kind |
+| Own kitchen quests | `quest.view` A (`kitchen_staff`), D (`department_lead`) | OK |
+| Lead creates/assigns/verifies | `quest.create/assign/verify` D (`department_lead`) | OK |
+| Headcount counts | `headcount.view` D (`department_lead`, `kitchen_staff`); counts only via aggregate function | OK (was M-05) |
+| Manual adjustment | `headcount.adjust` D (`department_lead` only) | OK |
+| Meal schedule | `schedule.view` S; schedule kind `meal` in master §6.2 | OK; semantics to be confirmed by Agent 02 |
 | Event guest counts | `event.view` T | OK (counts only) |
 | Stock view | `inventory.view` D | OK |
-| Stock movement by staff | `inventory.manage` — (staff) | **M-11** staff cannot record consumption; lead can (D) |
-| Command center panel | `command_center.view` D⁵ (lead) | OK, kitchen panel only |
-| Team directory | `member.view` Tm / D | OK |
-| Check-in | none | **M-03** |
+| Stock movement | `inventory.record` D (`kitchen_staff`), `inventory.manage` D (`department_lead`) | OK (was M-11) |
+| Command center panel | `command_center.view` D, kitchen panel only (`department_lead`) | OK; `kitchen_staff` has none |
+| Team roster | `presence.view` D (`department_lead`); `presence.view` C (`kitchen_staff`); `member.view` D | Staff see coarse colleague states, never reasons |
+| Check-in | `presence.set_self` S | OK |
 
 ## 10. Cross-agent notes
 - Agent 02: confirm that the resolver can be evaluated for a **future** instant and returns `location_state`; this file depends on it (C1/C2). If it cannot, headcount for future meals is entirely Unknown.
@@ -202,6 +202,6 @@ Unknown labelled. No other number is shown as "the" headcount.
 - FQ-KIT-01: Is there one meal or several for monastics, at what times, and for whom do kitchens cook (monks, novices, nuns, residents, staff, visitors, volunteers)?
 - FQ-KIT-02: How do cooks learn the number today (verbal, LINE message, assumption)? What is the typical error and its cost (waste or shortage)?
 - FQ-KIT-03: Are monks willing to indicate meal attendance in the app, or should an attendant do it? (links Q-08)
-- FQ-KIT-04: Do nuns (แม่ชี) and lay residents eat from the temple kitchen? They have no role in the matrix (M-14).
+- FQ-KIT-04: Do nuns (แม่ชี) and lay residents eat from the temple kitchen? They map to the YAML role `lay_resident` (HYPOTHESIS in the matrix); the `meal_audience` setting must say whether they are counted.
 - FQ-KIT-05: How are food donations received and recorded now?
 - FQ-KIT-06: Dietary and allergy needs: how do they reach the kitchen today?

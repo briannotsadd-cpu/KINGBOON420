@@ -1,6 +1,6 @@
 # GENERAL STAFF AND TEMPLE BOY — เจ้าหน้าที่วัด (`staff_general`) and เด็กวัด (`temple_boy`)
 
-Owner: Agent 17 · Wave 1a · Readiness: **DESIGNED** (content HYPOTHESIS; see §10)
+Owner: Agent 17 · Wave 1a, revised in Wave 1 fix round · Readiness: **DESIGNED** (content HYPOTHESIS; see §10)
 Master refs: matrix §2.2, §4 (`temple_boy` column only), §5 ("volunteer / temple_boy / staff") · Legend: `CLEANING.md` §0
 
 HYPOTHESIS notice: these are the least-specified roles. Real-world duties of a เด็กวัด and a general temple staff
@@ -20,8 +20,9 @@ Both use the shared home (matrix §5): **My quests today → check-in → report
 `temple_boy` may be under 18 (HYPOTHESIS; age is a field-research question FQ-GEN-01). Until Agent 13 / legal review
 (risk R-07, gap Q-06) says otherwise, treat every `temple_boy` as a **minor-capable account**:
 
-1. No person-to-person chat/calls (matrix gives `community.participate` S to every staff role; for minors it must be
-   restricted — **M-09**).
+1. No person-to-person chat/calls, no public profile: the YAML `minor_overrides` denies `community.participate.p2p_chat`,
+   `.calls` and `community.public_profile` for any membership flagged minor, which overrides the `@lay` grant. The temple
+   admin must set the minor flag for every `temple_boy` under 18.
 2. Quest assignment, evidence and photos never include the minor's face by default; photo guidance shown.
 3. Quests are never created that send a minor alone to an off-site location or out of daylight hours (soft rule,
    manager sees a warning when `location` is outside the temple or `due_at` is outside configured daylight window — **HYPOTHESIS**).
@@ -31,10 +32,13 @@ Both use the shared home (matrix §5): **My quests today → check-in → report
 6. Check-in is non-location-based; no location tracking.
 
 ## 3. How work reaches these roles
-`staff_general` and `temple_boy` have no `quest.create` (matrix). A monk who needs a small errand done has only
-`quest.create` S (self) — there is no path (**M-16**). Proposed: a **task request** (a DRAFT quest carrying a target
-department, created with `quest.request`, proposed permission) which a department lead (or `office_staff`) publishes
-and assigns. Until then, requests go through office/lead out-of-band.
+`staff_general` and `temple_boy` have no `quest.create` (YAML). Requests reach them as follows:
+- `bhikkhu` (monks; **not** `samanera` in YAML v0.3), `staff_general`, `housekeeper`, `kitchen_staff`, `gardener`, `technician`, `driver`,
+  `office_staff` and `security_guard` hold `quest.request` (T): they create a **DRAFT request** with a target department.
+  A `department_lead` (D) or `facility_manager` publishes and assigns it (`quest.assign`). `temple_boy` has **no**
+  `quest.request`; they only receive assigned quests.
+- Safeguarding rule: a request that would be assigned to a `temple_boy` is never auto-published; a lead must read it and
+  check §2 rules 3 and 4 first. `samanera` (often minors) no longer hold `quest.request` (audit F-27 closed in the YAML).
 
 ## 4. Quest templates
 `quest_type = general` unless noted, `department = general`, `points = 0`, `source = manual` or `template`.
@@ -43,7 +47,7 @@ and assigns. Until then, requests go through office/lead out-of-band.
 |---|---|---|---|---|---|---|
 | QT-GEN-01 | งานทั่วไป / General task | ad hoc | Yes | `photo_optional` | `staff_verification` (requester or lead) | Free text title, up to 10-item checklist |
 | QT-GEN-02 | ช่วยจัดสถานที่งาน / Event setup and teardown help | Event-triggered; child of `event_root` (`quest_type = event_task`, Agent 19 owns) | Yes | `photo_before_after` | `staff_verification` by event board owner | Listed here as a consumer only |
-| QT-GEN-03 | นำทาง/ต้อนรับผู้มาวัด / Visitor guidance | Event/day-driven | Yes | `none` | `attendance` | HYPOTHESIS that general staff do this |
+| QT-GEN-03 | นำทาง/ต้อนรับผู้มาวัด / Visitor guidance | Event/day-driven | Yes | `none` | `staff_verification` (lead confirms; the `attendance` method has no defined record yet — audit F-26) | HYPOTHESIS that general staff do this |
 | QT-GEN-04 | เก็บของหาย/ของตกค้าง / Lost-and-found logging | ad hoc | Yes | `photo_optional` | `none` | Items logged; owner contact held only by office |
 | QT-GEN-05 | ช่วยงานครัว/แม่บ้าน/สวน (cross-department help) | ad hoc, created by dept lead | Yes | per source template | per source template | Uses the **same** template of the requesting department; `required_role` is relaxed to `staff_general` or `temple_boy` |
 | QT-TBY-01 | งานเล็กประจำวัน / Daily small chore | Daily slot, assigned by a lead | No | `photo_optional` | `none` | Checklist ≤ 5 items, one sentence each, Simple Mode language |
@@ -61,7 +65,7 @@ Assignments and claimable quests for `general` and cross-department help; team r
 | # | Module id | Title TH / EN | Visible when |
 |---|---|---|---|
 | 1 | `wf.my_quests_today` | ภารกิจของฉันวันนี้ / My quests today | always (assignments + claimable) |
-| 2 | `wf.check_in` | เช็กอิน / Check-in | `presence.set_self` (proposed) |
+| 2 | `wf.check_in` | เช็กอิน / Check-in | `presence.set_self` S |
 | 3 | `wf.report_problem` | แจ้งปัญหา / Report a problem | `maintenance.report` |
 
 Simple Mode is the **default** for `temple_boy` (can be changed by the person): modules shown as three big buttons,
@@ -80,19 +84,20 @@ claimable OPEN quests in my department, as read; if none, the screen says "ย�
 | E2 | Two leads want the same helper | Assignments conflict flag (both quests due overlapping); the person sees both, and either lead can see the other's quest title only (team-level). |
 | E3 | Shortage of general staff for event | Event board shows unfilled child quests (Agent 19 readiness); volunteers (`volunteer` role) may claim public ones. |
 | E4 | Temple boy at school/study | **HYPOTHESIS** that a school timetable exists. Not modelled as a presence state: outside a defined shift the person resolves to UNKNOWN with reason OFF_SHIFT (spec §3). Lead may enter the timetable as `schedule_entries` kind `class`. FQ-GEN-02. |
-| E5 | Request from a monk for a private errand | Not supported (M-16). |
+| E5 | Request from a monk for an errand | Monk files a `quest.request` draft (§3); a lead publishes. No direct monk-to-minor assignment. |
 | E6 | Temple boy reports a problem involving a person | Report goes to `moderation.manage` and abbot, not to peers. Content ≈ safeguarding; Agent 13 defines flow. |
 
-## 9. Permission check
+## 9. Permission check (v0.2 / YAML)
 
-| Need | Matrix | Result |
+| Need | YAML grant | Result |
 |---|---|---|
-| Both roles' columns | `staff_general` absent from §4 table | **M-01** (no column at all); proposed to copy `volunteer` + `temple_boy` rows |
-| Own quests | `quest.view` A, `quest.complete` S | OK for `temple_boy`; `staff_general` unknown (M-01) |
-| Directory | `member.view` Tm | OK; for minors see §2 rule 4 |
-| Chat | `community.participate` S | **M-09** conflicts with minor policy |
-| Request tasks | none | **M-16** |
-| Check-in | none | **M-03** |
+| Both roles' columns | `staff_general` and `temple_boy` exist | OK |
+| Own quests | `quest.view` A, `quest.complete` S | OK for both |
+| Directory | `member.view` D | OK; for minors see §2 rule 4 |
+| Chat / profile (minor) | `minor_overrides` | OK, denied for minors |
+| Request tasks | `quest.request` T (`staff_general`; not `temple_boy`) | OK; see §3 and F-27 note |
+| Check-in | `presence.set_self` S | OK |
+| Report problem | `maintenance.report` T | OK |
 
 ## 10. Field-research questions
 - FQ-GEN-01: Who are temple boys today (age, schooling, living arrangement)? Do guardians exist and consent?

@@ -1,12 +1,11 @@
 # OFFICE — ธุรการ (`office_staff`), บัญชี (`accountant`), ผู้ดูแลระบบของวัด (`temple_admin`)
 
-Owner: Agent 17 · Wave 1a · Readiness: **DESIGNED** (content HYPOTHESIS; see §10)
+Owner: Agent 17 · Wave 1a, revised in Wave 1 fix round · Readiness: **DESIGNED** (content HYPOTHESIS; see §10)
 Master refs: matrix §2.2, §4, §5 · features F-42 (P2), F-43 (P2, post-pilot), F-06, F-13, F-37 · Legend: `CLEANING.md` §0
 
 HYPOTHESIS notice: no source used. Office duties are general administration assumptions. **Finance is out of pilot**
 (gap Q-05, F-43 P2): this file designs a *view-only* accountant home as a placeholder and takes no position on
-accounting rules. The matrix maps ไวยาวัจกร to `facility_manager`, while a ไวยาวัจกร in practice may be the person who
-handles money and property on behalf of monks (**HYPOTHESIS**; Agent 01 to source) — open item M-13.
+accounting rules. Matrix v0.2 defines a separate role `waiyawatchakon` (ไวยาวัจกร) holding the restricted finance grants (`finance.view` T; `finance.approve` only by explicit abbot grant), distinct from `accountant` (`finance.view` T only) and from `facility_manager` (operations, no finance). Its legal basis is still to be verified by Agent 01 (HYPOTHESIS). This file does not design a waiyawatchakon home (outside the role list given to Agent 17).
 
 ## 1. Roles and goals
 
@@ -47,7 +46,7 @@ handles money and property on behalf of monks (**HYPOTHESIS**; Agent 01 to sourc
 | QT-OFF-03 | จัดการเอกสารเข้า-ออก / Document handling | Ad hoc | P2 | Yes | `photo_optional` (scan) | `none` | — |
 | QT-OFF-04 | จองสถานที่/ห้อง / Booking management | Ad hoc | P2 | Yes | `none` | `staff_verification` | `office_staff` other than creator or lead |
 | QT-OFF-05 | เตรียมประชุมและรายงานการประชุม / Meeting prep and minutes | Weekly/ad hoc | P2 | No | minutes document (PDF) | `organizer_approval` | meeting chair |
-| QT-OFF-06 | ตรวจสอบสถานะพระก่อนตอบผู้ติดต่อ / Check monastic availability before replying | Inside QT-OFF-01 | P1 | — | — | — | uses coarse availability only (M-15) |
+| QT-OFF-06 | ตรวจสอบสถานะพระก่อนตอบผู้ติดต่อ / Check monastic availability before replying | Inside QT-OFF-01 | P1 | — | — | — | uses coarse availability only (`availability.view` C) |
 | QT-ADM-01 | ยืนยันตัวตนสมาชิกใหม่ / Verify new member | Event | P1 | Yes | `none` | `organizer_approval` for monastic status | abbot-level (restricted, audited) |
 | QT-ADM-02 | ทบทวนสิทธิ์รายเดือน / Monthly role review | Monthly | P1 | No | `checklist_only` | `organizer_approval` | abbot-level |
 | QT-ADM-03 | ตรวจรายงานในคิวดูแลชุมชน / Moderation queue triage | Daily | P1 | Yes | `none` | `none` | — |
@@ -64,7 +63,7 @@ fields of master §6.1; QT-ADM-01 เช็กชื่อ-บทบาท · �
 | Invitations (read/write intake) | Agent 02/19 (`invitation.*`) |
 | Monastic availability (coarse) | Agent 02 resolver (`availability.view` T) |
 | Temple Contact threads | F-37 (Agent 09/12) |
-| Documents, bookings, meetings | **new concepts** (F-42, P2) — no master permission codes (M-07) |
+| Documents, bookings, meetings | **new concepts** (F-42, P2); codes `document.view/manage`, `booking.manage`, `schedule.view/manage` (YAML) |
 | Members and roles | F-06 (`member.view/manage`) |
 | Finance | F-43 post-pilot, legal review required |
 | Moderation reports | `moderation.manage` |
@@ -73,11 +72,11 @@ fields of master §6.1; QT-ADM-01 เช็กชื่อ-บทบาท · �
 
 | Role | # | Module id | Title TH / EN | Visible when |
 |---|---|---|---|---|
-| office_staff / accountant | 1 | `wf.documents_bookings` | เอกสารและการจอง / Documents and bookings | `document.view` (proposed) — **P2, hidden in pilot** |
+| office_staff / accountant | 1 | `wf.documents_bookings` | เอกสารและการจอง / Documents and bookings | `document.view` T — **P2, hidden in pilot** |
 | | 2 | `wf.meetings` | การประชุม / Meetings | `schedule.view` T |
 | | 3 | `wf.invitation_intake` | รับกิจนิมนต์ / Invitation intake | `invitation.manage` T |
 | | 4 | `wf.finance_view` | การเงิน / Finance | `finance.view` T (hidden unless granted; **P2**) |
-| temple_admin | 1 | `wf.member_admin` | สมาชิกและบทบาท / Members and roles | `member.manage` T — PROPOSED order |
+| temple_admin | 1 | `wf.member_admin` | สมาชิกและบทบาท / Members and roles | `member.manage` T — order PROPOSED |
 | | 2 | `wf.moderation_queue` | คิวรายงาน / Moderation queue | `moderation.manage` T |
 | | 3 | `wf.my_quests_today` | ภารกิจของฉัน / My quests | `quest.view` A |
 
@@ -95,7 +94,7 @@ Master has none for these roles. Proposed:
 | # | Case | Behaviour |
 |---|---|---|
 | E1 | Office staff absent | Intake quests QT-OFF-01 remain claimable by any `office_staff`; if none present, the invitation list is also visible to secretary monk (`invitation.manage` T) — no gap in access. |
-| E2 | Caller wants to know if a monk is available | Office sees coarse state only; reasons (sick, personal) never shown (M-15). |
+| E2 | Caller wants to know if a monk is available | Office sees coarse state only (`availability.view` scope C); reasons (sick, personal) never shown. |
 | E3 | Handover | Optional note: pending callbacks. |
 | E4 | Shortage | Invitations age beyond SLA → flagged to secretary monk and abbot's approvals; no auto-decline. |
 | E5 | Temple admin tries to grant self a restricted permission | Blocked per matrix §1 (abbot approval, audited). |
@@ -103,24 +102,25 @@ Master has none for these roles. Proposed:
 | E7 | Accountant asked to approve spending | Only with explicit abbot grant of `finance.approve`; default off; whole flow post-pilot. |
 | E8 | Phone/LINE intake while offline | Quick-capture form saves locally; syncs later (idempotent). |
 
-## 8. Permission check
+## 8. Permission check (v0.2 / YAML)
 
-| Need | Matrix | Result |
+| Need | YAML grant | Result |
 |---|---|---|
-| Invitations | `invitation.view/manage` T (office) | OK; `confirm` correctly absent |
+| Invitations | `invitation.view/manage` T (office); `invitation.confirm` absent | OK |
 | Contact inbox | `contact_inbox.manage` T | OK |
-| Documents, bookings, meetings, PDF | no codes; `schedule.manage` is in catalog but has no matrix row | **M-07** |
-| Availability | `availability.view` T (office) | OK, but reason visibility unspecified for lay readers **M-15** |
-| Quests | `quest.view` D, `quest.create` D, no assign/verify for office | **M-02** for office dept; accountant and temple_admin have `quest.view` — while `quest.complete` S: **M-08** |
-| temple_admin has no `schedule.view` and no `quest.view` | | **M-08** |
-| Finance | `finance.view` T / approve —⁷ | OK (accountant) |
+| Documents, PDF | `document.view` T (office, accountant), `document.manage` T (office) | OK (was M-07) |
+| Bookings | `booking.manage` T (`office_staff`, `monk_secretary`) | OK |
+| Meetings / calendar | `schedule.view` T, `schedule.manage` T (office) | OK |
+| Availability | `availability.view` C (office) | OK, coarse only |
+| Quests (office department) | `quest.view` D, `quest.create` D, `quest.request` T; **no** `quest.assign/verify` | Assignment and verification in the office department go to a `department_lead` (office) or abbot-level roles. Office staff cannot assign each other |
+| Accountant / temple_admin quests | `quest.view` A | OK (was M-08) |
+| Finance | `finance.view` T (accountant); `finance.approve` none | OK |
 | Reports | `report.view` T (office, accountant) | OK |
-| Command Center | none for office/admin | **M-18** (temple_admin administers staff but cannot see staff counters) |
-| Member admin | `member.view` T, `member.manage` T (admin only) | OK |
-| Moderation | `moderation.manage` T (admin) | OK |
-| Reward catalog | `reward.manage` T (office) | OK; out of scope here |
-| ไวยาวัจกร vs finance | facility_manager only | **M-13** |
-| Check-in | none | **M-03** |
+| Command Center | `command_center.view` D (staff panel) for `temple_admin`; none for office | OK |
+| Staff admin | `presence.view` T, `presence.set_others` T, `shift.manage` T (`temple_admin`) | OK |
+| Member admin | `member.view` T, `member.manage` T (abbot, deputy, `temple_admin`) | OK |
+| Moderation | `moderation.manage` T | OK |
+| Check-in | `presence.set_self` S | OK |
 
 ## 9. Safety note on this file
 Office tools hold the widest personal-data surface among lay staff (contacts of hosts, visitors, members). Every export

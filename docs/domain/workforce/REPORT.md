@@ -2,10 +2,30 @@
 
 Date: 2026-10-07 · Pack revision W1-r2 · Scope: lay workforce roles only (drivers, technicians, facility manager → Agent 18; ceremony roles, undertaker → Agent 19).
 
+## 0. Wave 1 fix round (applies on top of everything below)
+
+Aligned to `role_permissions.yaml` v0.3, `ROLE_PERMISSION_MATRIX.md` v0.2, `GOVERNANCE_AUDIT.md`.
+
+| Item | Status | Where |
+|---|---|---|
+| Six presence states (`OFF_SHIFT` added; UNKNOWN only for missing signal); counters, sum invariant, cases WF-05/10/13/14 revised, WF-23..26 added | Done | `STAFF_PRESENCE_SPEC.md` §2, §4.2, §5, §9 |
+| `kitchen_lead` replaced by `department_lead` (kitchen) | Done | KITCHEN, MODULE_REGISTRY_INPUT, STAFF_PRESENCE_SPEC, this report |
+| YAML codes only (presence.*, shift.manage, headcount.*, inventory.record, quest.request, security.log(.view), security.incident.view, document.*, booking.manage); no proposed codes remain | Done | all permission tables |
+| presence.view T/D/C, set_others incl. abbot/deputy/assistant, no Tm; legacy scopes removed (F-32); member.view D | Done | PRESENCE §7, KITCHEN §9, CLEANING §9, GENERAL §9 |
+| Gate log read = `security.log.view`; incidents = `security.incident.view` (abbot, deputy, dept lead only) (F-18) | Done | SECURITY_TRAFFIC §4, §9 |
+| Dot-case domain events, `temple_id` statement on staff tables (audit F-?, tenant rows) | Done | PRESENCE §3.1, §8 |
+| `quest_type = security` used; `samanera` no longer holds `quest.request` (F-27) | Done | SECURITY_TRAFFIC §3, GENERAL §3 |
+| `attendance` verification has no record owner (F-26): QT-TRF-02 -> `qr_checkin`, QT-GEN-03 -> `staff_verification` | Done (open for Opus/Agent 19) | SECURITY_TRAFFIC §3, GENERAL §4 |
+| Monastic score label "แต้มกิจวัตร" | Not mentioned in my files; workforce quests stay `points = 0`, OQ-03 open | — |
+| Skill vocabulary owner (`skill_code`, audit line on A17-1) | Not done: needs Opus to assign one owner; not invented here | — |
+| Staff `presence` / handover tables missing in DATABASE_PLAN | Not mine (Agent 08) | — |
+
+Sections 3.2 (mismatch table) and 5 (proposals) below are the Wave 1a record; most M-items are now closed by matrix v0.2/v0.3. Still open: zone read rule (M-10), M-13 resolved by the `waiyawatchakon` role.
+
 ## 1. Summary
 Nine artifacts specify workflows, quest templates, data needs and role-aware homes for: housekeeper, kitchen lead/staff,
 gardener, general staff, temple boy, security guard, traffic staff, office staff, accountant, temple admin. A shared
-**staff presence** spec (5 states, shifts, check-in, handover, counters with a sum invariant, 22 cases) and a
+**staff presence** spec (6 states, shifts, check-in, handover, counters with a sum invariant, 26 cases) and a
 **kitchen headcount** definition (range, never an invented single number, 10 cases) are the two load-bearing pieces.
 The largest finding is that the permission matrix does not support most of what these homes need (18 mismatches, §3).
 No web or field research was done: every real-world duty is a HYPOTHESIS and each file ends with field-research
@@ -28,7 +48,7 @@ claims (duties, hours, meal practice, minors, ไวยาวัจกร) are l
 | ID | Mismatch | Where hit | Recommendation |
 |---|---|---|---|
 | M-01 | `staff_general` and `traffic_staff` have **no column** in §4 | GENERAL, SECURITY | Add columns: `staff_general` = `volunteer` + `temple_boy` rows; `traffic_staff` = `security` row minus `asset.view` T |
-| M-02 | No role holds `quest.assign`/`quest.verify` for departments **cleaning, garden, security, general, office** (only facility_mgr D, kitchen_lead D, ceremony_lead D, and T roles). Housekeepers, gardeners, guards cannot be assigned or verified in-department | CLEANING, GARDEN, SECURITY, GENERAL, OFFICE | Interim: put `facility_manager` (and optionally `office_staff` for assign) in those departments via `membership_departments` so scope D applies. Alternative: a `staff_supervisor` role. Decision for Opus |
+| M-02 | No role holds `quest.assign`/`quest.verify` for departments **cleaning, garden, security, general, office** (only facility_mgr D, department_lead (kitchen) D, ceremony_lead D, and T roles). Housekeepers, gardeners, guards cannot be assigned or verified in-department | CLEANING, GARDEN, SECURITY, GENERAL, OFFICE | Interim: put `facility_manager` (and optionally `office_staff` for assign) in those departments via `membership_departments` so scope D applies. Alternative: a `staff_supervisor` role. Decision for Opus |
 | M-03 | **No permission for presence, shifts, leave or check-in**; `availability.*` is monastic-only | PRESENCE, all | Add `presence.view`, `presence.set_self`, `presence.set_others`, `shift.manage` (rows in PRESENCE §7) |
 | M-04 | Security home lists incidents and gate log; **no permission**; incident data must be restricted | SECURITY | Add `security.log` (create own) and `security.incident.view` (**restricted**) |
 | M-05 | Kitchen headcount: `kitchen_staff` has no `availability.view`; lead has T⁴ counts only; no code for aggregate headcount or manual adjustment | KITCHEN | Add `headcount.view` (D) and `headcount.adjust` (D) fed by an aggregate function |
@@ -37,7 +57,7 @@ claims (duties, hours, meal practice, minors, ไวยาวัจกร) are l
 | M-08 | `accountant` and `temple_admin` have `quest.view` — but `quest.complete` S (cannot see what they complete); `temple_admin` also has no `schedule.view` | OFFICE | Set `quest.view` = A for both; `schedule.view` S for temple_admin |
 | M-09 | `temple_boy` is probably a minor but `community.participate` S (chat) applies to all staff | GENERAL | Minor flag overrides: no P2P chat; matrix note required (links Q-06) |
 | M-10 | Zones are not assets; housekeeper/gardener "My zones" rely on `asset.view` A | CLEANING, GARDEN | Agent 18 defines zone read rule; derive from assigned-quest location |
-| M-11 | Staff cannot record consumption (`inventory.manage` only for facility_mgr, kitchen_lead D) | CLEANING, KITCHEN, GARDEN | Add `inventory.record` (movement of type "use") at D, or allow quest-completion to log use |
+| M-11 | Staff cannot record consumption (`inventory.manage` only for facility_mgr, department_lead (kitchen) D) | CLEANING, KITCHEN, GARDEN | Add `inventory.record` (movement of type "use") at D, or allow quest-completion to log use |
 | M-12 | `security_guard` has `asset.view` **T** (broader than needed) | SECURITY | Narrow to A/D (checkpoints and gates) |
 | M-13 | ไวยาวัจกร mapped to `facility_manager` only; in practice may handle money/property for monks (HYPOTHESIS) while finance roles are `accountant` | OFFICE | Agent 01 to source; Opus to decide mapping before F-43 |
 | M-14 | No role for nuns (แม่ชี) or lay residents, yet they may eat from the temple kitchen (HYPOTHESIS) | KITCHEN | Field question; possible role or "meal audience" setting |
@@ -47,7 +67,7 @@ claims (duties, hours, meal practice, minors, ไวยาวัจกร) are l
 | M-18 | Staff panel in Command Center: `command_center.view` D⁵ only for three roles; `temple_admin` and `office_staff` cannot see staff counters | PRESENCE, OFFICE | Decide if `temple_admin` gets staff panel at T |
 
 ### 3.3 Case counts
-- `STAFF_PRESENCE_SPEC.md`: **22** cases WF-01…WF-22 (minimum 12).
+- `STAFF_PRESENCE_SPEC.md`: **26** cases WF-01…WF-26 (minimum 12).
 - `KITCHEN.md` headcount: **10** cases WF-31…WF-40.
 - Quest templates: CLEANING 7, KITCHEN 9, GARDEN 7, GENERAL/TEMPLE BOY 7, SECURITY/TRAFFIC 7, OFFICE/ADMIN/ACCOUNTANT 10 = **47**, each with checklist, evidence and verification policy.
 - Modules: 25 registered (`MODULE_REGISTRY_INPUT.md`).
@@ -76,7 +96,7 @@ claims (duties, hours, meal practice, minors, ไวยาวัจกร) are l
 | ID | Question | Owner |
 |---|---|---|
 | OQ-01 | D-WF-1: five presence states with `UNKNOWN/OFF_SHIFT`, or add a sixth `OFF_SHIFT` state? Recommendation: add the sixth | Opus |
-| OQ-02 | How is M-02 solved: dept scope for `facility_manager`, or a `staff_supervisor` role? | Opus |
+| OQ-02 | How is M-02 solved: dept scope for `facility_manager`, (a `staff_supervisor` role was rejected; resolved by `department_lead`)? | Opus |
 | OQ-03 | May lay staff earn `community_boon_points` for assigned duties? Default here: no (`points = 0`) to avoid gamifying paid work; volunteers earn through Agent 12/19 flows | Opus, Agent 11 |
 | OQ-04 | Is `security` a new `quest_type`? (Proposed; default `general` until accepted) | Agent 02 |
 | OQ-05 | Raw presence signal and gate-log retention periods (proposed ≤ 90 days / 30 days) | Agent 13, legal |
@@ -124,7 +144,7 @@ claims (duties, hours, meal practice, minors, ไวยาวัจกร) are l
 
 | Artifact | Readiness | Note |
 |---|---|---|
-| `STAFF_PRESENCE_SPEC.md` | DESIGNED | Testable (22 cases); depends on M-03 decision |
+| `STAFF_PRESENCE_SPEC.md` | DESIGNED | Testable (26 cases); depends on M-03 decision |
 | `KITCHEN.md` (headcount) | DESIGNED | Formula testable (10 cases); depends on OQ-06/07 |
 | `CLEANING.md` | DESIGNED | Duties HYPOTHESIS |
 | `GARDEN.md` | DESIGNED | Duties HYPOTHESIS; proposed north-star |

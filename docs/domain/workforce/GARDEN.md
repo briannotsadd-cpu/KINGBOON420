@@ -1,6 +1,6 @@
 # GARDEN — Gardener (คนสวน) workflow, quests and home
 
-Owner: Agent 17 · Wave 1a · Readiness: **DESIGNED** (content HYPOTHESIS; see §9)
+Owner: Agent 17 · Wave 1a, revised in Wave 1 fix round · Readiness: **DESIGNED** (content HYPOTHESIS; see §9)
 Master refs: matrix §2.2, §4, §5 · features F-25, F-20, F-22 · Legend: `CLEANING.md` §0
 
 HYPOTHESIS notice: no source was used. Grounds care duties below come from general groundskeeping practice. The master
@@ -19,8 +19,8 @@ Grounds look cared-for before rites and visits; plants are watered on schedule; 
 | Event-driven | Pre-event grounds preparation; post-event pick-up |
 | Seasonal | Heavy pruning, tree care — scheduled by the manager as one-off quests |
 
-Assignment: `gardener` has no `quest.create/assign` (matrix). Same gap as cleaning (M-02); interim rule: put
-`facility_manager` in the `garden` department (D scope).
+Assignment: `gardener` has no `quest.create/assign` (YAML). Quests are created, assigned and verified by a
+`department_lead` with department `garden` or by a `facility_manager` (D). A gardener may raise `quest.request` (T).
 
 ## 3. Quest templates
 All: `quest_type = garden`, `department = garden`, `points = 0`, `required_role = gardener`.
@@ -79,16 +79,17 @@ priority. Zero rows is shown as zero.
 | E5 | Hazard (leaning tree, wasps nest) | Report problem with severity; facility manager notified (Agent 18). |
 | E6 | Tool damaged | Report on the asset via QR (Agent 18); quest QT-GAR-04 can be submitted with "blocked: equipment". |
 
-## 8. Permission check
+## 8. Permission check (v0.2 / YAML)
 
-| Need | Matrix | Result |
+| Need | YAML grant | Result |
 |---|---|---|
 | Own quests | `quest.view` A / `quest.complete` S | OK |
-| Equipment | `asset.view` D | OK |
-| Zones | none (zones are not assets) | **M-10** |
-| Consumables | `inventory.view` D, manage — | OK view; **M-11** cannot log consumption |
-| Verify | none in garden dept | **M-02** |
-| Check-in | none | **M-03** |
+| Equipment | `asset.view` A | OK |
+| Zones | no zone code | Open (Agent 18); interim via assigned-quest location |
+| Consumables | `inventory.view` D, `inventory.record` D | OK |
+| Request extra work | `quest.request` T | OK |
+| Verify | `quest.verify` D (`department_lead`, `facility_manager`) | OK |
+| Check-in | `presence.set_self` S | OK |
 
 ## 9. Field-research questions
 - FQ-GAR-01: How big are the grounds, how many gardeners, and is watering manual or automated?

@@ -1,6 +1,6 @@
 # CLEANING — Housekeeper (แม่บ้าน) workflow, quests and home
 
-Owner: Agent 17 · Wave 1a · Readiness: **DESIGNED** (content is HYPOTHESIS until field-validated; see §10)
+Owner: Agent 17 · Wave 1a, revised in Wave 1 fix round · Readiness: **DESIGNED** (content is HYPOTHESIS until field-validated; see §10)
 Master refs: `ROLE_PERMISSION_MATRIX.md` §2.2, §4, §5 · `TEMPLE_DOMAIN_MODEL.md` §5 · features F-25, F-20 (zones from Agent 18)
 
 Convention: every real-world duty below that is not sourced is a **HYPOTHESIS** written from general knowledge of
@@ -21,7 +21,7 @@ Quest fields follow `TEMPLE_DOMAIN_MODEL.md` §5.1. A *template* adds:
 | `verification_policy` | One of the master list: `none · organizer_approval · staff_verification · qr_checkin · photo_evidence · location · attendance` |
 | `points` | `0` for all workforce templates (see REPORT open question OQ-03: paid staff duties do not earn community points by default) |
 
-A verifier is never the assignee (master §5.2). Who holds `quest.verify` for cleaning is a matrix gap (M-02, §9).
+A verifier is never the assignee (master §5.2). In the cleaning department the verifier is a `department_lead` (D) or `facility_manager` (D) — see §2.3.
 
 ## 1. Role goals
 
@@ -49,10 +49,10 @@ A verifier is never the assignee (master §5.2). Who holds `quest.verify` for cl
 Deep clean of rotating zones (QT-CLN-04); weekly supplies summary to the facility manager (view only here).
 
 ### 2.3 Who creates and assigns work
-`housekeeper` has no `quest.create` / `quest.assign` (matrix §4). Recurring cleaning quests are generated from
-templates by a **department-scoped manager**. The matrix defines no cleaning lead (M-02). Interim rule recommended
-in REPORT: place `facility_manager` (and `office_staff` for assignment intake) in the `cleaning` department through
-`membership_departments` so department scope **D** applies; no new role needed.
+`housekeeper` has no `quest.create` / `quest.assign` (YAML). Recurring cleaning quests are generated from templates and
+assigned by a **`department_lead` with department `cleaning`** (or a `facility_manager`, D). Both hold `quest.create`,
+`quest.assign`, `quest.verify` and `quest.manage` at D. A housekeeper may raise a one-off `quest.request` (T) — a draft
+that a lead publishes.
 
 ## 3. Quest templates
 
@@ -140,21 +140,22 @@ If there are zero assignments the screen says so explicitly; it never invents a 
 ## 8. What this role never sees
 Finance, monastic availability, other temples, personal data beyond team-level directory (see §9).
 
-## 9. Permission check against `ROLE_PERMISSION_MATRIX.md`
+## 9. Permission check against `ROLE_PERMISSION_MATRIX.md` v0.2 / `role_permissions.yaml`
 
-| Need | Matrix | Result |
+| Need | YAML grant | Result |
 |---|---|---|
 | See own assignments | `quest.view` A | OK |
 | Start/submit | `quest.complete` S | OK |
-| Supplies levels | `inventory.view` D, `.manage` — | OK read-only; cannot record consumption (M-11) |
+| Supplies levels | `inventory.view` D | OK |
+| Record consumption of supplies | `inventory.record` D | OK |
 | Report problem | `maintenance.report` T | OK |
-| Equipment/zone data | `asset.view` A | Partial: zones are not assets; see M-10 |
-| Team directory | `member.view` Tm | OK (team-level) |
+| Ask for an extra task | `quest.request` T | OK (draft only) |
+| Equipment/asset data | `asset.view` A | OK |
+| Zone data | zones are not assets; no zone code | Open: Agent 18 defines zone read rule; interim = zone shown through the location of an assigned quest |
+| Team directory | `member.view` D | OK (department-level directory) |
 | Calendar | `schedule.view` S | OK |
-| Check-in / shift | no permission code | **Mismatch M-03** |
-| Verify cleaning quests | no cleaning role has `quest.verify` D | **Mismatch M-02** |
-
-Mismatch ids are defined in `REPORT.md` §Evidence (M-01…M-18).
+| Check-in / shift | `presence.set_self` S | OK; `presence.view` C gives colleagues' coarse states and counts only (no reasons, flags or conflicts) |
+| Verify cleaning quests | `quest.verify` D (`department_lead`, `facility_manager`) | OK |
 
 ## 10. Field-research questions (replace HYPOTHESES)
 - FQ-CLN-01: How many zones does one housekeeper cover per shift, and how are zones divided today (paper, LINE group, verbal)?

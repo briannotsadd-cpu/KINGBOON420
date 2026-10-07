@@ -1,6 +1,6 @@
 # SECURITY AND TRAFFIC — รปภ. (`security_guard`) and เจ้าหน้าที่จราจร (`traffic_staff`)
 
-Owner: Agent 17 · Wave 1a · Readiness: **DESIGNED** (content HYPOTHESIS; see §11)
+Owner: Agent 17 · Wave 1a, revised in Wave 1 fix round · Readiness: **DESIGNED** (content HYPOTHESIS; see §11)
 Master refs: matrix §2.2, §4 (`security` column), §5 · `SECURITY_MODEL.md` · features F-25, F-27 · Legend: `CLEANING.md` §0
 
 HYPOTHESIS notice: no source used. Gate hours, patrol practice and whether a temple employs guards at all are unknown.
@@ -29,8 +29,8 @@ review (PDPA) and are **not designed here**.
 Night shifts cross midnight; the shift belongs to the date it starts (`STAFF_PRESENCE_SPEC.md` WF-10).
 
 ## 3. Quest templates
-`quest_type = general` for now, `department = security`, `points = 0`. **Proposal:** new quest type `security`
-(propose in REPORT) so Command Center and audit can separate it; until accepted use `general` + department filter.
+`quest_type = security` (added to master §5.1 from Agent 17's proposal), `department = security`, `points = 0`.
+Event-linked traffic templates (QT-TRF-01..03) are `event_task` children of an event.
 
 | ID | Title (TH / EN) | Recurrence · window | Location | Claimable | Evidence | Verification |
 |---|---|---|---|---|---|---|
@@ -39,7 +39,7 @@ Night shifts cross midnight; the shift belongs to the date it starts (`STAFF_PRE
 | QT-SEC-03 | ปิดประตู/ล็อกวัด / Lock-up | Daily at configured time | gates, key points | No | `checklist_only` | `qr_checkin` |
 | QT-SEC-04 | ส่งมอบเวร / Shift handover | Each shift end | — | No | handover note (§ spec 7) | acknowledged by incoming (not `quest.verify`) |
 | QT-TRF-01 | จัดที่จอดรถงาน / Event parking setup | Event-triggered, child of `event_root` (Agent 19 owns; `quest_type = event_task`) | parking zones | No | `photo_before_after` | `staff_verification` by event board owner |
-| QT-TRF-02 | ควบคุมจราจรช่วงงาน / Event traffic duty | Event window | post | No | `none` | `attendance` (check-in at post by QR/lead) |
+| QT-TRF-02 | ควบคุมจราจรช่วงงาน / Event traffic duty | Event window | post | No | `none` | `qr_checkin` (QR scan at post; the `attendance` method has no defined record yet — audit F-26) |
 | QT-TRF-03 | เก็บที่จอดหลังงาน / Parking clear-down | After event | parking zones | Yes | `photo_after` | `staff_verification` |
 
 Checklist examples: SEC-01 ปลดล็อก · ตรวจรอบประตู · ตรวจไฟ; SEC-03 ตรวจประตูทุกบาน · ปิดไฟสาธารณะตามที่กำหนด · ล็อก ·
@@ -48,22 +48,22 @@ Checklist examples: SEC-01 ปลดล็อก · ตรวจรอบปร�
 ## 4. Non-quest records (restricted)
 
 ### 4.1 Principle
-Two records are **not** quests because their visibility differs from quest visibility. Proposed permissions (M-04):
-`security.log` (create own entries) and `security.incident.view` (**restricted**, like `audit.view`).
+Two records are **not** quests because their visibility differs from quest visibility. YAML permissions:
+`security.log` S (`security_guard`, `traffic_staff`) covers **creating gate-log entries, recording patrol rounds and
+filing incident reports**. Reading is separate: `security.log.view` (**restricted**; abbot T, deputy T, `department_lead` D `dept_security`, guards and traffic staff D within the security department) reads gate log and rounds; `security.incident.view` (**restricted**; abbot T, deputy T, `department_lead` D `dept_security`; `facility_manager` removed) reads incidents.
 
 ### 4.2 Gate / visitor log
 Fields (concept): `occurred_at`, `direction (in/out)`, `kind (pedestrian / vehicle / delivery / other)`, optional
 `plate`, optional `visitor_label`, optional `purpose`, `recorded_by`. All identifying fields optional; **plate and
 visitor name are personal data** → retained only for a configurable period (HYPOTHESIS default 30 days; Agent 13 to set)
-and visible only to the author, security shift lead and abbot-level roles. No photos of visitors by default.
+and visible only to the author (own entries) and holders of `security.log.view` (YAML v0.3). No photos of visitors by default.
 
 ### 4.3 Incident report
 Fields: `occurred_at`, `location (zone/building concept)`, `category (theft, injury, dispute, fire/hazard, lost child,
 suspicious, other)`, `severity`, free text, optional photos (no faces by default), `recorded_by`, `status`.
-Visibility: reporter (own), temple-level roles with `security.incident.view` (proposed: abbot, deputy, assistant, and a
-named temple-designated person), **never** peers in team view, never exposed in Command Center beyond count by
+Visibility: reporter (own), roles holding `security.incident.view` (YAML v0.3: abbot T, deputy T, `department_lead` D `dept_security`; assistant and `facility_manager` do **not** hold it), **never** peers in team view, never exposed in Command Center beyond count by
 category/severity and "open" flag. Injuries or health content is sensitive (PDPA s.26) — minimise text.
-Escalation: severity high → push to abbot-level; the app does **not** contact police/emergency services; it shows
+Escalation: severity high → push to the `security.incident.view` holders; the app does **not** contact police/emergency services; it shows
 local emergency numbers as a static help card (HYPOTHESIS that this is desired; FQ-SEC-04).
 
 ## 5. Data needed
@@ -83,8 +83,8 @@ Order below is **PROPOSED**.
 |---|---|---|---|---|
 | security_guard | 1 | `wf.shift_handover` | เวรและส่งมอบ / Shift and handover | has shift today |
 | | 2 | `wf.patrol_rounds` | เดินตรวจ / Patrol rounds | has QT-SEC-02 today |
-| | 3 | `wf.gate_log` | บันทึกเข้า-ออก / Gate log | `security.log` (proposed) |
-| | 4 | `wf.incident_report` | แจ้งเหตุ / Incident report | `security.log` (proposed) |
+| | 3 | `wf.gate_log` | บันทึกเข้า-ออก / Gate log | `security.log` S |
+| | 4 | `wf.incident_report` | แจ้งเหตุ / Incident report | `security.log` S |
 | traffic_staff | 1 | `wf.event_traffic_quests` | ภารกิจจราจรงาน / Event traffic quests | has TRF assignment |
 | | 2 | `wf.check_in` | เช็กอิน / Check-in | `presence.set_self` |
 | | 3 | `wf.report_problem` | แจ้งปัญหา / Report problem | `maintenance.report` |
@@ -106,19 +106,19 @@ Order below is **PROPOSED**.
 | E7 | Incident involves a monastic or a minor | Visible only at temple-level incident role; no peer visibility; flagged for Agent 13 policy. |
 | E8 | Guard asked to share visitor data with outsiders | Not supported; no export of gate log beyond temple-level roles. |
 
-## 9. Permission check
+## 9. Permission check (v0.2 / YAML)
 
-| Need | Matrix | Result |
+| Need | YAML grant | Result |
 |---|---|---|
-| `traffic_staff` entire column | absent | **M-01** (propose copy of `security` column) |
-| Gate log, incident | none | **M-04** |
+| `traffic_staff` column | exists (`security.log` S, `asset.view` A) | OK |
+| Gate log, rounds, incident filing | `security.log` S | OK |
+| Reading gate log and rounds | `security.log.view` (abbot T, deputy T, `department_lead` D dept_security, guards/traffic D) | OK |
+| Reading incidents | `security.incident.view` (abbot T, deputy T, `department_lead` D dept_security) | OK |
 | Quests | `quest.view` A, `quest.complete` S | OK |
-| Assets view | `asset.view` **T** for security | **M-12** broader than needed (checkpoints and gates only); propose A or D |
-| Vehicle view | none | OK (visitor vehicles are not temple vehicles) |
-| Team directory | `member.view` Tm | OK |
-| Verify security quests | none | **M-02** (QR scans provide automated verification) |
-| Check-in / shift | none | **M-03** |
-| Command Center | none | OK (guard does not see) |
+| Assets view | `asset.view` A | OK (narrowed from v0.1) |
+| Verify security quests | `quest.verify` D (`department_lead`, `facility_manager`); QR scans verify automatically | OK |
+| Check-in / shift | `presence.set_self` S | OK |
+| Command Center | none for guards | OK |
 
 ## 10. Security of this module itself
 Incident and gate-log rows carry `temple_id` and are protected by RLS; read policy is narrower than quest policy
