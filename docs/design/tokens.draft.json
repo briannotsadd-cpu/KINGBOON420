@@ -1,0 +1,11 @@
+{
+"Sacred Minimal":{
+ "light":{"bg":"#FAF7F0","surface":"#FFFFFF","ink":"#1F1B16","muted":"#5E564B","primary":"#8A4B0F","onPrimary":"#FFFFFF","accent":"#7A5A00","ok":"#2F6B3F","warn":"#8A5A00","danger":"#A12A2A","unknown":"#4A4F7A"},
+ "dark":{"bg":"#15120E","surface":"#201B15","ink":"#F3EDE2","muted":"#B5AA99","primary":"#E3A25B","onPrimary":"#1F1B16","accent":"#E0B85A","ok":"#7FC08F","warn":"#E0B04F","danger":"#F08A8A","unknown":"#AEB4E6"}},
+"Thai Neo-Future":{
+ "light":{"bg":"#F1F5F4","surface":"#FFFFFF","ink":"#0E1A1C","muted":"#475B5E","primary":"#006A6A","onPrimary":"#FFFFFF","accent":"#8C5E00","ok":"#1E6B45","warn":"#8A5A00","danger":"#B3261E","unknown":"#3D4F8F"},
+ "dark":{"bg":"#0A1214","surface":"#131E21","ink":"#E6F1F0","muted":"#9DB3B5","primary":"#4FD1C5","onPrimary":"#06201E","accent":"#F2C14E","ok":"#6FD6A0","warn":"#F2C14E","danger":"#FF8A80","unknown":"#A9B8F5"}},
+"Living Temple":{
+ "light":{"bg":"#F6F1E7","surface":"#FFFDF8","ink":"#2A2418","muted":"#5C5543","primary":"#3F6B3A","onPrimary":"#FFFFFF","accent":"#A64B22","ok":"#2F6B3A","warn":"#8A5A00","danger":"#A8321F","unknown":"#5B5A8C"},
+ "dark":{"bg":"#14170F","surface":"#1E2217","ink":"#EEEBDD","muted":"#B3B39C","primary":"#9CCB86","onPrimary":"#12200E","accent":"#E58F65","ok":"#8FD19A","warn":"#E8B64F","danger":"#F29A88","unknown":"#B5B4EA"}}
+}
