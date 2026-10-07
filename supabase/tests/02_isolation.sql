@@ -55,6 +55,11 @@ begin
           when 'events' then format('insert into events(temple_id, kind, title, starts_at, ends_at, created_by) values (%L, ''other'', ''xx'', now(), now() + interval ''1 hour'', %L)', B, me)
           when 'event_staffing_targets' then format('insert into event_staffing_targets(temple_id, event_id, category, label, required, min_required) values (%L, gen_random_uuid(), ''volunteer'', ''xx'', 1, 1)', B)
           when 'event_participants' then format('insert into event_participants(temple_id, event_id, target_id, person_id) values (%L, gen_random_uuid(), gen_random_uuid(), %L)', B, me)
+          when 'buildings' then format('insert into buildings(temple_id, code, name_th, kind, created_by) values (%L, ''X.SALA.A'', ''xx'', ''SALA'', %L)', B, me)
+          when 'zones' then format('insert into zones(temple_id, code, name_th, kind) values (%L, ''X.ZONE.A'', ''xx'', ''PATH'')', B)
+          when 'point_holds' then format('insert into point_holds(temple_id, person_id, assignment_id, amount, signal) values (%L, %L, gen_random_uuid(), 1, ''x'')', B, me)
+          when 'reward_catalog' then format('insert into reward_catalog(temple_id, name_th, cost, stock, created_by) values (%L, ''xx'', 1, 1, %L)', B, me)
+          when 'reward_redemptions' then format('insert into reward_redemptions(temple_id, reward_id, person_id, cost) values (%L, gen_random_uuid(), %L, 1)', B, me)
           else null end;
       exception when insufficient_privilege then ok := true;
                 when others then raise exception 'role % table %: write into B failed with % (%), expected 42501', r.code, ins, sqlstate, sqlerrm;
@@ -78,10 +83,11 @@ end $$;
 
 -- positive controls: the policies are not simply "deny all"
 do $$
-declare n bigint;
+declare n bigint; ea bigint;
 begin
+  select count(*) into ea from public.quests where temple_id = 'aaaaaaaa-0000-0000-0000-000000000001';
   perform test.as_person(test.pid('abbot'));
-  select count(*) into n from public.quests;             perform test.assert(n = 1, 'abbot sees A quest only (got ' || n || ')');
+  select count(*) into n from public.quests;             perform test.assert(n = ea, 'abbot sees all A quests and no B quest (got ' || n || ', A has ' || ea || ')');
   select count(*) into n from public.schedule_entries;   perform test.assert(n = 1, 'abbot sees A rite only');
   select count(*) into n from public.audit_logs;         perform test.assert(n >= 1, 'abbot has audit.view');
   select count(*) into n from public.memberships;        perform test.assert(n >= 28, 'abbot sees A members');
@@ -91,7 +97,8 @@ begin
   select count(*) into n from public.memberships;        perform test.assert(n = 1, 'community_member sees only own membership');
   reset role;
   perform test.as_person((select id from public.persons where display_name = 'b_owner'));
-  select count(*) into n from public.quests;             perform test.assert(n = 1, 'B owner sees only B quest');
+  select count(*) into n from public.quests where temple_id <> 'bbbbbbbb-0000-0000-0000-000000000001'; perform test.assert(n = 0, 'B owner sees no quest of another temple');
+  select count(*) into n from public.quests;             perform test.assert(n >= 1, 'B owner sees B quests');
   select count(*) into n from public.temples;            perform test.assert(n = 1, 'B owner sees only temple B');
   reset role;
   raise notice 'PASS 02_isolation controls';
