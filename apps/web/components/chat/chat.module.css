@@ -1,0 +1,46 @@
+/* Chat styles (CSS module; uses the global colour tokens). All text >= 1rem (18px), touch targets >= 48px. */
+.avatar { width: 52px; height: 52px; border-radius: 50%; background: var(--primary); color: var(--on-primary);
+  display: grid; place-items: center; font-weight: 700; font-size: 1.1rem; flex-shrink: 0; }
+.convItem { display: flex; align-items: center; gap: 14px; min-height: 72px; padding: 14px 16px; text-decoration: none; color: inherit;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+.convItem:hover { border-color: var(--saffron); }
+.convBody { flex: 1; min-width: 0; }
+.convName { font-weight: 700; font-size: 1.1rem; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.convLast { color: var(--muted); margin: 0; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.unread { background: var(--bad); color: #fff; min-width: 32px; height: 32px; padding: 0 10px; border-radius: 999px; display: inline-grid;
+  place-items: center; font-weight: 700; font-size: 1rem; }
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.pickRow { display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 8px 16px; background: var(--surface);
+  border: 2px solid var(--line); border-radius: 14px; cursor: pointer; }
+.pickRow:has(input:checked) { border-color: var(--primary); background: var(--surface-2); }
+.pickRow input { width: 28px; height: 28px; accent-color: var(--primary); flex-shrink: 0; }
+
+.room { display: grid; grid-template-rows: auto 1fr auto; gap: 12px; min-height: calc(100dvh - 150px); }
+.head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.headTitle { flex: 1 1 60%; min-width: 0; margin: 0; font-size: 1.3rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.callBtns { display: flex; gap: 10px; flex: 1 1 100%; }
+.callBtns > button { flex: 1; padding: 0 12px; }
+.log { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: calc(100dvh - 330px); min-height: 200px;
+  padding: 12px; background: var(--surface-2); border-radius: var(--radius); border: 1px solid var(--line); }
+.empty { color: var(--muted); text-align: center; margin: auto; padding: 24px 8px; }
+.msg { display: flex; flex-direction: column; max-width: 86%; gap: 4px; }
+.mine { align-self: flex-end; align-items: flex-end; }
+.theirs { align-self: flex-start; align-items: flex-start; }
+.bubbleRow { display: flex; align-items: flex-start; gap: 4px; }
+.mine .bubbleRow { flex-direction: row-reverse; }
+.bubble { padding: 10px 14px; border-radius: 16px; font-size: 1.05rem; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.mine .bubble { background: var(--primary); color: var(--on-primary); border-bottom-right-radius: 4px; }
+.theirs .bubble { background: var(--surface); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+.removed { font-style: italic; opacity: .85; }
+.who { font-size: 1rem; font-weight: 700; color: var(--muted); }
+.time { font-size: 1rem; color: var(--muted); }
+.more { min-width: 48px; min-height: 48px; border: 0; background: transparent; color: var(--muted); border-radius: 12px; cursor: pointer; display: grid; place-items: center; }
+.more:hover { background: var(--surface); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 10px; width: min(100%, 360px); }
+.panel label { font-weight: 700; }
+.compose { display: grid; gap: 10px; }
+.composeRow { display: flex; gap: 10px; align-items: flex-end; }
+.composeRow textarea { flex: 1; min-height: 56px; max-height: 160px; resize: vertical; }
+.counter { color: var(--muted); font-size: 1rem; text-align: right; }
+.counterBad { color: var(--bad); font-weight: 700; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
