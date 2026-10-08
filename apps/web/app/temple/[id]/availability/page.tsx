@@ -1,3 +1,4 @@
+import { FlashNotice } from "@/components/contact/flash";
 import { gate, LoadError, BackToHub } from "@/components/monastic/parts";
 import { loadBoard, loadCoarse } from "@/components/monastic/queries";
 import { ClearRowButton, SetOtherForm } from "@/components/monastic/availability-forms";
@@ -29,6 +30,7 @@ export default async function Availability({ params }: { params: Promise<{ id: s
     return (
       <main className="stack">
         {head}
+        <FlashNotice />
         <section className="card" aria-label="จำนวนตามสถานะ" data-testid="counters">
           <h2>สรุปตามสถานะ · พระและสามเณร {board.rows.length} รูป</h2>
           <div className="kpis">

@@ -1,3 +1,4 @@
+import { FlashNotice } from "@/components/contact/flash";
 import Link from "next/link";
 import { gate, LoadError, BackToHub } from "@/components/monastic/parts";
 import { myDay } from "@/components/monastic/queries";
@@ -29,6 +30,7 @@ export default async function MyDay({ params, searchParams }: { params: Promise<
     <main className="stack">
       <BackToHub id={id} />
       <div><h1>{isToday ? "วันนี้" : "ตารางวัน"} · {fmtYmd(day)}</h1><p className="lead" style={{ margin: 0 }}>{g.access.name_th}</p></div>
+      <FlashNotice />
       <nav className="btn-row" style={{ marginTop: 0, gap: 8 }} aria-label="เปลี่ยนวัน">
         <Link className="btn btn-secondary" style={{ minHeight: 48, padding: "0 16px" }} href={`/temple/${id}/day?d=${addDaysYmd(day, -1)}`}>‹ วันก่อน</Link>
         {!isToday && <Link className="btn btn-secondary" style={{ minHeight: 48, padding: "0 16px" }} href={`/temple/${id}/day`}>วันนี้</Link>}
