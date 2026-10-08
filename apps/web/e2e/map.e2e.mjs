@@ -141,7 +141,8 @@ await cm.waitForSelector("[data-testid=building-sheet]");
 let sheet = await cm.textContent("[data-testid=building-sheet]");
 ok(sheet.includes("ศาลาทดสอบหนึ่ง") && sheet.includes("ศาลา") && sheet.includes("เปิดใช้งาน") && sheet.includes("TEST.SALA.01") && sheet.includes("กิจกรรมวันนี้") && sheet.includes("งานอาสาที่เปิดอยู่"),
   "building sheet opens from the polygon (keyboard) with name, kind, status, counts");
-console.log("info- sheet counts:", (await cm.textContent("[data-testid=sheet-events]")).trim(), "|", (await cm.textContent("[data-testid=sheet-quests]")).trim());
+ok((await cm.textContent("[data-testid=sheet-events]")).trim() === "ไม่ทราบ" && (await cm.textContent("[data-testid=sheet-quests]")).trim() === "ไม่ทราบ",
+  "community member: event/quest counts shown as ไม่ทราบ (unknown), never 0 (0014)");
 await shot(cm, "mp-09-sheet-polygon");
 await cm.click("button[aria-label='ปิดรายละเอียดอาคาร']");
 ok((await cm.locator("[data-testid=building-sheet]").count()) === 0, "sheet closes");

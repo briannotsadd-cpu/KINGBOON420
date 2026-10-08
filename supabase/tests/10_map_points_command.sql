@@ -38,6 +38,12 @@ begin
   perform test.as_person(CM);
   select count(*) into n from public.buildings where id = b; perform test.assert(n = 1, 'confirmed PUBLIC building visible to members');
   select count(*) into n from public.buildings where id = b2; perform test.assert(n = 0, 'STAFF_ONLY building hidden from community');
+  select count(*) into n from app.map_buildings(A) m where m.id = b and m.events_today is null and m.open_quests is null;
+  perform test.assert(n = 1, 'map counts are NULL (unknown), never 0, for a viewer who cannot see all events/quests (0014)');
+  reset role;
+  perform test.as_person(ABBOT);
+  select count(*) into n from app.map_buildings(A) m where m.id = b and m.events_today = 0 and m.open_quests = 0;
+  perform test.assert(n = 1, 'map counts are real numbers for a viewer with event.view T + quest.view T (0014)');
   reset role;
   perform set_config('request.jwt.claims', '', false); execute 'set role anon';
   select count(*) into n from public.temple_public_map('demo-a') m where m.code = 'DEMO.SALA.02'; perform test.assert(n = 1, 'public map shows confirmed public building');
@@ -108,7 +114,9 @@ begin
   reset role;
   perform test.as_person(CM);
   select balance into bal0 from app.my_points(A) limit 1;
-  rd := app.redeem_reward(A, rw, gen_random_uuid());
+  rd := app.redeem_reward(A, rw, '00000000-0000-4000-8000-00000000aa14');
+  perform test.assert(app.redeem_reward(A, rw, '00000000-0000-4000-8000-00000000aa14') = rd, 'replaying the same redeem request returns the first redemption (0014)');
+  select count(*) into n from public.reward_redemptions where reward_id = rw; perform test.assert(n = 1, 'replay creates no second redemption (0014)');
   ok := false; begin perform app.redeem_reward(A, rw, gen_random_uuid()); exception when check_violation then ok := true; end;
   perform test.assert(ok, 'stock / per-person limit enforced');
   ok := false; begin perform app.redeem_reward(A, rw2, gen_random_uuid()); exception when check_violation then ok := sqlerrm = 'INSUFFICIENT_POINTS'; end;
