@@ -61,3 +61,22 @@ Migrations reference these codes. Changing one means a new migration plus update
 ## Temple data verification (0013)
 - **D-V1:** A critical field needs two confirmations: step 1 by anyone with verify rights, then step 2 by the abbot. Step 2 must be a different person from step 1.
 - **D-V2:** Platform admins can never confirm data on a temple's behalf.
+
+## Fixed after UI review (0014)
+- **Map counts are unknown, not zero.** A building's count of today's events and open tasks is now NULL ("ไม่ทราบ") unless the viewer can see all events (`event.view` T) and all tasks (`quest.view` T). Before this fix, rows the viewer could not see were silently filtered out, so the count showed 0.
+- **"Events today" means today.** It now counts the current day in the temple's time zone, not the next 24 hours.
+- **Redeeming twice is safe.** Sending the same redeem request again (a double tap or a retry) returns the first redemption, with no second charge and no second stock deduction.
+
+## Known v1 behaviour (by the current rules; change only by decision)
+- **Monk secretary cannot approve events.** `monk_secretary` holds `event.approve` only as "delegated", and the permission rank ignores delegated grants. In v1 there is also no screen for delegating it.
+- **Followers cannot see members-only events.** `temple_members` events need `event.view` at scope T, so they are visible to staff and monks but not to followers (`community_member`, scope P). `public` events are visible to all members.
+- **Public event page shows approved and live events only.** It lists APPROVED or LIVE events that have not ended yet. Volunteers can sign up only while an event is PLANNING or APPROVED.
+- **Other people's sign-ups are visible only to managers.** Only `event.manage` and `event.volunteer_approve` holders see them, so everyone else sees only their own row.
+- **Buildings:**
+  - Changing only a building's status keeps its confirmation. Changing the name, kind, visibility or shape clears it.
+  - Zones can only be listed and added; there is no edit screen.
+  - The UI has no "retire building" action.
+- **Points:**
+  - A redemption stores no copy of the reward name. If a reward is deactivated, non-managers see a generic name.
+  - The points history shows the reason and type for each row, but not a link to its source.
+- **Command Center:** someone without `availability.view` T sees only their own schedule conflicts.
