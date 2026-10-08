@@ -209,8 +209,8 @@ for (const n of ["อาสา หนึ่ง", "อาสา สอง"]) {
 }
 await waitText(fm, "ยืนยันแล้ว 2");
 ok(sql(`select count(*) from public.event_participants where event_id = '${EV}' and status = 'CONFIRMED'`) === "3", "facility manager approved both volunteers");
-await fm.click("button:has-text('สมัครเป็นอาสา')");
-await waitText(fm, "สมัครแล้ว");
+await fm.click("button:has-text('สมัครเป็นอาสา')");   // the sign-up form is replaced by the withdraw form once the page refreshes
+await fm.waitForSelector("text=สถานะของคุณ: รออนุมัติ");
 await fm.waitForSelector("text=คุณอนุมัติการสมัครของตัวเองไม่ได้");
 ok((await fm.$$(`[data-testid='participant-${U.fm[1]}'] button`)).length === 0, "own pending sign-up: no approve buttons (the database refuses it too)");
 ok(sql(`select count(*) from public.event_participants p join public.persons pe on pe.id = p.person_id where pe.display_name = '${U.fm[1]}' and p.status = 'PENDING'`) === "1", "facility manager sign-up is pending");
