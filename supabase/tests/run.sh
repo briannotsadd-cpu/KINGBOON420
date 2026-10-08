@@ -16,7 +16,10 @@ sh "$PGBIN/initdb -D $WORK/data -A trust -U postgres >/dev/null"
 sh "$PGBIN/pg_ctl -D $WORK/data -o \"-p $PORT -k $WORK -c listen_addresses=''\" -l $WORK/log -w start >/dev/null"
 PSQL="$PGBIN/psql -X -q -v ON_ERROR_STOP=1 -h $WORK -p $PORT -U postgres"
 sh "$PGBIN/createdb -h $WORK -p $PORT -U postgres boon_test"
-run() { echo "== $1"; local out rc=0; out="$(sh "$PSQL -d boon_test -f $2" 2>&1)" || rc=$?; [ -n "$out" ] && echo "$out"; [ $rc = 0 ] || { echo "FAILED: $1"; exit 1; }; }
+# The invoking user can read the checkout; the postgres OS user may not traverse
+# its parent directories (for example a private CI runner workspace). Feed SQL
+# through stdin instead of widening checkout permissions or moving source files.
+run() { echo "== $1"; local out rc=0; out="$(sh "$PSQL -d boon_test -f -" < "$2" 2>&1)" || rc=$?; [ -n "$out" ] && echo "$out"; [ $rc = 0 ] || { echo "FAILED: $1"; exit 1; }; }
 MIG="${MIGRATIONS_DIR:-$ROOT/supabase/migrations}"
 for f in "$MIG"/*.sql; do run "migration $(basename "$f")" "$f"; done
 for f in "$ROOT"/supabase/seed/*.sql; do run "seed $(basename "$f")" "$f"; done
