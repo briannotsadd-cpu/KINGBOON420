@@ -15,6 +15,7 @@ function templeMenu(id: string, a: PAccess): Item[] {
   const base = `/temple/${id}`;
   const lay = a.is_member && !a.is_monastic;
   return ([
+    a.is_member && { href: `${base}/day`, icon: CalendarDays, title: a.is_monastic ? "วันนี้ของฉัน" : "วันนี้ของทีมวัด", note: a.is_monastic ? "ตารางวัน กิจนิมนต์ และภารกิจส่วนตัว" : "งานที่ได้รับมอบหมาย งานค้าง และงานที่รอตรวจรับ" },
     (a.is_monastic || a.can_avail || a.can_inv_view) && { href: `${base}/monastic`, icon: CalendarDays, title: "พระและกิจนิมนต์", note: "วันนี้ของฉัน สถานะพระ และกิจนิมนต์" },
     a.is_member && { href: `${base}/events`, icon: PartyPopper, title: "งานและกิจกรรม", note: "งานของวัด ความพร้อม และการสมัครเป็นอาสา" },
     a.is_member && { href: `${base}/map`, icon: Map, title: "แผนผังวัด", note: "อาคารและพื้นที่ที่วัดยืนยันแล้ว" },

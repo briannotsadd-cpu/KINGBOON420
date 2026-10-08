@@ -161,3 +161,55 @@ Lockfile Resolve ใหม่แก้ Transitive `rolldown 1.2.13 → 1.2.12`, 
 - `UX_UI_UPGRADE_REPORT.md`
 
 ตรวจ Diff รอบสุดท้ายโดยแยก Ownership ของ Audit / 3D / Parking; แก้ Regression ของ GPS state, Focus และภาพทีเซอร์ก่อนรวม ขอบเขตนี้ไม่มีการแก้ DB migration, Permission model, API schema หรือข้อมูล Asset จริง
+
+## Iteration: วันนี้ของทีมวัด — 2026-10-08
+
+สถานะ: **IMPLEMENTED / PARTIAL verification**. เรื่องรายได้อยู่นอกขอบเขต
+
+### สิ่งที่พบและแก้
+
+- สมาชิกที่ไม่ใช่พระ/สามเณรเข้าหน้าวันแล้วพบข้อความว่าไม่มีข้อมูลสำหรับบัญชี ทั้งที่มี quest assignments อยู่แล้ว
+- เพิ่มทางเข้าหน้าวันเป็นรายการแรกในเมนูวัด; พระ/สามเณรยังใช้ประสบการณ์เดิม
+- สำหรับทีมวัด แสดงตารางส่วนตัว งานติดขัด/เลยกำหนด งานที่ต้องทำ รอตรวจรับ และงานที่ตรวจรับในวันที่เลือก รวมงานค้างและงานไม่กำหนดวัน
+- รวมวันตาม Asia/Bangkok, ขอบเขตปลายวัน exclusive, แยกสถานะปัจจุบันจากประวัติย้อนหลังอย่างชัดเจน
+- แสดง description, สถานที่ที่มีข้อมูล, reason เดิมเป็นบันทึกส่งต่อ และลิงก์กิจกรรม/แผนผังเมื่อมีข้อมูลจริง ไม่สร้างเส้นทางหรือตำแหน่งสมมติ
+- งานทีมที่ยังไม่มอบหมาย/ติดขัด/รอตรวจ แสดงเฉพาะแผนกที่มีสิทธิ์เห็น assignments ครบ; ไม่ตีความแถวที่ RLS ซ่อนว่าไม่มีผู้รับผิดชอบ
+- เริ่ม/ส่งงานกิจกรรมใช้ DB workflow เดิม; เพิ่มการตรวจสมาชิก, event/assignment binding, OPEN quest และ expected state ที่ server action ก่อนเรียก function เดิม
+- ข้อความสำเร็จอยู่ต่อเมื่อส่งแล้วรายการย้ายกลุ่ม; มี loading/error ของฟอร์มเดิมและ recovery link สำหรับโหลดหน้าไม่สำเร็จ
+- จำกัดรายการ 100 ต่อส่วนและบอกเมื่อมีมากกว่านั้น ตัวเลขสรุปไม่อ้างว่าเป็นยอดทั้งหมด
+- ไม่มี schema/dependency ใหม่ ไม่มีข้อมูลสาธิตใน production ไม่มีการขยายสิทธิ์หรือเปลี่ยน availability ส่วนตัว
+
+### Design และ performance
+
+- ใช้ Sarabun/สีเดิม, รายการงานแทน dashboard cards, ลิงก์สรุปข้ามไปกลุ่มงาน, สีพร้อมข้อความสถานะ ไม่ใช้สีอย่างเดียว
+- Render/query บน server, ส่งเฉพาะ IDs/status ที่ต้องใช้ให้ฟอร์ม client ไม่เพิ่ม WebGL หรือ animation ต่อเนื่อง
+- เพิ่ม Vitest path alias เพื่อทดสอบ server query/action boundary ด้วย mocked DB; mocks ไม่ถือเป็นการทดสอบ RLS จริง
+
+### หลักฐาน
+
+- VERIFIED: typecheck และ 15 test files / 172 tests ผ่าน รวม 18 tests ใหม่ด้านเวลา/การจัดกลุ่ม/query boundary/mutation boundary
+- VERIFIED: production build ผ่านหลังลบ QA route; หน้า day First Load JS 119 kB, shared 103 kB; ตัวเลข build ไม่ใช่การวัด Web Vitals หรือความเร็วบนมือถือ
+- VERIFIED: UI fixture ใน browser 1363×936, 3 งาน, ไม่มี horizontal overflow; keyboard Enter ที่ summary link เลื่อนไปกลุ่ม waiting ที่ top 144px ไม่ถูก header บัง; empty state มีทางไปหน้ากิจกรรม
+- Screenshot: `docs/ux-upgrade/boon-team-day-qa.jpg` เป็น QA fixture ติดป้ายชัดเจน ไม่ใช่ข้อมูลวัดจริง; temporary QA route ถูกลบก่อน build ส่งมอบ
+- ใช้ Verification / React Best Practices เพื่อไล่ browser → action → authenticated DB path และตรวจ server/client boundary; Sites ใช้เฉพาะ preview ภายใน ไม่สร้าง/เผยแพร่ Site ใหม่
+
+### BLOCKED / สิ่งที่ควรทำต่อ
+
+- ไม่มี DATABASE_URL/ฐานข้อมูลทดสอบใน environment นี้: SQL ใหม่, การเริ่ม/ส่ง/ตรวจรับจริง, คำขอซ้ำพร้อมกัน และ revoked membership ต้องทดสอบกับ DB ที่มี migrations ครบก่อนเปิดใช้
+- Mobile/tablet/dark mode visual QA ยังไม่ยืนยัน เนื่องจาก browser ไม่มี viewport resize ที่รองรับ; CSS wrap/touch targets มี implementation แต่ไม่ถือเป็นหลักฐานการทดสอบมือถือ
+- งานทั่วไปที่ไม่ผูกกิจกรรมมีข้อมูลอ่านได้ แต่ยังไม่มีหน้าส่งงาน; แสดงข้อจำกัดและให้ประสานผู้มอบหมาย ไม่สร้างปุ่มหลอก
+- การแจ้งติดขัด/แก้ reason/เปลี่ยนผู้รับผิดชอบจากหน้านี้ และ spatial issue reporting ยังไม่ได้สร้าง
+- ไม่ merge/deploy production ใน iteration นี้
+
+### ไฟล์ของ iteration นี้
+
+- `apps/web/app/temple/[id]/day/page.tsx`
+- `apps/web/app/temple/[id]/page.tsx`
+- `apps/web/app/temple/[id]/events/actions.ts`
+- `apps/web/components/events/common.tsx`
+- `apps/web/components/events/task-progress.ts`, `task-progress.test.ts`
+- `apps/web/components/team-day/queries.ts`, `queries.test.ts`, `workspace.tsx`, `workspace.module.css`
+- `apps/web/lib/team-day.ts`, `team-day.test.ts`
+- `apps/web/vitest.config.mts`
+- `docs/ux-upgrade/boon-team-day-qa.jpg`
+- `UX_UI_UPGRADE_REPORT.md`

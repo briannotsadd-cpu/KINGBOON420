@@ -2,6 +2,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { asUser } from "@/lib/db";
+import { progressTask } from "@/components/events/task-progress";
 import {
   TASK_ACTIONS, TRANSITIONS, UUID_RE, dbErrorMessage, okMessage, parseEventForm, parseReason, parseTargetForm, parseTaskForm, type Op, type Transition,
 } from "@/lib/events";
@@ -103,7 +104,13 @@ export async function eventOpAction(_: EventState, fd: FormData): Promise<EventS
     case "progress": {
       const a = str(fd, "assignment_id");
       if (!UUID_RE.test(a) || !(TASK_ACTIONS as readonly string[]).includes(act)) return { error: BAD };
-      return run("select app.event_task_progress($1::uuid, $2::uuid, $3)", [temple, a, act]);
+      try {
+        const saved = await progressTask(s.authUserId, temple, event, a, act);
+        return saved ? { ok: okMessage(op, act) } : { error: "งานเปลี่ยนสถานะแล้ว หรือคุณไม่มีสิทธิ์ กรุณาโหลดข้อมูลใหม่ก่อนทำต่อ" };
+      } catch (e) {
+        console.error("[action:event:progress]", e);
+        return { error: dbErrorMessage(op, code(e), msg(e), act) };
+      }
     }
     default: return { error: BAD };
   }

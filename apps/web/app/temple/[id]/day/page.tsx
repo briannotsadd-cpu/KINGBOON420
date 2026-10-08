@@ -4,6 +4,8 @@ import { gate, LoadError, BackToHub } from "@/components/monastic/parts";
 import { myDay } from "@/components/monastic/queries";
 import { AvailabilityForm, CheckInButton, ClearOwnButton, RespondForm } from "@/components/monastic/day-forms";
 import { Notice } from "@/components/ui";
+import { teamDay } from "@/components/team-day/queries";
+import { DayWorkspace } from "@/components/team-day/workspace";
 import {
   addDaysYmd, bkkYmd, dayKindLabel, endOfTodayLocal, fmtDateTime, fmtTime, fmtYmd, isYmd, questStatusLabel, reasonLabel, stateBadge, stateLabel,
 } from "@/lib/monastic";
@@ -16,11 +18,25 @@ export default async function MyDay({ params, searchParams }: { params: Promise<
   if (!g.ok) return g.page;
   const now = new Date(), today = bkkYmd(now);
   const day = isYmd(d) ? d : today;
-  if (!g.access.is_monastic) return (
-    <main className="stack"><BackToHub id={id} />
-      <h1>วันนี้ของฉัน</h1>
-      <Notice kind="info">หน้านี้เป็นตารางประจำวันของพระและสามเณร จึงยังไม่มีข้อมูลสำหรับบัญชีของคุณ ถ้าต้องการดูตารางหรือกิจกรรมของวัด กรุณาดูที่หน้าวัดหรือสอบถามเจ้าหน้าที่</Notice>
-    </main>);
+  if (!g.access.is_monastic) {
+    let team;
+    try { team = await teamDay(g.s.authUserId, id, day); }
+    catch (e) {
+      console.error("[page:team-day]", e);
+      return <main className="stack"><Link className="back" href={`/temple/${id}`}>‹ กลับเมนูวัด</Link><h1>วันนี้ของทีมวัด</h1>
+        <Notice kind="error">ดึงงานไม่ได้ ข้อมูลอาจไม่เป็นปัจจุบัน กรุณาลองใหม่</Notice>
+        <Link className="btn btn-secondary" href={`/temple/${id}/day?d=${day}`}>ลองโหลดอีกครั้ง</Link></main>;
+    }
+    return <main className="stack"><Link className="back" href={`/temple/${id}`}>‹ กลับเมนูวัด</Link>
+      <header><h1>วันนี้ของทีมวัด</h1><p className="lead">{g.access.name_th}</p><p>{fmtYmd(day)}</p></header>
+      <nav className="btn-row" aria-label="เปลี่ยนวัน">
+        <Link className="btn btn-secondary" href={`/temple/${id}/day?d=${addDaysYmd(day, -1)}`}>‹ วันก่อน</Link>
+        {day !== today && <Link className="btn btn-secondary" href={`/temple/${id}/day`}>วันนี้</Link>}
+        <Link className="btn btn-secondary" href={`/temple/${id}/day?d=${addDaysYmd(day, 1)}`}>วันถัดไป ›</Link>
+      </nav>
+      <DayWorkspace data={team} templeId={id} now={now} isToday={day === today} />
+    </main>;
+  }
   let data;
   try { data = await myDay(g.s.authUserId, id, day); } catch (e) { console.error("[page:day]", e); return <LoadError id={id} />; }
   const items = [...data.items].sort((a, b) => +a.starts_at - +b.starts_at);
