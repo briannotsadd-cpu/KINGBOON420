@@ -4,7 +4,7 @@ import { CalendarCheck, Check, DoorOpen, Hand, TriangleAlert, X } from "lucide-r
 import { Field, Notice, SubmitButton } from "@/components/ui";
 import { checkInAction, clearAvailabilityAction, respondAction, setMyAvailabilityAction } from "@/app/temple/[id]/monastic-actions";
 import { SELF_STATES, UNAVAIL_REASONS } from "@/lib/monastic";
-import { aria, err, kv, useRefreshOnOk } from "./use-refresh";
+import { aria, err, kv, useRefreshOnOk, useFlashRefreshOnOk } from "./use-refresh";
 
 /** Set my own availability. valid_until is required and prefilled to the end of today (Asia/Bangkok). */
 export function AvailabilityForm({ templeId, defaultUntil }: { templeId: string; defaultUntil: string }) {
@@ -57,11 +57,10 @@ export function CheckInButton({ templeId }: { templeId: string }) {
 
 export function ClearOwnButton({ templeId, rowId, label }: { templeId: string; rowId: string; label: string }) {
   const [s, act] = useActionState(clearAvailabilityAction, {});
-  useRefreshOnOk(s);
+  useFlashRefreshOnOk(s);
   return (
     <form action={act} className="stack">
       {s.error && <Notice kind="error">{s.error}</Notice>}
-      {s.ok && <Notice kind="ok">{s.ok}</Notice>}
       <input type="hidden" name="temple_id" value={templeId} />
       <input type="hidden" name="row_id" value={rowId} />
       <SubmitButton pendingText="กำลังยกเลิก…" variant="secondary"><X aria-hidden />{label}</SubmitButton>

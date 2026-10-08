@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { setFlash } from "@/components/contact/flash";
 import type { MonasticState } from "@/app/temple/[id]/monastic-actions";
 
 /** After a successful action on the same page, re-render the server parts (statuses, lists) while this form stays
@@ -9,6 +10,13 @@ export function useRefreshOnOk(s: MonasticState) {
   const router = useRouter();
   const last = useRef<MonasticState | null>(null);
   useEffect(() => { if (s.ok && last.current !== s) { last.current = s; router.refresh(); } }, [s, router]);
+}
+
+/** For forms whose row leaves the page after refresh (e.g. clearing a status): the message moves to the page-level <FlashNotice/>. */
+export function useFlashRefreshOnOk(s: MonasticState) {
+  const router = useRouter();
+  const last = useRef<MonasticState | null>(null);
+  useEffect(() => { if (s.ok && last.current !== s) { last.current = s; setFlash(s.ok); router.refresh(); } }, [s, router]);
 }
 
 export const err = (s: MonasticState, k: string) => s.fieldErrors?.[k];

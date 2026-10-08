@@ -4,7 +4,7 @@ import { Ban, X } from "lucide-react";
 import { Field, Notice, SubmitButton } from "@/components/ui";
 import { clearAvailabilityAction, setOtherUnavailableAction } from "@/app/temple/[id]/monastic-actions";
 import { UNAVAIL_REASONS } from "@/lib/monastic";
-import { aria, err, kv, useRefreshOnOk } from "./use-refresh";
+import { aria, err, kv, useRefreshOnOk, useFlashRefreshOnOk } from "./use-refresh";
 
 /** Set ANOTHER monk to ไม่ว่าง. The end date is required (no default), at most 120 days. */
 export function SetOtherForm({ templeId, monks, minDate }: { templeId: string; monks: { id: string; name: string }[]; minDate: string }) {
@@ -36,11 +36,10 @@ export function SetOtherForm({ templeId, monks, minDate }: { templeId: string; m
 
 export function ClearRowButton({ templeId, rowId }: { templeId: string; rowId: string }) {
   const [s, act] = useActionState(clearAvailabilityAction, {});
-  useRefreshOnOk(s);
+  useFlashRefreshOnOk(s);
   return (
     <form action={act} className="stack">
       {s.error && <Notice kind="error">{s.error}</Notice>}
-      {s.ok && <Notice kind="ok">{s.ok}</Notice>}
       <input type="hidden" name="temple_id" value={templeId} />
       <input type="hidden" name="row_id" value={rowId} />
       <SubmitButton pendingText="กำลังยกเลิก…" variant="secondary"><X aria-hidden />ยกเลิกการตั้ง ไม่ว่าง</SubmitButton>
