@@ -11,6 +11,7 @@ Branch: `codex/spatial-ux-upgrade`
 | ระดับ | Evidence / ปัญหา | ผลการดำเนินการ |
 | --- | --- | --- |
 | P0 / Environment | Lockfile เดิมมีแพ็กเกจใหม่เกิน minimum release age ของ Runtime | VERIFIED: Resolve ใหม่ภายใต้นโยบายเดิม และ Frozen install ผ่าน ไม่ปิดการป้องกัน |
+| P0 / CI | DB test runner เปลี่ยนเป็น OS user `postgres` แล้วอ่าน Migration ใน Private checkout ไม่ได้ | IMPLEMENTED + VERIFIED: Invoking user เปิด SQL แล้วส่งผ่าน stdin; CI PostgreSQL 16 ผ่าน โดยไม่เปิดสิทธิ์ Checkout เพิ่ม |
 | P1 | แผนที่ใช้ Panel ต่อท้าย Scene; โฟกัสเปิด Panel ไม่แน่นอนและไม่มีการคืนโฟกัส | IMPLEMENTED + VERIFIED บน Component: Panel ข้าง Scene, รอ DOM Commit ก่อน Focus, Escape/ปิดคืนโฟกัส |
 | P1 | Parking เป็นรายการรอง ไม่มี Save / Find My Car และเชื่อมแผนผังไม่ชัด | IMPLEMENTED: Overview เด่นบนหน้าวัด, หน้า Parking ใหม่, ลิงก์สองทิศทางกับแผนผัง |
 | P1 | State GPS สามารถค้างหลัง Retry, เปลี่ยนวัด หรือรายงานใหม่ถอนลานเดิม | IMPLEMENTED: ล้างพิกัดก่อน Retry, ยกเลิก Request เดิม, ห้าม Save โดยใช้ลาน Fallback เงียบ ๆ; VERIFIED การถอนลาน/ล้าง Note ผ่าน UI |
@@ -97,6 +98,7 @@ Font WOFF2 ที่ Emit รวม 42,672 → 85,868 bytes เนื่อง�
 | `pnpm --filter @boon/web typecheck` | VERIFIED | TypeScript |
 | `pnpm --filter @boon/web test` | VERIFIED | 12 files / 154 tests รวม Parking edge cases |
 | `git diff --check` | VERIFIED | Whitespace / conflict-marker review |
+| GitHub Actions `db-test` | VERIFIED | PostgreSQL 16: 14 Migrations + 12 SQL Test files; Role matrix 61 Permissions × 28 Roles ผ่าน |
 | Browser render + Visual inspection | VERIFIED | 1363×936: Home error state, Login presentation, 3D fallback; Component fixtures สำหรับ Map/Parking |
 | Map selection / Escape focus | VERIFIED | Component fixtures ผ่าน DOM + Keyboard interaction |
 | Parking Save/Restore/Delete/withdrawal | VERIFIED | Component fixtures; ไม่ใช่ DB end-to-end |
@@ -106,6 +108,8 @@ Font WOFF2 ที่ Emit รวม 42,672 → 85,868 bytes เนื่อง�
 | Existing map E2E script | IMPLEMENTED | ปรับ Locator Native select / Opt-in rotation; ยังไม่ได้รันชุด E2E |
 
 ภาพตรวจจริง: [Home](docs/ux-upgrade/boon-home-qa.jpg), [Login](docs/ux-upgrade/boon-login-qa.jpg) — ภาพจาก Dev preview จึงมี Next Dev indicator; หน้า Home แสดง Error ของ DB ตามจริง
+
+CI Evidence: [successful run 37758928089](https://github.com/briannotsadd-cpu/KINGBOON420/actions/runs/37758928089), commit `03e15c907921e8d4cf159cbf23c4a7b5c19a96ca`. Log ยืนยัน `ALL DB TESTS PASSED`; การทดสอบ SQL ไม่ได้ยืนยัน Web application E2E หรือข้อมูล Production
 
 ## Tools / Library
 
@@ -117,7 +121,7 @@ Lockfile Resolve ใหม่แก้ Transitive `rolldown 1.2.13 → 1.2.12`, 
 
 ## Blockers / งานถัดไปที่มี Impact สูง
 
-1. **BLOCKED:** จัดฐานทดสอบที่ใช้ Migration จริงและบัญชีตาม Role เพื่อทดสอบ Search → Temple → Map/Parking พร้อม Backend permission/freshness/error states และ E2E เดิม
+1. **BLOCKED:** จัดฐานและบัญชีสำหรับ Web application E2E เพื่อทดสอบ Search → Temple → Map/Parking พร้อม Backend permission/freshness/error states; ชุด SQL ผ่านบนฐานชั่วคราวใน CI แล้ว
 2. **BLOCKED:** เปิด Browser/GPU ที่รองรับ WebGL แล้วตรวจ Lighting, Camera clipping, Raycast/drag/pinch, Context recovery, Idle RAF, FPS/Memory และ 1920/Laptop/Tablet/Mobile/Dark/Text scaling ก่อนรับรองคุณภาพ
 3. **BLOCKED ด้านข้อมูล:** ต้องมีผังสำรวจจริง, Parking polygons/slots, Entrance/Elevator coordinates, Walkable graph, Floor metadata และสถานะจากแหล่งที่ยืนยันแล้ว จึงสร้าง Digital Twin / Exploded-floor / Recommended parking / Indoor routing ได้อย่างซื่อตรง
 4. **PROPOSED:** แก้ UX เดิมของ Follow temple → Login ที่ไม่คืนผู้ใช้กลับวัด โดยส่ง `returnTo` แบบ Local path ที่ตรวจความปลอดภัยผ่าน Login/Code/Welcome; ต้องทดสอบ OTP จริงด้วย ไม่ทำ Auto-follow
@@ -153,6 +157,7 @@ Lockfile Resolve ใหม่แก้ Transitive `rolldown 1.2.13 → 1.2.12`, 
 - `apps/web/lib/parking.ts`
 - `apps/web/package.json`
 - `pnpm-lock.yaml`
+- `supabase/tests/run.sh`
 - `UX_UI_UPGRADE_REPORT.md`
 
 ตรวจ Diff รอบสุดท้ายโดยแยก Ownership ของ Audit / 3D / Parking; แก้ Regression ของ GPS state, Focus และภาพทีเซอร์ก่อนรวม ขอบเขตนี้ไม่มีการแก้ DB migration, Permission model, API schema หรือข้อมูล Asset จริง
