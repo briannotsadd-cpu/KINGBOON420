@@ -21,7 +21,11 @@ export function FieldCandidate({ r, back, canTemple, isAdmin }: { r: FieldRow; b
   if (canTemple && st === "CONFLICT") ops.push({ op: "resolve", label: "เลือกข้อมูลนี้" });
   if (canTemple && (["SOURCE_VERIFIED", "CROSS_CHECKED"].includes(st) || (st === "SOURCE_FOUND" && r.source_tier === 2)))
     ops.push({ op: "send", label: "ตรวจและยืนยันข้อมูลนี้", variant: "secondary" });
-  if (canTemple && ["TEMPLE_CONFIRMED", "PUBLISHED", "VERIFICATION_EXPIRED"].includes(st)) ops.push({ op: "reconfirm", label: "ยืนยันซ้ำว่ายังถูกต้อง", variant: "secondary" });
+  if (canTemple && ["TEMPLE_CONFIRMED", "PUBLISHED", "VERIFICATION_EXPIRED"].includes(st)) {
+    // critical fields: re-confirmation takes two people (step 1, then the abbot) — migration 0013
+    const step2 = critical && r.first_approved_at && r.verified_at && new Date(r.first_approved_at) > new Date(r.verified_at);
+    ops.push({ op: "reconfirm", label: step2 ? "เจ้าอาวาสยืนยันซ้ำ (ขั้นที่ 2)" : critical ? "ยืนยันซ้ำ ขั้นที่ 1" : "ยืนยันซ้ำว่ายังถูกต้อง", variant: "secondary" });
+  }
   if (isAdmin && st === "SOURCE_FOUND" && r.source_tier === 1) ops.push({ op: "verify_source", label: "ตรวจหลักฐานแล้ว ถูกต้อง" });
   if (isAdmin && st === "SOURCE_VERIFIED") ops.push({ op: "cross_check", label: "ตรวจเทียบหลายแหล่งแล้ว", variant: "secondary" });
   return (

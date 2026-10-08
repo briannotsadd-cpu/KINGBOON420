@@ -37,6 +37,7 @@ export default async function TemplePage({ params }: { params: Promise<{ slug: s
             <span className="badge b-ok"><BadgeCheck size={18} aria-hidden />วัดที่ผ่านการตรวจสอบ</span>
           </div>
           <Link className="btn btn-primary btn-block" href={`/t/${encodeURIComponent(slug)}/contact`}>ติดต่อวัด</Link>
+          <Link className="btn btn-secondary btn-block" href={`/t/${encodeURIComponent(slug)}/events`}>งานและกิจกรรมของวัด</Link>
           <FollowSection slug={slug} />
           <section className="card" aria-labelledby="info-h">
             <h2 id="info-h">ข้อมูลวัด</h2>

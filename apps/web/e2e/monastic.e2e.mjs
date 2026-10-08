@@ -64,13 +64,14 @@ for (const [path, needle] of [["day", "ตารางประจำวัน�
 await shot(P.lay, "m-02-lay-explained");
 
 // ---------- seed quests for monk1 (setup the quest feature does not cover here) ----------
+// A quest that awards points must be verified (0011: verification_policy 'none' => 0 points).
 const secId = id("sec"), monkId = id("monk");
 function seedQuest(title, { status, points = 0, due = null }) {
   const q = sql(`insert into public.quests(temple_id, quest_type, title, created_by, status, verification_policy, points, due_at)
-    values ('${T}', 'monastic_daily', '${title}', '${secId}', 'OPEN', 'none', ${points}, ${due ? `'${due}'` : "null"}) returning id`).split("\n")[0];
+    values ('${T}', 'monastic_daily', '${title}', '${secId}', 'OPEN', '${points > 0 ? "staff_verification" : "none"}', ${points}, ${due ? `'${due}'` : "null"}) returning id`).split("\n")[0];
   const a = sql(`insert into public.quest_assignments(temple_id, quest_id, assignee_person_id) values ('${T}', '${q}', '${monkId}') returning id`).split("\n")[0];
   const path = { ASSIGNED: [], SUBMITTED: ["IN_PROGRESS", "SUBMITTED"], COMPLETED: ["IN_PROGRESS", "SUBMITTED", "COMPLETED"] }[status];
-  for (const st of path) sql(`update public.quest_assignments set status = '${st}' where id = '${a}'`);
+  for (const st of path) sql(`update public.quest_assignments set status = '${st}'${st === "COMPLETED" ? `, verifier_person_id = '${secId}'` : ""} where id = '${a}'`);
 }
 seedQuest("ตรวจเครื่องบริขาร (ทดสอบ)", { status: "COMPLETED", points: 10 });
 seedQuest("ทำความสะอาดกุฏิ (ทดสอบ) เลยกำหนด", { status: "ASSIGNED", due: new Date(Date.now() - 3600e3).toISOString() });
