@@ -84,6 +84,7 @@ MUTATIONS = {
   "cc: open to everyone": ("0011_map_points_helpers_command.sql",
      "if not app.has_permission(p_temple, 'command_center.view', 'D') then raise exception", "if false then raise exception"),
   "helpers: conflicts visible to all": ("0011_map_points_helpers_command.sql", "     and (full_view or x.person_id = me)\n", "\n"),
+  "verification: critical reconfirm by one person": ("0013_critical_reconfirm.sql", "  if r.risk = 'critical' then", "  if false then"),
 }
 
 def run(name):

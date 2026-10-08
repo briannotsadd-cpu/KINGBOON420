@@ -134,13 +134,16 @@ const OPS: Record<string, { sql: string; to?: string; ok: string; needsReason?: 
 export async function fieldOpAction(_: FormState, fd: FormData): Promise<FormState> {
   const s = await getSession(); if (!s) redirect("/login");
   const opKey = val(fd, "op"), op = OPS[opKey], id = val(fd, "value_id"), reason = val(fd, "reason"), back = val(fd, "back");
-  let firstApproval = false;
+  let firstApproval = false, reconfirmFirst = false;
   if (!op) return { error: "คำสั่งไม่ถูกต้อง" };
   if (op.needsReason && reason.length < 3) return { fieldErrors: { reason: "กรุณาบอกเหตุผล เช่น เบอร์นี้ยกเลิกแล้ว" }, values: { reason } };
   try {
     firstApproval = await asUser(s.authUserId, async (c) => {
       if (op.sql === "advance") await c.query("select app.advance_field_value($1, $2, $3)", [id, op.to, reason || null]);
-      else if (op.sql === "reconfirm") await c.query("select app.reconfirm_field_value($1)", [id]);
+      else if (op.sql === "reconfirm") {
+        const r = (await c.query<{ r: string }>("select app.reconfirm_field_value($1) as r", [id])).rows[0]?.r;
+        if (r === "first") { reconfirmFirst = true; return false; }
+      }
       else await c.query("select app.resolve_conflict($1, $2)", [id, reason]);
       if (opKey !== "confirm") return false;
       return (await c.query<{ st: string }>("select status as st from public.temple_field_values where id = $1", [id])).rows[0]?.st === "WAITING_TEMPLE_CONFIRMATION";
@@ -156,7 +159,7 @@ export async function fieldOpAction(_: FormState, fd: FormData): Promise<FormSta
       : errCode(e) === "42501" ? "คุณไม่มีสิทธิ์ทำรายการนี้" : NET_ERR;
     return { error: msg, values: { reason } };
   }
-  return { ok: DONE_TH[firstApproval ? "first_approval" : opKey] };
+  return { ok: DONE_TH[reconfirmFirst ? "reconfirm_first" : firstApproval ? "first_approval" : opKey] };
 }
 
 export async function reviewTempleAction(_: FormState, fd: FormData): Promise<FormState> {
