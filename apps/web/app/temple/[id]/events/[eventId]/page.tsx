@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { asUser } from "@/lib/db";
 import { notFound, redirect } from "next/navigation";
 import { CalendarClock, MapPin, Pencil, User } from "lucide-react";
 import { getSession } from "@/lib/auth";
@@ -6,6 +7,7 @@ import { Notice } from "@/components/ui";
 import { eventAccess, eventDetail, type EventDetail } from "@/components/events/queries";
 import { Chip, sub } from "@/components/events/chip";
 import { ReadinessPanel } from "@/components/events/readiness-panel";
+import { EventChecklist, type ChecklistRow } from "@/components/helpers/event-checklist";
 import { LifecycleForm } from "@/components/events/lifecycle-form";
 import { AddParticipantForm, DecideForm, SignupForm, TargetForm, TaskForm, TaskProgress, WithdrawForm } from "@/components/events/detail-forms";
 import {
@@ -19,10 +21,12 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
   const { id, eventId } = await params;
   const s = await getSession(); if (!s) redirect("/login");
   if (!UUID_RE.test(id) || !UUID_RE.test(eventId)) notFound();
-  let access, d: EventDetail | null = null, failed = false;
+  let access, d: EventDetail | null = null, failed = false, checklist: ChecklistRow[] | null = null;
   try {
     access = await eventAccess(s.authUserId, id);
     if (access?.name_th) d = await eventDetail(s.authUserId, id, eventId, access.manage);
+    // rule-based checklist (no AI), only for people who manage events; it never changes the event
+    if (d && access?.manage) checklist = await asUser(s.authUserId, async (c) => (await c.query<ChecklistRow>("select * from app.event_checklist($1, $2)", [id, eventId])).rows);
   } catch (e) { console.error("[page:event]", e); failed = true; }
   const back = <Link className="back" href={`/temple/${id}/events`}>‹ กลับไปรายการงาน</Link>;
   if (failed) return <main className="stack">{back}<div className="card notice-error" role="alert">ตอนนี้ดึงข้อมูลไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ตแล้วลองโหลดหน้านี้ใหม่</div></main>;
@@ -72,6 +76,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
       {access.manage && <LifecycleForm {...ids} status={e.status} canApprove={access.approve} />}
 
       <ReadinessPanel view={view} status={e.status} />
+      {checklist && <section className="card"><EventChecklist rows={checklist} title="รายการตรวจก่อนวันงาน" /></section>}
 
       <section aria-labelledby="staff-h" className="stack">
         <h2 id="staff-h" style={{ marginBottom: 0 }}>กำลังคนที่ต้องการ</h2>
