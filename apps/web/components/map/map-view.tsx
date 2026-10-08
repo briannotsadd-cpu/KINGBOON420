@@ -39,7 +39,7 @@ export function MapView({ items, manageHref, detail, emptyText }: { items: ViewI
       {drawn.length > 0 ? (
         <section aria-labelledby="map-h" className="stack" style={{ gap: 8 }}>
           <h2 id="map-h">แผนที่วัด</h2>
-          <p className="hint" style={{ margin: 0 }}>แตะอาคารบนแผนที่ หรือเลือกจากรายการด้านล่าง เพื่อดูรายละเอียด{detail ? " เส้นประ = รอวัดยืนยัน" : ""}</p>
+          <p className="hint" style={{ margin: 0 }}>แตะอาคารบนแผนที่ หรือเลือกจากรายการด้านล่าง เพื่อดูรายละเอียด{items.some((b) => b.confirmed === false) ? " เส้นประ = รอวัดยืนยัน" : ""}</p>
           <svg className="map-svg" viewBox={`0 0 ${MAP_W} ${MAP_H}`} role="group" aria-label="แผนที่อาคารในวัด" data-testid="map-svg">
             {drawn.map((b) => (
               <g key={b.key} className={`map-b ${sel === b.key ? "sel" : ""} ${tone(b)}`} role="button" tabIndex={0} data-testid={`poly-${b.code}`}

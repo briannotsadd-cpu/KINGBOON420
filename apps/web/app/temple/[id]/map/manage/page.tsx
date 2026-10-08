@@ -49,7 +49,7 @@ export default async function ManageMap({ params, searchParams }: { params: Prom
                 <p className="meta" style={{ margin: 0 }}>{b.code} · {kindLabel(b.kind)} · {statusLabel(b.status)} · เห็นได้: {visLabel(b.visibility)}</p>
                 <p className="meta" style={{ margin: 0 }}>{b.polygon ? `วาดแล้ว ${b.polygon.length} จุด` : "ยังไม่มีตำแหน่งบนแผนที่"}</p>
                 <Link className="btn btn-secondary" href={`/temple/${id}/map/manage?edit=${b.id}`}>แก้ไข {b.name_th}</Link>
-                {!b.confirmed && access.can_confirm && <ConfirmForm templeId={id} buildingId={b.id} name={b.name_th} />}
+                {access.can_confirm && <ConfirmForm templeId={id} buildingId={b.id} confirmed={b.confirmed} />}
                 {!b.confirmed && !access.can_confirm && <p className="meta" style={{ margin: 0 }}>ให้เจ้าอาวาสหรือผู้ดูแลระบบของวัดเป็นผู้ยืนยันข้อมูลอาคารนี้</p>}
               </li>
             ))}

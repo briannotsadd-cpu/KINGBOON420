@@ -81,7 +81,7 @@ export function BuildingForm({ templeId, edit, others }: { templeId: string; edi
       {s.ok && <Notice kind="ok">{s.ok}</Notice>}
       <input type="hidden" name="temple_id" value={templeId} />
       {edit && <input type="hidden" name="building_id" value={edit.id} />}
-      <div className="stack" key={gen}>
+      <div className="stack" key={`${gen}:${JSON.stringify(s.values ?? {})}`}>
         {edit ? (
           <div className="field"><span style={{ fontWeight: 700 }}>รหัสอาคาร</span>
             <output className="input" style={{ display: "flex", alignItems: "center", background: "var(--surface-2)" }} data-testid="code-readonly">{edit.code}</output>
@@ -120,17 +120,19 @@ export function BuildingForm({ templeId, edit, others }: { templeId: string; edi
 }
 
 /** One form per building: stays mounted when the building becomes confirmed so the result message is visible. */
-export function ConfirmForm({ templeId, buildingId, name }: { templeId: string; buildingId: string; name: string }) {
+export function ConfirmForm({ templeId, buildingId, confirmed }: { templeId: string; buildingId: string; confirmed: boolean }) {
   const [s, act] = useActionState(confirmBuildingAction, {});
   useRefreshOnOk(s);
   return (
     <form action={act} className="stack" noValidate>
       {s.error && <Notice kind="error">{s.error}</Notice>}
-      {s.ok && <Notice kind="ok">{s.ok}</Notice>}
+      {s.ok && confirmed && <Notice kind="ok">{s.ok}</Notice>}
       <input type="hidden" name="temple_id" value={templeId} />
       <input type="hidden" name="building_id" value={buildingId} />
-      <p className="meta" style={{ margin: 0 }}>{CONFIRM_TEXT}</p>
-      <SubmitButton pendingText="กำลังยืนยัน…" variant="secondary"><Check aria-hidden /><span aria-hidden>ยืนยันข้อมูลอาคารนี้</span><span className="sr-only" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}> ({name})</span></SubmitButton>
+      {!confirmed && <>
+        <p className="meta" style={{ margin: 0 }}>{CONFIRM_TEXT}</p>
+        <SubmitButton pendingText="กำลังยืนยัน…" variant="secondary"><Check aria-hidden />ยืนยันข้อมูลอาคารนี้</SubmitButton>
+      </>}
     </form>
   );
 }
@@ -147,7 +149,7 @@ export function ZoneForm({ templeId, buildings }: { templeId: string; buildings:
       {s.error && <Notice kind="error">{s.error}</Notice>}
       {s.ok && <Notice kind="ok">{s.ok}</Notice>}
       <input type="hidden" name="temple_id" value={templeId} />
-      <div className="stack" key={gen}>
+      <div className="stack" key={`${gen}:${JSON.stringify(s.values ?? {})}`}>
         <Field id="zone-building" label="อยู่ในอาคาร" hint="ไม่เลือก = โซนกลางแจ้งที่ไม่ได้อยู่ในอาคารใด" error={err(s, "building")}>
           <select id="zone-building" name="building" className="input" defaultValue={v("building")}>
             <option value="">— ไม่อยู่ในอาคารใด —</option>
