@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, BadgeCheck, Car, Accessibility, Banknote, Clock, Hash, Phone, MapPin } from "lucide-react";
+import { ChevronLeft, BadgeCheck, Phone, MapPin } from "lucide-react";
 import { templeParking, templePublic, type PublicField } from "@/lib/db";
 import { presentParking, type ParkingView } from "@/lib/parking";
 import { formatDateTh, formatValue } from "@/lib/verification";
 import { FollowSection } from "@/components/contact/follow-section";
+import { ParkingOverview } from "@/components/parking/parking-overview";
 
-const TONE: Record<string, string> = { ok: "b-ok", warn: "b-warn", bad: "b-bad", closed: "b-closed", unknown: "b-unknown" };
-const DETAIL_ICON = { vehicles: Car, count: Hash, access: Accessibility, fee: Banknote, hours: Clock };
 const HIDDEN_IN_LIST = new Set(["temple.name_th", "temple.geo", "temple.donation_account"]);
 
 function FieldValue({ f }: { f: PublicField }) {
@@ -39,6 +38,7 @@ export default async function TemplePage({ params }: { params: Promise<{ slug: s
           <Link className="btn btn-primary btn-block" href={`/t/${encodeURIComponent(slug)}/contact`}>ติดต่อวัด</Link>
           <Link className="btn btn-secondary btn-block" href={`/t/${encodeURIComponent(slug)}/map`}>แผนผังวัด</Link>
           <Link className="btn btn-secondary btn-block" href={`/t/${encodeURIComponent(slug)}/events`}>งานและกิจกรรมของวัด</Link>
+          {parking && <ParkingOverview view={parking} slug={slug} />}
           <FollowSection slug={slug} />
           <section className="card" aria-labelledby="info-h">
             <h2 id="info-h">ข้อมูลวัด</h2>
@@ -63,23 +63,6 @@ export default async function TemplePage({ params }: { params: Promise<{ slug: s
               <p className="meta">✓ ยืนยัน 2 ขั้นโดยวัด · ตรวจสอบล่าสุด {formatDateTh(donation.verified_at)}</p>
             </section>
           )}
-          <section aria-labelledby="parking-h">
-            <h2 id="parking-h">ที่จอดรถ</h2>
-            {parking?.kind === "none" && <div className="card">วัดนี้ไม่มีที่จอดรถของวัด</div>}
-            {(parking?.kind === "no_info" || parking?.kind === "not_found") && <div className="card">วัดยังไม่ได้ยืนยันข้อมูลที่จอดรถ</div>}
-            {parking?.kind === "lots" && (
-              <ul className="list">
-                {parking.lots.map((l) => (
-                  <li key={l.code} className="card" data-testid={`lot-${l.code}`}>
-                    <div className="row"><h3>{l.name}</h3><span className={`badge ${TONE[l.tone]}`}>{l.label}</span></div>
-                    {l.freeText && <p className="big">{l.freeText}</p>}
-                    {l.updatedText && <p className="meta">{l.updatedText}</p>}
-                    <ul className="details">{l.details.map((d) => { const I = DETAIL_ICON[d.kind]; return <li key={d.kind}><I size={18} aria-hidden />{d.text}</li>; })}</ul>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
         </div>
       )}
     </main>

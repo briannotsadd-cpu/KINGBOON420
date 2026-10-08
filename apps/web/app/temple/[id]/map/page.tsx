@@ -26,7 +26,7 @@ export default async function TempleMap({ params }: { params: Promise<{ id: stri
       <Notice kind="info">แผนที่ภายในวัดแสดงให้เฉพาะผู้ที่ติดตามหรือเป็นสมาชิกของวัดนี้ ถ้ายังไม่ได้ติดตามวัด ให้ไปที่หน้าวัดแล้วกด “ติดตามวัด” ส่วนแผนผังที่วัดเผยแพร่แล้วดูได้จากหน้าสาธารณะของวัด</Notice>
       <Link className="btn btn-secondary" href="/">ค้นหาวัด</Link></main>);
   return (
-    <main className="stack">
+    <main className="stack spatial-page">
       <Link className="back" href="/me">‹ กลับหน้าของฉัน</Link>
       <div><h1>แผนที่วัด</h1><p className="lead" style={{ margin: 0 }}>{access.name_th}</p></div>
       {access.can_manage && <Link className="btn btn-primary btn-block" href={`/temple/${id}/map/manage`}><Settings2 aria-hidden />จัดการอาคารและแผนที่</Link>}

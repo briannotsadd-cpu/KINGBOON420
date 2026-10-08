@@ -7,9 +7,9 @@ export const metadata = { title: "ตัวอย่างแผนที่ 3 �
 
 export default function Showcase() {
   return (
-    <main className="stack">
+    <main className="stack spatial-page">
       <Link className="back" href="/">‹ กลับหน้าแรก</Link>
-      <div><h1>ตัวอย่างแผนที่ 3 มิติ (สาธิต)</h1></div>
+      <div><p className="eyebrow">KINGBOON / SPATIAL EXPLORER</p><h1>ตัวอย่างแผนที่ 3 มิติ (สาธิต)</h1><p className="lead">สำรวจอาคารจากมุมที่คุณเลือก หมุนดู แล้วแตะอาคารเพื่อโฟกัส</p></div>
       <div className="notice notice-warn" data-testid="placeholder-label"><TriangleAlert size={24} aria-hidden style={{ flexShrink: 0, marginTop: 2 }} /><div><b>{PLACEHOLDER_LABEL}</b></div></div>
       <Showcase3D />
     </main>
