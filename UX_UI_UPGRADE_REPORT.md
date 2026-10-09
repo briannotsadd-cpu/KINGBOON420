@@ -160,6 +160,15 @@ Lockfile Resolve ใหม่แก้ Transitive `rolldown 1.2.13 → 1.2.12`, 
 - `supabase/tests/run.sh`
 - `UX_UI_UPGRADE_REPORT.md`
 
+## Supabase separation — 2026-10-09
+
+- **IMPLEMENTED:** KINGBOON uses `KINGBOON_DATABASE_URL` with `KINGBOON_SUPABASE_PROJECT_REF`. Remote direct/pooler connection must match that reference before a Pool is created. Generic `DATABASE_URL` is accepted only for localhost development/test; production requires the dedicated variable. No passwords are included in configuration errors.
+- **VERIFIED:** typecheck, production build and 16 test files / 180 tests passed. Eight new tests cover project mismatch, remote generic variable rejection, direct/pooler URLs, hostname spoofing, local compatibility and credential-safe errors.
+- **BLOCKED:** Supabase dashboard requires login; secure authentication request timed out, and a fresh verification tab still showed the sign-in page. No Supabase project has been created, no remote migrations were run and no hosting environment was changed.
+- XAUUSD and AUTOWEALTH hosting/resources were not modified. Vercel read-only listing showed `xauusd-signals`, `xau-signal-web`, `autowealth`, with no KINGBOON project in that connected account.
+- Required next step: authenticate to the existing Supabase account, identify and retain XAUUSD, create a separate KINGBOON project after checking plan/cost, review managed-Supabase migration compatibility, apply only KINGBOON schema/permissions, then configure the dedicated secrets and verify real DB flows. Project reference must come from the created project, never a placeholder.
+- Changed: `apps/web/lib/database-config.ts`, `database-config.test.ts`, `db.ts`, `apps/web/.env.example`, this report. No dependency/schema change, deploy or data deletion.
+
 ตรวจ Diff รอบสุดท้ายโดยแยก Ownership ของ Audit / 3D / Parking; แก้ Regression ของ GPS state, Focus และภาพทีเซอร์ก่อนรวม ขอบเขตนี้ไม่มีการแก้ DB migration, Permission model, API schema หรือข้อมูล Asset จริง
 
 ## Iteration: วันนี้ของทีมวัด — 2026-10-08
