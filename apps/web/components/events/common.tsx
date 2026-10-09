@@ -3,6 +3,7 @@ import { useActionState, useEffect, useRef, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle } from "lucide-react";
 import { Notice } from "@/components/ui";
+import { setFlash } from "@/components/contact/flash";
 import { eventOpAction, type EventState } from "@/app/temple/[id]/events/actions";
 
 /** After a successful save on the same page, re-render the server parts (lists, readiness) while this form stays
@@ -10,7 +11,7 @@ import { eventOpAction, type EventState } from "@/app/temple/[id]/events/actions
 export function useRefreshOnOk(s: EventState) {
   const router = useRouter();
   const last = useRef<EventState | null>(null);
-  useEffect(() => { if (s.ok && last.current !== s) { last.current = s; router.refresh(); } }, [s, router]);
+  useEffect(() => { if (s.ok && last.current !== s) { last.current = s; setFlash(s.ok); router.refresh(); } }, [s, router]);
 }
 
 /** Labelled field with hint (18px) and error. Same look as the shared Field, with larger hint text. */

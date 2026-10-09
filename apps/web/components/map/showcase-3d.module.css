@@ -1,0 +1,34 @@
+.showcase { display: grid; gap: 16px; min-width: 0; }
+.viewport { position: relative; width: 100%; aspect-ratio: 16 / 10; min-height: 300px; max-height: 720px; overflow: hidden; border: 1px solid var(--line); border-radius: 20px; background: #e9e8e1; isolation: isolate; }
+.canvasHost { position: absolute; inset: 0; }
+.sceneCaption { position: absolute; top: 18px; left: 20px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 8px 12px; border: 1px solid #d6d2c7; border-radius: 8px; background: #faf9f2f0; color: #393b32; font-size: .88rem; font-weight: 600; pointer-events: none; }
+.sceneCaption > span:last-child { border-left: 1px solid #cdc9bd; padding-left: 8px; color: #626354; font-weight: 400; }
+.captionDot { width: 6px; height: 6px; border-radius: 50%; background: #a55f16; flex: 0 0 auto; }
+.loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: #e9e8e1; color: #44473b; }
+.loading > span:last-child { font-size: .88rem; color: #626354; }
+.cameraControls { position: absolute; right: 18px; bottom: 18px; display: flex; align-items: center; padding: 4px; gap: 2px; border: 1px solid #d6d2c7; border-radius: 12px; background: #faf9f2f5; box-shadow: 0 3px 12px #342e1812; }
+.cameraControls > button { width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 8px; color: #44473b; background: transparent; cursor: pointer; transition: background 140ms ease, color 140ms ease; }
+.cameraControls > button:hover { background: #eae6d9; }
+.cameraControls > button:active { background: #e1dac6; }
+.cameraControls > button[aria-pressed="true"] { background: #e6d7b9; color: #77430f; }
+.cameraControls > button:focus-visible { outline: 2px solid #9a651e; outline-offset: 1px; }
+.cameraControls > button:disabled { opacity: .4; cursor: default; }
+.selectionBar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: center; }
+.selector { display: grid; gap: 7px; min-width: 0; }
+.selector > label { font-size: .88rem; font-weight: 600; color: var(--muted); }
+.selector > select { width: 100%; min-height: 46px; border: 1px solid var(--line); border-radius: 10px; padding: 9px 32px 9px 12px; background: var(--surface); color: var(--text); font: inherit; font-size: 1rem; text-overflow: ellipsis; cursor: pointer; }
+.selector > select:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+.selectionDetail { display: grid; gap: 6px; padding-left: 24px; border-left: 1px solid var(--line); min-width: 0; }
+.selectionDetail > strong { font-size: 1.05rem; font-weight: 600; overflow-wrap: anywhere; }
+.selectionLabel { color: var(--muted); font-size: .88rem; }
+.hint, .credit { margin: 0; color: var(--muted); font-size: .88rem; line-height: 1.7; }
+.credit { font-size: .85rem; }
+.fallback { width: 100%; height: auto; border-radius: 16px; }
+@media (max-width: 640px) {
+  .viewport { aspect-ratio: 1 / 1; min-height: 320px; border-radius: 14px; }
+  .sceneCaption { top: 12px; left: 12px; right: 12px; width: fit-content; font-size: .85rem; }
+  .cameraControls { right: 12px; bottom: 12px; }
+  .selectionBar { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .selectionDetail { padding-left: 0; border-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .cameraControls > button { transition: none; } }

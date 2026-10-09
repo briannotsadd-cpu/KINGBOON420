@@ -19,8 +19,8 @@
 .ctl[aria-pressed="true"] { background: var(--surface-2); border-color: var(--ok); }
 .ctl[aria-pressed="false"] { background: var(--bad-bg); border-color: var(--bad); }
 .ctl[disabled] { opacity: .55; cursor: not-allowed; }
-.hang { background: var(--bad); color: #fff; border-color: var(--bad); }
-.answer { background: var(--ok); color: #fff; border-color: var(--ok); }
+.hang { background: var(--bad); color: var(--on-bad); border-color: var(--bad); }
+.answer { background: var(--ok); color: var(--on-ok); border-color: var(--ok); }
 .bigRow { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .note { color: var(--muted); font-size: 1rem; margin: 0; }
 .sink { width: 100%; }
@@ -31,5 +31,5 @@
 .bannerBtns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .bannerBtn { min-height: 64px; border-radius: 16px; border: 2px solid transparent; font: inherit; font-weight: 700; font-size: 1.1rem; cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
-.accept { background: var(--ok); color: #fff; }
-.decline { background: var(--bad); color: #fff; }
+.accept { background: var(--ok); color: var(--on-ok); }
+.decline { background: var(--bad); color: var(--on-bad); }

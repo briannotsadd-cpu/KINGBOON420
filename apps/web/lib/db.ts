@@ -1,13 +1,13 @@
 import "server-only";
 import { Pool, type PoolClient } from "pg";
 import type { ParkingRow } from "./parking";
+import { kingboonDatabaseUrl } from "./database-config";
 
 // Server-side only. Visitor queries run as DB role `anon`; signed-in queries run as `authenticated` with the
 // user's id in request.jwt.claims (same model as Supabase Auth), so RLS in the database decides what is visible.
 let pool: Pool | null = null;
 function getPool(): Pool {
-  if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not set");
-  pool ??= new Pool({ connectionString: process.env.DATABASE_URL, max: 10 });
+  pool ??= new Pool({ connectionString: kingboonDatabaseUrl(process.env), max: 10 });
   return pool;
 }
 

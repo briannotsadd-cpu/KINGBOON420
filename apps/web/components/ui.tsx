@@ -1,7 +1,7 @@
 "use client";
 import { useFormStatus } from "react-dom";
 import { AlertCircle, CheckCircle2, Info, TriangleAlert } from "lucide-react";
-import type { ReactNode } from "react";
+import { Children, cloneElement, isValidElement, type ReactNode } from "react";
 
 export function SubmitButton({ children, pendingText, variant = "primary", block, name, value }:
   { children: ReactNode; pendingText: string; variant?: "primary" | "secondary" | "danger"; block?: boolean; name?: string; value?: string }) {
@@ -15,11 +15,22 @@ export function SubmitButton({ children, pendingText, variant = "primary", block
 
 export function Field({ id, label, required, hint, error, children }:
   { id: string; label: string; required?: boolean; hint?: string; error?: string; children: ReactNode }) {
+  // Keep hint and error references in sync with the actual rendered field IDs.
+  // Native validity remains server-driven in forms that deliberately use noValidate.
+  const controls = Children.map(children, (child) => {
+    if (!isValidElement<Record<string, unknown>>(child) || typeof child.type !== "string" || !["input", "select", "textarea"].includes(child.type)) return child;
+    return cloneElement(child, {
+      id,
+      "aria-required": required || undefined,
+      "aria-invalid": error ? true : undefined,
+      "aria-describedby": [hint && `${id}-hint`, error && `${id}-err`].filter(Boolean).join(" ") || undefined,
+    });
+  });
   return (
     <div className="field">
       <label htmlFor={id}>{label} {required ? <span className="req">(จำเป็น)</span> : <span className="hint">(ไม่บังคับ)</span>}</label>
       {hint && <span className="hint" id={`${id}-hint`}>{hint}</span>}
-      {children}
+      {controls}
       {error && <span className="field-error" id={`${id}-err`} role="alert"><AlertCircle size={20} aria-hidden />{error}</span>}
     </div>
   );

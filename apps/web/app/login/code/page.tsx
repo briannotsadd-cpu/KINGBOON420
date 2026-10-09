@@ -9,7 +9,7 @@ export default async function CodePage({ searchParams }: { searchParams: Promise
   const email = normalizeEmail(raw);
   if (!email) redirect("/login");
   return (
-    <main>
+    <main className="auth-page">
       <Link className="back" href="/login">‹ เปลี่ยนอีเมล</Link>
       <p className="steps">ขั้นที่ 2 จาก 2</p>
       <h1>กรอกรหัสจากอีเมล</h1>

@@ -207,7 +207,7 @@ if (state === "ready") {
   await sc.waitForSelector("[data-testid=pick-code]", { timeout: 5000 }).catch(() => {});
   const tapped = await sc.locator("[data-testid=pick-code]").count();
   console.log("info- canvas tap at centre selected a building:", tapped ? await sc.textContent("[data-testid=pick-code]") : "no (nothing under the tap)");
-  await sc.click("[data-testid='node-WAT-ARUN.UBOSOT']");
+  await sc.getByLabel("สำรวจอาคารในแบบจำลอง").selectOption("WAT-ARUN.UBOSOT");
   ok((await sc.textContent("[data-testid=pick-code]")).trim() === "WAT-ARUN.UBOSOT", "choosing a node from the list shows its code");
   await shot(sc, "mp-12-showcase-3d");
   const rm = await sc.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -215,7 +215,11 @@ if (state === "ready") {
   const def = await page("198.51.100.16");
   await def.goto(`${BASE}/showcase/3d`);
   await def.waitForSelector("[data-testid=showcase][data-state=ready]", { timeout: 60000 });
-  ok((await def.getAttribute("[data-testid=showcase]", "data-autorotate")) === "true", "default motion -> auto-rotate on");
+  ok((await def.getAttribute("[data-testid=showcase]", "data-autorotate")) === "false", "default view -> static until user opts in to auto-rotation");
+  await def.getByRole("button", { name: "หมุนอัตโนมัติ", exact: true }).click();
+  ok((await def.getAttribute("[data-testid=showcase]", "data-autorotate")) === "true", "auto-rotation starts on explicit user action");
+  await def.getByRole("button", { name: "คืนมุมมองทั้งหมด", exact: true }).click();
+  ok((await def.getAttribute("[data-testid=showcase]", "data-autorotate")) === "false", "reset stops auto-rotation");
 } else {
   ok((await sc.locator("[data-testid=webgl-fallback]").count()) === 1, "WebGL unavailable: fallback message + 2D illustration link shown");
   await shot(sc, "mp-12-showcase-fallback");

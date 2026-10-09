@@ -1,0 +1,12 @@
+.summary { display: flex; flex-wrap: wrap; gap: 1rem 2rem; padding: 1rem 0; }
+.summary > a, .summary > span { display: flex; align-items: baseline; gap: .5rem; text-decoration: none; }
+.summary strong { font-size: 1.75rem; font-variant-numeric: tabular-nums; }
+.summary > span { color: var(--muted); }
+.task { padding: 1.25rem 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; scroll-margin-top: 8rem; }
+.task h3 { margin: 0; }
+.task p { margin: .65rem 0; white-space: pre-wrap; }
+.task:first-child { border-top: 1px solid var(--line); }
+.description { max-width: 65ch; }
+.section { scroll-margin-top: 8rem; }
+.team { padding: 1rem 1.25rem; border-left: 3px solid var(--primary); background: var(--surface); }
+@media (max-width: 600px) { .summary { gap: .75rem 1.25rem; } .team { padding: 1rem; } }
