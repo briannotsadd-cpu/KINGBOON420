@@ -234,7 +234,7 @@ await shot(cm, "h-01-menu-member");
 m = await menuOf(monk);
 ok(!m.includes("points") && !m.includes("rewards") && m.includes("monastic"), `monk menu has no community points/rewards: ${m}`);
 m = await menuOf(fm);
-ok(m.includes("points-manage") && m.includes("command") && !m.includes("monastic"), `facility_manager menu: ${m}`);
+ok(m.includes("points-manage") && m.includes("command") && m.includes("parking") && !m.includes("monastic"), `facility_manager menu (incl. parking): ${m}`);
 await noOverflow(fm, "temple menu");
 
 console.log("ALL POINTS E2E CHECKS PASSED");

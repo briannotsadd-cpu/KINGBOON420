@@ -67,6 +67,12 @@ Migrations reference these codes. Changing one means a new migration plus update
 - **"Events today" means today.** It now counts the current day in the temple's time zone, not the next 24 hours.
 - **Redeeming twice is safe.** Sending the same redeem request again (a double tap or a retry) returns the first redemption, with no second charge and no second stock deduction.
 
+## Parking staff screens (0016)
+- **D-PK1:** Lots and status reports are written only through functions (`app.save_parking_lot`, `app.report_parking_status`, `app.confirm_parking_lot`, `app.set_parking_declared`). Direct INSERT/UPDATE grants on `parking_lots` and `parking_status_reports` are revoked.
+- **D-PK2:** A lot is public only after someone holding `temple.settings` confirms it (same rule as buildings, D-M1). Changing the name, capacity, accessible spaces, vehicle types, fee, hours or public flag clears the confirmation. Changing only active or the stale minutes keeps it.
+- **D-PK3:** The reporter is always the caller. A report needs `parking.report` T, an active lot and a valid status (never UNKNOWN). Limit: 30 reports per reporter per 10 minutes. A free-space count is only what the reporter typed; FULL stores 0 and CLOSED stores none.
+- **D-PK4:** Lots are never deleted; they are turned off (`active = false`). Maximum 50 lots per temple. Lot codes never change.
+
 ## Known v1 behaviour (by the current rules; change only by decision)
 - **Monk secretary cannot approve events.** `monk_secretary` holds `event.approve` only as "delegated", and the permission rank ignores delegated grants. In v1 there is also no screen for delegating it.
 - **Followers cannot see members-only events.** `temple_members` events need `event.view` at scope T, so they are visible to staff and monks but not to followers (`community_member`, scope P). `public` events are visible to all members.

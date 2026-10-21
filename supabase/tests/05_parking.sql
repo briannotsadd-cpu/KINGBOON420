@@ -28,7 +28,7 @@ begin
 
   -- 5 traffic staff of A reports FILLING with 5 free spaces --------------------------------------
   perform test.as_person(tp);
-  insert into public.parking_status_reports(temple_id, lot_id, status, free_spaces, reported_by) values (A, L1, 'FILLING', 5, tp);
+  perform app.report_parking_status(A, L1, 'FILLING', 5, null);
   reset role;
 
   -- 6-7 visitor sees the fresh report; two hours later it is stale => UNKNOWN ---------------------
@@ -40,26 +40,26 @@ begin
                       'stale report => UNKNOWN, number hidden, last-update time kept');
   reset role;
 
-  -- 8 community member cannot report; 9 staff cannot report in someone else's name ---------------
+  -- 8 community member cannot report; 9 nobody writes the table directly (reporter is always the caller) ---------------
   perform test.as_person(cm);
   ok := false;
-  begin insert into public.parking_status_reports(temple_id, lot_id, status, reported_by) values (A, L1, 'FULL', cm);
+  begin perform app.report_parking_status(A, L1, 'FULL', null, null);
   exception when insufficient_privilege then ok := true; end;
   perform test.assert(ok, 'community_member must not report parking status');
   reset role;
   perform test.as_person(tp);
   ok := false;
-  begin insert into public.parking_status_reports(temple_id, lot_id, status, reported_by) values (A, L1, 'FULL', cm);
+  begin insert into public.parking_status_reports(temple_id, lot_id, status, reported_by) values (A, L1, 'FULL', tp);
   exception when insufficient_privilege then ok := true; end;
-  perform test.assert(ok, 'reporter must be the caller');
+  perform test.assert(ok, 'direct INSERT is refused even for staff (reports go through app.report_parking_status, reporter = caller)');
 
   -- 10 numbers must be consistent with capacity ---------------------------------------------------
   ok := false;
-  begin insert into public.parking_status_reports(temple_id, lot_id, status, free_spaces, reported_by) values (A, L1, 'AVAILABLE', 41, tp);
+  begin perform app.report_parking_status(A, L1, 'AVAILABLE', 41, null);
   exception when check_violation then ok := true; end;
   perform test.assert(ok, 'free_spaces above capacity 40 rejected');
   ok := false;
-  begin insert into public.parking_status_reports(temple_id, lot_id, status, free_spaces, reported_by) values (A, L1, 'FULL', 3, tp);
+  begin perform app.report_parking_status(A, L1, 'FULL', 3, null);
   exception when check_violation then ok := true; end;
   perform test.assert(ok, 'FULL with free spaces rejected');
 

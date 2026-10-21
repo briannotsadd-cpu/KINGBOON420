@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { CalendarDays, Gift, HandCoins, Inbox, LayoutDashboard, Map, Medal, PartyPopper, Users } from "lucide-react";
+import { CalendarDays, Car, Gift, HandCoins, Inbox, LayoutDashboard, Map, Medal, PartyPopper, Users } from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { Notice } from "@/components/ui";
 import { UUID, pointsAccess, type PAccess } from "@/components/points/queries";
@@ -24,6 +24,7 @@ function templeMenu(id: string, a: PAccess): Item[] {
     a.can_award && { href: `${base}/points/manage`, icon: HandCoins, title: "มอบแต้มและตรวจแต้มที่รอตรวจ", note: "สำหรับเจ้าหน้าที่ที่ได้รับมอบหมาย" },
     a.can_reward_manage && { href: `${base}/rewards/manage`, icon: Gift, title: "จัดการของที่ระลึก", note: "เพิ่มของ ดูคำขอแลก และส่งมอบ" },
     a.can_cc_view && { href: `${base}/command`, icon: LayoutDashboard, title: "ศูนย์บัญชาการวัด", note: "ภาพรวมวันนี้ สิ่งที่ต้องทำ และข้อเสนอแนะ" },
+    a.can_parking && { href: `${base}/parking`, icon: Car, title: "ลานจอดรถ", note: "รายงานว่าลานว่างหรือเต็ม และจัดการลานจอดของวัด" },
     a.can_inbox && { href: `${base}/inbox`, icon: Inbox, title: "กล่องข้อความของวัด", note: "ข้อความที่คนทั่วไปส่งถึงวัด" },
   ].filter(Boolean) as Item[]);
 }

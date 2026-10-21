@@ -1,0 +1,59 @@
+.group { border: 0; padding: 0; margin: 0; min-width: 0; }
+.group legend { font-weight: 700; margin-bottom: 10px; padding: 0; }
+
+.lotPicker { display: flex; flex-wrap: wrap; gap: 8px; }
+.lotChip { position: relative; display: inline-flex; align-items: center; min-height: 48px; padding: 10px 16px; border: 2px solid var(--line);
+  border-radius: 999px; background: var(--surface); cursor: pointer; font-size: .95rem; max-width: 100%; }
+.lotChip span { overflow-wrap: anywhere; }
+.lotChip input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.lotChip:has(input:checked) { border-color: var(--primary); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--primary); }
+.lotChip:has(input:focus-visible) { outline: 3px solid var(--saffron); outline-offset: 2px; }
+
+.statusGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.statusTile { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center;
+  min-height: 116px; padding: 14px 10px; border-radius: 16px; border: 2px solid transparent; cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease; }
+.statusTile input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.statusTile strong { font-size: 1.15rem; }
+.statusTile small { font-size: .8rem; opacity: .85; }
+.statusTile:hover { transform: translateY(-1px); }
+.statusTile:has(input:checked) { border-color: currentColor; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent); transform: translateY(-1px); }
+.statusTile:has(input:checked)::after { content: "✓"; position: absolute; top: 8px; right: 12px; font-weight: 800; }
+.statusTile:has(input:focus-visible) { outline: 3px solid var(--saffron); outline-offset: 2px; }
+.ok { color: var(--ok); background: var(--ok-bg); }
+.warn { color: var(--warn); background: var(--warn-bg); }
+.bad { color: var(--bad); background: var(--bad-bg); }
+.closed { color: var(--closed, var(--muted)); background: var(--surface-2); }
+.unknown { color: var(--muted); background: var(--surface-2); }
+
+.twoCol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.checks { display: flex; flex-direction: column; gap: 8px; }
+.check { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; }
+.check input { width: 22px; height: 22px; accent-color: var(--primary); flex-shrink: 0; }
+
+/* Board: one card per lot with the live status as a coloured band */
+.board { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.lotCard { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); overflow: hidden; display: flex; flex-direction: column; }
+.band { display: flex; align-items: center; gap: 10px; padding: 14px 18px; font-weight: 700; font-size: 1.05rem; }
+.band small { margin-left: auto; font-weight: 600; font-size: .8rem; opacity: .9; }
+.lotBody { padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.lotBody h3 { margin: 0; overflow-wrap: anywhere; }
+.code { color: var(--muted); font-size: .75rem; font-weight: 700; letter-spacing: .05em; }
+.meter { height: 8px; border-radius: 8px; background: var(--surface-2); overflow: hidden; }
+.meter > span { display: block; height: 100%; border-radius: 8px; background: currentColor; }
+.meta { margin: 0; color: var(--muted); font-size: .85rem; overflow-wrap: anywhere; }
+.note { margin: 0; padding: 8px 12px; border-left: 3px solid var(--primary); background: var(--surface-2); font-size: .88rem; overflow-wrap: anywhere; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.lotCard .actions { margin-top: auto; padding-top: 6px; }
+
+.summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.stat { border-radius: 14px; padding: 12px 10px; text-align: center; }
+.stat strong { display: block; font-size: 1.6rem; line-height: 1.1; }
+.stat span { font-size: .8rem; }
+
+@media (max-width: 480px) {
+  .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .statusTile { min-height: 104px; }
+  .twoCol { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .statusTile { transition: none; } .statusTile:hover, .statusTile:has(input:checked) { transform: none; } }

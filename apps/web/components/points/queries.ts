@@ -6,7 +6,7 @@ export const UUID = /^[0-9a-f-]{36}$/;
 export interface PAccess {
   name_th: string | null; is_member: boolean; is_monastic: boolean; me: string | null;
   can_award: boolean; can_reward_manage: boolean; can_cc_view: boolean; can_cc_full: boolean;
-  can_avail: boolean; can_inv_view: boolean; can_inbox: boolean;
+  can_avail: boolean; can_inv_view: boolean; can_inbox: boolean; can_parking: boolean;
 }
 /** What the signed-in user may use in this temple, answered by the database's own permission functions. */
 export const pointsAccess = (authUserId: string, templeId: string) =>
@@ -21,7 +21,8 @@ export const pointsAccess = (authUserId: string, templeId: string) =>
             app.has_permission($1, 'command_center.view', 'T') as can_cc_full,
             (app.has_permission($1, 'availability.view', 'T') or app.has_scope_letter($1, 'availability.view', 'C')) as can_avail,
             app.has_permission($1, 'invitation.view') as can_inv_view,
-            app.has_permission($1, 'contact_inbox.manage', 'T') as can_inbox`, [templeId])).rows[0]);
+            app.has_permission($1, 'contact_inbox.manage', 'T') as can_inbox,
+            (app.has_permission($1, 'parking.report', 'T') or app.has_permission($1, 'parking.manage', 'T')) as can_parking`, [templeId])).rows[0]);
 
 export interface MyPointRow { balance: string; created_at: Date | null; amount: number | null; txn_type: string | null; reason: string | null; source_type: string | null }
 export interface HeldRow { id: string; amount: number; created_at: Date }
