@@ -229,7 +229,7 @@ const menuOf = async (p) => { await p.goto(`${BASE}/me`); await p.click(`[data-t
 let m = await menuOf(ab);
 ok(["command", "monastic", "inbox", "events", "map"].every((k) => m.split(",").includes(k)) && !m.split(",").includes("points") && !m.split(",").includes("rewards"), `abbot (monastic) menu: command, monk menu, inbox; no personal points/rewards: ${m}`);
 m = await menuOf(cm);
-ok(m === "events,map,points,rewards", `community member menu (no staff tools, no command): ${m}`);
+ok(m === "day,events,map,points,rewards", `community member menu (own day, no staff tools, no command): ${m}`);
 await shot(cm, "h-01-menu-member");
 m = await menuOf(monk);
 ok(!m.includes("points") && !m.includes("rewards") && m.includes("monastic"), `monk menu has no community points/rewards: ${m}`);

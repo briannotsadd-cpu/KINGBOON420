@@ -57,7 +57,12 @@ await shot(P.monk, "m-01-hub");
 await noOverflow(P.monk, "hub");
 
 // lay: every page explains instead of showing monk data
-for (const [path, needle] of [["day", "ตารางประจำวันของพระ"], ["practice", "กิจวัตรส่วนตัวของพระ"], ["availability", "ยังไม่มีสิทธิ์นี้"], ["invitations", "ยังไม่มีสิทธิ์นี้"]]) {
+// /day for a lay member is the team-day workspace (own tasks only), never the monk's day
+await P.lay.goto(`${BASE}/temple/${T}/day`);
+{ const t = await text(P.lay);
+  ok(t.includes("วันนี้ของทีมวัด") && !t.includes("ตั้งสถานะของฉัน") && (await P.lay.locator("[data-testid=day-task]").count()) === 0,
+    "lay member: /day shows the team-day workspace with no monk data and no tasks of others"); }
+for (const [path, needle] of [["practice", "กิจวัตรส่วนตัวของพระ"], ["availability", "ยังไม่มีสิทธิ์นี้"], ["invitations", "ยังไม่มีสิทธิ์นี้"]]) {
   await P.lay.goto(`${BASE}/temple/${T}/${path}`);
   ok((await text(P.lay)).includes(needle), `lay member: /${path} shows an explanation`);
 }

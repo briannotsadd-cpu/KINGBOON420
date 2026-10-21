@@ -2,16 +2,18 @@
 
 Temple Operating System + Monastic Life System + Temple Workforce + Community Network.
 
-**Status:** Wave 1 closed; Wave 2 in progress (database schema + RLS tests, procedural 3D Wat Arun; Figma design paused
-by plan limit). Local app: login, temple claim, data verification, parking (see FEATURE_MATRIX). **No real temple data** —
-see [`docs/data/TEMPLE_DATA_AUDIT.md`](docs/data/TEMPLE_DATA_AUDIT.md). Not deployed.
+**Status (2026-10-21):** v1 features are built and tested on a local machine: login, temple registration and data
+verification, parking, contact, chat and 1:1 calls, community, events, monk features, 2D map + 3D showcase, points,
+rewards and the Temple Command Center (see [`docs/master/FEATURE_MATRIX.md`](docs/master/FEATURE_MATRIX.md)).
+**Not deployed:** the Supabase schema is only partly applied (see [`docs/v1/deploy/README.md`](docs/v1/deploy/README.md))
+and there is no Vercel deployment. **No real temple data** — see [`docs/data/TEMPLE_DATA_AUDIT.md`](docs/data/TEMPLE_DATA_AUDIT.md).
 
 ## Run the app locally
 
 ```bash
 pnpm install
 bash supabase/dev/local-db.sh start            # empty PG16 database on :54322 (no sample data)
-cp apps/web/.env.example apps/web/.env.local   # then set AUTH_PEPPER and PLATFORM_ADMIN_EMAILS (your email)
+cp apps/web/.env.example apps/web/.env.local   # then set AUTH_PEPPER and PLATFORM_ADMIN_EMAILS (your email); DATABASE_URL works for local dev
 pnpm --filter @boon/web dev                     # http://localhost:3000
 ```
 

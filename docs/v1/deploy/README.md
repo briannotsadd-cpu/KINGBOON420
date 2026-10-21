@@ -11,3 +11,10 @@
   It runs in one transaction, so if anything fails nothing is changed.
 - **Testing.** Step 1 plus step 2 was replayed on a local PostgreSQL. All database tests passed, including the table × role isolation matrix.
 - **Not changed.** The other app's table (`public.xauusd_signals`) and Supabase's default privileges are untouched.
+
+## Status on 2026-10-21 (read-only check)
+- **Step 2 has not been run.** The tables `events`, `buildings` and `reward_catalog` are missing and `public.roles` has 0 rows.
+- **0015 is included in step 2.** It pins `search_path` on 7 functions, fixing the advisor warning `function_search_path_mutable`.
+- **Open decision on which project to use.** Since commit be0a679, the app reads `KINGBOON_DATABASE_URL` and `KINGBOON_SUPABASE_PROJECT_REF`, and refuses a remote URL from any other project (`apps/web/.env.example` says to use a dedicated project).
+  - **Keep using `xauusd-signals`:** its project ref must be set as `KINGBOON_SUPABASE_PROJECT_REF`. That conflicts with the "never copy XAUUSD credentials" note.
+  - **Create a dedicated project:** about $10/month on the Pro plan. Re-run steps 1 and 2 there.

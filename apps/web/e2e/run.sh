@@ -12,7 +12,7 @@ pg_isready -q -h localhost -p 54322 || bash "$ROOT/supabase/dev/local-db.sh" sta
 fresh_db() { $PSQL -d postgres -c "drop database if exists $DB with (force)" -c "create database $DB" >/dev/null
   for f in "$ROOT"/supabase/migrations/*.sql "$ROOT"/supabase/seed/*.sql; do $PSQL -d "$DB" -f "$f" >/dev/null; done; }
 fresh_db
-export AUTH_PEPPER="$(head -c 24 /dev/urandom | base64)" DATABASE_URL=postgres://postgres@localhost:54322/$DB PLATFORM_ADMIN_EMAILS=admin@example.com MAIL_DEV_LOG=1 NEXT_TELEMETRY_DISABLED=1 BASE="http://localhost:$PORT" E2E_DB="$DB"
+export AUTH_PEPPER="$(head -c 24 /dev/urandom | base64)" DATABASE_URL=postgres://postgres@localhost:54322/$DB KINGBOON_DATABASE_URL=postgres://postgres@localhost:54322/$DB PLATFORM_ADMIN_EMAILS=admin@example.com MAIL_DEV_LOG=1 NEXT_TELEMETRY_DISABLED=1 BASE="http://localhost:$PORT" E2E_DB="$DB"
 cd "$HERE"
 [ "${SKIP_BUILD:-0}" = 1 ] || pnpm -s build >/dev/null
 if curl -s -o /dev/null "$BASE/"; then echo "port $PORT is already in use - stop the other server first"; exit 1; fi

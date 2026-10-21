@@ -26,6 +26,11 @@ begin
     bad := bad || format(' [%s.%s not composite on temple_id]', t.tbl, t.conname);
   end loop;
   perform test.assert(bad = '', 'FK rules violated:' || bad);
+  -- every function in app/public pins search_path (Supabase advisor function_search_path_mutable; 0015)
+  perform test.assert((select count(*) from pg_proc p join pg_namespace ns on ns.oid = p.pronamespace
+     where ns.nspname in ('app', 'public') and p.prokind = 'f'
+       and not exists (select 1 from unnest(coalesce(p.proconfig, '{}')) c where c like 'search_path=%')) = 0,
+    'every app/public function must pin search_path');
   -- seed sanity: generated from YAML
   perform test.assert((select count(*) from public.roles) = 28, 'expected 28 roles');
   perform test.assert((select count(*) from public.role_permissions) > 400, 'role_permissions seeded');
